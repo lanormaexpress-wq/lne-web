@@ -1,0 +1,50 @@
+[
+    {
+        "id": 1,
+        "titulo": "Introducción al Derecho Penal Económico",
+        "imagen": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Fundamentos, evolución e importancia del Derecho Penal Económico. Estudio del bien jurídico en los delitos económicos: el orden socioeconómico y su tutela Constitucional e internacional."
+    },
+    {
+        "id": 2,
+        "titulo": "Delitos Económicos",
+        "imagen": "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Análisis dogmático de las principales figuras penales: acaparamiento, especulación, adulteración, delitos financieros y delitos contra los derechos intelectuales."
+    },
+    {
+        "id": 3,
+        "titulo": "Lavado de Activos",
+        "imagen": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Estudio exhaustivo del delito de Lavado de Activos: actos de conversión, transferencia, ocultamiento y tenencia. Inclusión del delito fuente y la prueba indiciaria."
+    },
+    {
+        "id": 4,
+        "titulo": "Delitos Tributarios",
+        "imagen": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Ley Penal Tributaria. El delito de Defraudación Tributaria, evasión fiscal, modalidades de ocultamiento de ingresos y el delito contable. Sus consecuencias accesorias."
+    },
+    {
+        "id": 5,
+        "titulo": "Responsabilidad Penal de la Empresa",
+        "imagen": "https://images.unsplash.com/photo-1507679622770-55e105e46be4?auto=format&fit=crop&q=80&w=800",
+        "contenido": "La superación del principio 'societas delinquere non potest'. Modelos de imputación corporativa, Ley 30424 y los presupuestos para atribuir responsabilidad a las personas jurídicas."
+    },
+    {
+        "id": 6,
+        "titulo": "Compliance Penal",
+        "imagen": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Los programas de cumplimiento regulatorio (Compliance). Oficial de cumplimiento, matriz de riesgos penales, capacitaciones, canal de denuncias y su eficacia como causa de exención de responsabilidad penal."
+    },
+    {
+        "id": 7,
+        "titulo": "Corrupción y Delitos",
+        "imagen": "https://images.unsplash.com/photo-1589578228464-eb012c8baf5e?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Delitos contra la Administración Pública ligados al ámbito empresarial: Colusión desleal, Cohecho activo (soborno nacional y transnacional), Tráfico de influencias y Peculado."
+    },
+    {
+        "id": 8,
+        "titulo": "Criminalidad Empresarial",
+        "imagen": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Casuística y tendencias criminológicas modernas. Actuación en banda, fraude corporativo, investigaciones corporativas internas (Corporate Investigations) y cooperación con las autoridades."
+    }
+]

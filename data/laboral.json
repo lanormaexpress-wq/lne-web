@@ -1,0 +1,38 @@
+[
+    {
+        "id": 1,
+        "titulo": "Contrato de Trabajo",
+        "imagen": "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Estudio de los elementos esenciales del contrato de trabajo: prestación personal, subordinación y remuneración. Se analizan los principios protectorio, irrenunciabilidad, y primacía de la realidad."
+    },
+    {
+        "id": 2,
+        "titulo": "Jornada y Horarios",
+        "imagen": "https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Regulación normativa sobre la jornada máxima legal, horas extras, horario nocturno, sobretiempo, trabajo en días feriados y descanso semanal obligatorio."
+    },
+    {
+        "id": 3,
+        "titulo": "Beneficios Sociales",
+        "imagen": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Análisis de los derechos económicos del trabajador: Gratificaciones de Fiestas Patrias y Navidad, Compensación por Tiempo de Servicios (CTS), Vacaciones y Asignación Familiar."
+    },
+    {
+        "id": 4,
+        "titulo": "Extinción del Vínculo",
+        "imagen": "https://images.unsplash.com/photo-1628108502318-932f995817d1?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Supuestos legales para la finalización del contrato: Renuncia, mutuo disenso, vencimiento de plazo, despido arbitrario, nulo y justificado. Cálculo de la liquidación de beneficios sociales."
+    },
+    {
+        "id": 5,
+        "titulo": "Seguridad y Salud",
+        "imagen": "https://images.unsplash.com/photo-1581579203328-3606f23b2073?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Obligaciones del empleador y derechos del trabajador en materia de prevención de riesgos laborales. Comités de SST, capacitaciones, matriz IPERC y reporte de accidentes de trabajo."
+    },
+    {
+        "id": 6,
+        "titulo": "Negociación Colectiva",
+        "imagen": "https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Estudio de las relaciones colectivas de trabajo: Libertad Sindical, Pliego de Reclamos, Negociación Colectiva y Derecho a la Huelga. Resolución de conflictos a nivel sindical."
+    }
+]

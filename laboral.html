@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derecho Laboral - La Norma Express</title>
+    <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body
+    style="background-color: #f4f6f9; margin: 0; font-family: 'Roboto', sans-serif; display: flex; flex-direction: column; min-height: 100vh;">
+
+    <header
+        style="background-color: #ffffff; display: flex; justify-content: space-between; align-items: center; padding: 10px 80px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; z-index: 1000;">
+        <div style="display: flex; align-items: center;">
+            <a href="index.html">
+                <img src="assets/imagenes/logo.png" alt="Volver al Inicio" class="header-logo">
+            </a>
+
+            <div class="dropdown" style="margin-left: 75px;">
+                <button class="dropbtn">Legislación</button>
+                <div class="dropdown-content">
+                    <a href="constitucion.html">Constitución Política</a>
+                    <a href="civil.html">Código Civil</a>
+                    <a href="penal.html">Código Penal</a>
+                </div>
+            </div>
+
+            <div class="dropdown" style="margin-left: 30px;">
+                <button class="dropbtn">Cursos</button>
+                <div class="dropdown-content">
+                    <a href="argumentacion.html">Argumentación Jurídica</a>
+                    <a href="contratos.html">Contratos</a>
+                    <a href="tributario.html">Derecho Tributario Especial</a>
+                    <a href="laboral.html">Derecho Laboral</a>
+                    <a href="penal-economico.html">Derecho Penal Económico</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-right-stack">
+            <div class="top-social-icons">
+                <a href="https://www.tiktok.com/@lanormaexpress" target="_blank" class="social-link tiktok"><i
+                        class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.facebook.com/profile.php?id=61584727995875" target="_blank"
+                    class="social-link facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/lanormaexpress/" target="_blank" class="social-link instagram"><i
+                        class="fa-brands fa-instagram"></i></a>
+                <a href="https://x.com/LaNormaExpress" target="_blank" class="social-link x-twitter"><i
+                        class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.youtube.com/@LaNormaExpress" target="_blank" class="social-link youtube"><i
+                        class="fa-brands fa-youtube"></i></a>
+            </div>
+            <nav>
+                <a href="admin.html" class="btn-login">Acceso Admin</a>
+            </nav>
+        </div>
+    </header>
+
+    <div style="flex: 1;">
+        <div style="max-width: 1200px; margin: 50px auto; padding: 50px; background-color: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #1b263b; border-bottom: 2px solid #000; padding-bottom: 15px; margin-top: 0; margin-bottom: 10px; text-align: center;">
+                Laboral
+            </h1>
+
+            <p style="color: #444; line-height: 1.6; font-size: 1.1rem; text-align: center; margin-bottom: 30px;">
+                Selecciona una de las clases para revisar el contenido interactivo.
+            </p>
+
+            <div id="laboral-grid" class="curso-grid">
+                <!-- Contenido dinámico inyectado desde JS -->
+            </div>
+
+        </div>
+    </div>
+
+    <footer
+        style="background-color: #111b29; text-align: center; padding: 25px 20px; color: #6c757d; width: 100%; box-sizing: border-box;">
+        <p style="margin: 0; font-size: 0.9rem;">&copy; 2026 La Norma Express - Perú. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Modal para Contenido del Curso Laboral -->
+    <div id="laboral-modal" class="curso-modal-overlay">
+        <div class="curso-modal-content">
+            <button id="laboral-modal-close" class="curso-modal-close"><i class="fa-solid fa-xmark"></i></button>
+            <div id="laboral-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Script principal extraído -->
+    <script src="laboral.js"></script>
+    <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
+    <input type="checkbox" id="legal-chat-toggle" class="legal-chat-checkbox">
+
+    <!-- Botón Flotante Circular -->
+    <label for="legal-chat-toggle" class="legal-chat-btn" title="Abrir Asistente IA">
+        <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-icon-main chat-logo-img">
+        <i class="fa-solid fa-xmark chat-icon-close"></i>
+    </label>
+
+    <!-- Ventana de Chat Elegante -->
+    <div class="legal-chat-window">
+        <!-- Cabecera -->
+        <div class="legal-chat-header">
+            <div class="legal-chat-header-info">
+                <div class="legal-chat-avatar">
+                    <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-header-logo-img">
+                </div>
+                <div>
+                    <h3>Asistente IA - La Norma Express</h3>
+                    <span>En línea | Soporte Legal</span>
+                </div>
+            </div>
+            <label for="legal-chat-toggle" class="legal-chat-close-btn" title="Cerrar chat">
+                <i class="fa-solid fa-chevron-down"></i>
+            </label>
+        </div>
+
+        <!-- Área de Mensajes -->
+        <div class="legal-chat-messages">
+            <!-- Mensaje de bienvenida del Bot -->
+            <div class="legal-chat-msg bot-msg">
+                <div class="msg-bubble">
+                    ¡Hola! Bienvenido a <strong>La Norma Express</strong>. Soy tu asistente legal con Inteligencia Artificial. ¿Qué código o tema del derecho deseas consultar hoy?
+                </div>
+                <span class="msg-time">Ahora</span>
+            </div>
+        </div>
+
+        <!-- Cajita de Entrada de Texto (Sin JS) -->
+        <form class="legal-chat-input-area" onsubmit="return false;">
+            <textarea rows="1" placeholder="Escribe tu consulta aquí..." class="legal-chat-input"></textarea>
+            <button type="submit" class="legal-chat-send-btn" title="Enviar">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+    <script src="asistente.js"></script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>La Norma Express | Admin</title>
+    <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos rápidos para el admin */
+        .admin-layout {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #0d1b2a;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #ddd;
+            text-decoration: none;
+            margin-bottom: 15px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .btn-submit {
+
+            background: #1b263b;
+
+            color: white;
+
+            border: none;
+
+            padding: 10px 20px;
+
+            cursor: pointer;
+        }
+
+        /* --- PEGA ESTO AQUÍ (NO BORRES LO ANTERIOR) --- */
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 10px;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .admin-table th {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+
+        .btn-delete {
+            background-color: #d9534f;
+            /* Rojo */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background-color: #c9302c;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="admin-layout">
+        <div class="sidebar">
+            <h2>Panel Admin</h2>
+            <a href="#">📝 Publicar Nuevo</a>
+            <a href="#">📂 Ver Archivos</a>
+            <a href="index.html">🔙 Volver a la web</a>
+        </div>
+
+        <div class="content">
+            <h1>Subir Nuevo Contenido</h1>
+            <hr><br>
+
+            <form>
+                <div class="form-group">
+                    <label>Título del Tema</label>
+                    <input type="text" id="tituloInput" placeholder="Ej: La legítima defensa en el código penal...">
+                </div>
+
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="categoriaInput">
+                        <optgroup label="📢 Avisos y Noticias">
+                            <option>🔴 URGENTE</option>
+                            <option>📰 Noticia del Día</option>
+                            <option>📅 Evento / Examen</option>
+                        </optgroup>
+
+                        <optgroup label="📚 Temas de Estudio">
+                            <option>Derecho Civil</option>
+                            <option>Derecho Penal</option>
+                            <option>Constitucional</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Contenido / Resumen</label>
+                    <textarea id="contenidoInput" rows="5" placeholder="Escribe aquí los puntos clave..."></textarea>
+                </div>
+
+                <button type="button" id="btnPublicar" class="btn-submit">Publicar en la Web</button>
+            </form>
+
+            <div class="manage-section">
+                <h2 style="margin-top: 40px; margin-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+                    Administrar Artículos</h2>
+
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Título del Tema</th>
+                            <th>Categoría</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCuerpo">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        const btnPublicar = document.getElementById('btnPublicar');
+        const inputTitulo = document.getElementById('tituloInput');
+        const inputCategoria = document.getElementById('categoriaInput');
+        const tabla = document.getElementById('tablaCuerpo');
+
+        // Función para cargar
+        function cargarArticulos() {
+            const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+            tabla.innerHTML = '';
+
+            articulosGuardados.forEach((articulo, index) => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${articulo.titulo}</td>
+                    <td>${articulo.categoria}</td>
+                    <td><button onclick="eliminarArticulo(${index})" class="btn-delete">Eliminar</button></td>
+                `;
+                tabla.appendChild(fila);
+            });
+        }
+
+        // Función Publicar
+        if (btnPublicar) {
+            btnPublicar.addEventListener('click', () => {
+                const titulo = inputTitulo.value;
+                const categoria = inputCategoria.value;
+
+                if (titulo.trim() === "") {
+                    alert("¡Escribe un título!");
+                    return;
+                }
+
+                const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+                articulosGuardados.push({ titulo: titulo, categoria: categoria });
+                localStorage.setItem('misArticulos', JSON.stringify(articulosGuardados));
+
+                inputTitulo.value = '';
+                cargarArticulos();
+            });
+        }
+
+        // Función Eliminar
+        window.eliminarArticulo = function (index) {
+            const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+            articulosGuardados.splice(index, 1);
+            localStorage.setItem('misArticulos', JSON.stringify(articulosGuardados));
+            cargarArticulos();
+        }
+
+        // Iniciar
+        cargarArticulos();
+    </script>
+    <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
+    <input type="checkbox" id="legal-chat-toggle" class="legal-chat-checkbox">
+
+    <!-- Botón Flotante Circular -->
+    <label for="legal-chat-toggle" class="legal-chat-btn" title="Abrir Asistente IA">
+        <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-icon-main chat-logo-img">
+        <i class="fa-solid fa-xmark chat-icon-close"></i>
+    </label>
+
+    <!-- Ventana de Chat Elegante -->
+    <div class="legal-chat-window">
+        <!-- Cabecera -->
+        <div class="legal-chat-header">
+            <div class="legal-chat-header-info">
+                <div class="legal-chat-avatar">
+                    <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-header-logo-img">
+                </div>
+                <div>
+                    <h3>Asistente IA - La Norma Express</h3>
+                    <span>En línea | Soporte Legal</span>
+                </div>
+            </div>
+            <label for="legal-chat-toggle" class="legal-chat-close-btn" title="Cerrar chat">
+                <i class="fa-solid fa-chevron-down"></i>
+            </label>
+        </div>
+
+        <!-- Área de Mensajes -->
+        <div class="legal-chat-messages">
+            <!-- Mensaje de bienvenida del Bot -->
+            <div class="legal-chat-msg bot-msg">
+                <div class="msg-bubble">
+                    ¡Hola! Bienvenido a <strong>La Norma Express</strong>. Soy tu asistente legal con Inteligencia Artificial. ¿Qué código o tema del derecho deseas consultar hoy?
+                </div>
+                <span class="msg-time">Ahora</span>
+            </div>
+        </div>
+
+        <!-- Cajita de Entrada de Texto (Sin JS) -->
+        <form class="legal-chat-input-area" onsubmit="return false;">
+            <textarea rows="1" placeholder="Escribe tu consulta aquí..." class="legal-chat-input"></textarea>
+            <button type="submit" class="legal-chat-send-btn" title="Enviar">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+    <script src="asistente.js"></script>
+</body>
+
+</html>

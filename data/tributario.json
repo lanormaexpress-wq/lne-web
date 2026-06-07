@@ -1,0 +1,68 @@
+[
+    {
+        "id": 1,
+        "titulo": "La Renta",
+        "imagen": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800",
+        "imagenes": [
+            "assets/documento/tributario 1_page-0001.jpg",
+            "assets/documento/tributario 1_page-0002.jpg",
+            "assets/documento/tributario 1_page-0003.jpg",
+            "assets/documento/tributario 1_page-0004.jpg",
+            "assets/documento/tributario 1_page-0005.jpg",
+            "assets/documento/tributario 1_page-0006.jpg",
+            "assets/documento/tributario 1_page-0007.jpg",
+            "assets/documento/tributario 1_page-0008.jpg",
+            "assets/documento/tributario 1_page-0009.jpg",
+            "assets/documento/tributario 1_page-0010.jpg",
+            "assets/documento/tributario 1_page-0011.jpg",
+            "assets/documento/tributario 1_page-0012.jpg",
+            "assets/documento/tributario 1_page-0013.jpg",
+            "assets/documento/tributario 1_page-0014.jpg",
+            "assets/documento/tributario 1_page-0015.jpg",
+            "assets/documento/tributario 1_page-0016.jpg",
+            "assets/documento/tributario 1_page-0017.jpg"
+        ]
+    },
+    {
+        "id": 2,
+        "titulo": "Obligación Tributaria",
+        "imagen": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Naturaleza, nacimiento y exigibilidad de la obligación tributaria. Sujetos de la obligación: contribuyente, responsable y agente de retención. Transmisión y extinción de la obligación."
+    },
+    {
+        "id": 3,
+        "titulo": "Hecho Imponible",
+        "imagen": "https://images.unsplash.com/photo-1628108502318-932f995817d1?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Análisis conceptual del hecho imponible o generador. Sus aspectos material, espacial, temporal y personal. Diferenciación entre inafectación y exoneración tributaria."
+    },
+    {
+        "id": 4,
+        "titulo": "Base Imponible",
+        "imagen": "https://images.unsplash.com/photo-1556740714-a8395b3bf30f?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Metodología para la determinación de la Base Imponible y la Tasa. Concepto de base cierta y base presunta aplicable en las fiscalizaciones."
+    },
+    {
+        "id": 5,
+        "titulo": "Deuda Tributaria",
+        "imagen": "https://images.unsplash.com/photo-1621929747188-0b4dc28498d2?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Componentes de la deuda: tributo, multas e intereses. Reglas de imputación de pago, prescripción, compensación y devolución de pagos indebidos o en exceso."
+    },
+    {
+        "id": 6,
+        "titulo": "Fiscalización Tributaria",
+        "imagen": "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Facultades de la Administración Tributaria. Procedimientos de fiscalización definitiva y parcial. Requerimientos, plazos y actas de fiscalización."
+    },
+    {
+        "id": 7,
+        "titulo": "Infracciones y Sanciones",
+        "imagen": "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800",
+        "contenido": "El régimen de gradualidad, tipos de infracciones (formales y sustanciales) y clases de sanciones: multa, comiso, internamiento temporal y cierre temporal de locales."
+    },
+    {
+        "id": 8,
+        "titulo": "Procedimiento Contencioso",
+        "imagen": "https://images.unsplash.com/photo-1505664173360-31121d5c5897?auto=format&fit=crop&q=80&w=800",
+        "contenido": "Etapas de la reclamación ante la SUNAT y la apelación ante el Tribunal Fiscal. Plazos, medios probatorios admisibles y resolución de controversias tributarias."
+    }
+]
