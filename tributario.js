@@ -38,6 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function abrirModal(curso) {
         if (curso.imagenes && curso.imagenes.length > 0) {
+            // Precarga asíncrona en caché de todas las imágenes del carrusel
+            curso.imagenes.forEach(src => {
+                const preloadImg = new Image();
+                preloadImg.src = src;
+            });
+
             modalBody.innerHTML = `
                 <div class="carrusel-presentacion">
                     <button class="btn-expand-pdf" id="btn-expand-carrusel">

@@ -1,0 +1,25 @@
+{
+  "name": "La Norma Express",
+  "short_name": "La Norma Express",
+  "description": "Tu fuente de conocimiento legal en Perú. Constitución, Código Civil y Código Penal de forma sencilla.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1b263b",
+  "theme_color": "#1b263b",
+  "orientation": "any",
+  "categories": ["education", "reference"],
+  "icons": [
+    {
+      "src": "assets/imagenes/logo4.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/imagenes/logo5.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

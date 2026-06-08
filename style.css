@@ -1340,3 +1340,78 @@ header nav {
     top: 20px;
     right: 20px;
 }
+
+/* =========================================
+   PANTALLAS ULTRA-ANCHAS (ULTRAWIDE)
+   ========================================= */
+@media (min-width: 1440px) {
+    header {
+        /* Centrar logo y menú en pantallas ultra-anchas usando padding dinámico */
+        padding-left: calc((100% - 1300px) / 2) !important;
+        padding-right: calc((100% - 1300px) / 2) !important;
+    }
+    .hero {
+        /* Alinear contenido del hero con la misma cuadrícula de 1300px */
+        padding-left: calc((100% - 1300px) / 2) !important;
+        padding-right: calc((100% - 1300px) / 2) !important;
+    }
+    /* Limitar el ancho de secciones directas en el body (como el tablón de anuncios) */
+    body > section:not(.hero):not(.container) {
+        max-width: 1300px;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        width: 100%;
+    }
+}
+
+/* =========================================
+   PANTALLAS MÓVILES (MOBILE OPTIMIZATION)
+   ========================================= */
+@media (max-width: 768px) {
+    header {
+        /* Evita colapsos en móviles reduciendo el padding inline y ajustando el espaciado */
+        padding: 10px 15px !important;
+        height: auto !important;
+        flex-wrap: wrap;
+        justify-content: center !important;
+        gap: 15px;
+    }
+    
+    header .header-logo {
+        max-height: 50px !important; /* Logotipo más compacto en móviles */
+    }
+
+    .dropdown {
+        margin-left: 10px !important; /* Elimina márgenes exagerados de 75px/30px */
+    }
+
+    /* Stack de iconos y botón login en la cabecera */
+    .header-right-stack {
+        align-items: center !important;
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    .top-social-icons {
+        transform: none !important; /* Elimina el posicionamiento absoluto en móviles */
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+
+    /* Adaptar el menú azul para que sus enlaces fluyan adecuadamente en móviles */
+    .universal-nav .nav-links-container {
+        flex-wrap: wrap;
+        height: auto !important;
+        padding: 10px 5px !important;
+        gap: 8px;
+    }
+
+    .nav-links-container li {
+        margin: 5px 2px !important;
+    }
+
+    .nav-link-item {
+        font-size: 0.9rem !important;
+        padding: 6px 10px !important;
+    }
+}

@@ -5,9 +5,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Configuración de la API de Gemini
-    const GEMINI_API_KEY = "AIzaSyB1NerafuHpwywaAuEMrF2G1asR4nr2zYY";
-    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    // Configuración del Endpoint del Chat (Servido por nuestro Backend Proxy)
+    const CHAT_API_URL = '/api/chat';
 
     // Capturar elementos de la interfaz del chat
     const chatInputForm = document.querySelector('.legal-chat-input-area');
@@ -161,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
 
-            const response = await fetch(GEMINI_API_URL, {
+            const response = await fetch(CHAT_API_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

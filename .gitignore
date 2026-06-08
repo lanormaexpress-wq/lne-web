@@ -1,3 +1,14 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # System files
 Thumbs.db
 db.properties

@@ -92,6 +92,7 @@
             color: white !important;
         }
     </style>
+    <link rel="manifest" href="manifest.json">
 </head>
 
 <body style="background-color: #f4f6f9; margin: 0; font-family: 'Roboto', sans-serif;">
@@ -274,11 +275,20 @@
         }
 
         // AQUÍ ESTÁ EL CAMBIO PARA QUE BUSQUE DESDE 1 SOLA LETRA O NÚMERO
+        let searchTimeout = null;
+
         function realizarBusquedaRealTime() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                ejecutarBusqueda();
+            }, 300);
+        }
+
+        function ejecutarBusqueda() {
             resetMark();
             let searchText = inputSearch.value.trim();
 
-            if (searchText !== "") {
+            if (searchText !== "" && (searchText.length >= 3 || !isNaN(searchText))) {
                 markInstance.mark(searchText, {
                     "done": function () {
                         results = contentToMark.querySelectorAll("mark");
@@ -384,6 +394,17 @@
         </form>
     </div>
     <script src="asistente.js"></script>
+
+    <!-- Registro del Service Worker de la PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito', reg))
+                    .catch(err => console.error('Error al registrar el Service Worker', err));
+            });
+        }
+    </script>
 </body>
 
 </html>
