@@ -118,16 +118,130 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Captura el contenido legal de la página actual de forma inteligente y dinámica
+     * utilizando el mensaje del usuario para filtrar el contexto si es una ley muy grande.
      */
-    async function obtenerContextoLey() {
-        // Seleccionamos el contenedor principal de la página para que la lectura sea limpia y estructurada
+    async function obtenerContextoLey(mensajeUsuario = "") {
+        // 1. Identificar si tenemos bases de datos cargadas en memoria globalmente
+        const activeCivil = (typeof CodigoCivil !== 'undefined') ? CodigoCivil : ((typeof Civil !== 'undefined') ? Civil : undefined);
+        const activePenal = (typeof CodigoPenal !== 'undefined') ? CodigoPenal : undefined;
+        const activeConstitucion = (typeof Constitucion !== 'undefined') ? Constitucion : undefined;
+
+        // Si es una página con gran volumen de datos estructurados
+        if (activeCivil || activePenal || activeConstitucion) {
+            const leyEstructurada = activeCivil || activePenal || activeConstitucion;
+            
+            // Si la consulta del usuario es vacía o es corta, devolvemos un resumen inicial
+            if (!mensajeUsuario.trim()) {
+                return "Esta página contiene una ley. Por favor, realiza una consulta específica sobre un artículo o tema.";
+            }
+
+            // Intentar buscar números de artículos (ej. "artículo 202", "art 202", "202", etc.)
+            // Detecta números solos o números con guiones y letras (ej. "45-A", "45-B")
+            const regexArticulo = /(?:art[ií]culo\s+|art\.?\s+)?(\d+(?:-[A-Za-z]+)?)\b/gi;
+            const matches = [...mensajeUsuario.matchAll(regexArticulo)];
+            
+            let articulosEncontrados = [];
+            
+            if (matches.length > 0) {
+                // El usuario mencionó uno o más números de artículos
+                const numerosBuscados = matches.map(m => m[1].toLowerCase());
+                
+                // Buscar en la ley
+                leyEstructurada.forEach(seccion => {
+                    if (seccion.articulos) {
+                        seccion.articulos.forEach(art => {
+                            if (numerosBuscados.includes(art.numero.toLowerCase())) {
+                                articulosEncontrados.push(art);
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Si se encontraron artículos específicos por número, devolvemos esos artículos detallados
+            if (articulosEncontrados.length > 0) {
+                let contextoContextual = "Artículos encontrados directamente relacionados con tu consulta:\n\n";
+                articulosEncontrados.forEach(art => {
+                    // Limpiar tags HTML antes de enviar
+                    const textoLimpio = (art.texto || "").replace(/<[^>]*>/g, '').trim();
+                    contextoContextual += `${art.tipo || 'Artículo'} ${art.numero}: ${art.titulo || ''}\n${textoLimpio}\n\n`;
+                });
+                return contextoContextual;
+            }
+
+            // Si no se encontró por número, realizar búsqueda por palabras clave en los artículos
+            // Convertir a minúsculas y limpiar caracteres especiales, luego filtrar stopwords de menos de 4 letras
+            const palabrasClave = mensajeUsuario.toLowerCase()
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()¿?¡!]/g, " ")
+                .split(/\s+/)
+                .filter(w => w.length > 3 && !["como", "para", "este", "esta", "sobre", "tiene", "donde", "cuando", "quien", "desde", "hasta", "sobre", "entre"].includes(w));
+
+            if (palabrasClave.length > 0) {
+                let articulosCandidatos = [];
+                leyEstructurada.forEach(seccion => {
+                    if (seccion.articulos) {
+                        seccion.articulos.forEach(art => {
+                            let matchesCount = 0;
+                            const tituloText = (art.titulo || "").toLowerCase();
+                            const textoText = (art.texto || "").replace(/<[^>]*>/g, '').toLowerCase();
+                            
+                            palabrasClave.forEach(palabra => {
+                                if (tituloText.includes(palabra)) matchesCount += 3; // mayor relevancia si coincide en el título
+                                if (textoText.includes(palabra)) matchesCount += 1;
+                            });
+
+                            if (matchesCount > 0) {
+                                articulosCandidatos.push({ articulo: art, peso: matchesCount });
+                            }
+                        });
+                    }
+                });
+
+                // Ordenar por relevancia (peso de coincidencias)
+                articulosCandidatos.sort((a, b) => b.peso - a.peso);
+                // Tomar los 5 más relevantes
+                const mejoresArticulos = articulosCandidatos.slice(0, 5);
+
+                if (mejoresArticulos.length > 0) {
+                    let contextoContextual = "Artículos relevantes de la ley encontrados para tu consulta:\n\n";
+                    mejoresArticulos.forEach(item => {
+                        const art = item.articulo;
+                        const textoLimpio = (art.texto || "").replace(/<[^>]*>/g, '').trim();
+                        contextoContextual += `${art.tipo || 'Artículo'} ${art.numero}: ${art.titulo || ''}\n${textoLimpio}\n\n`;
+                    });
+                    return contextoContextual;
+                }
+            }
+
+            // Si no coincide con palabras específicas de los artículos, mandamos los primeros 12 artículos como fallback
+            let contextoCortesia = "No se encontraron artículos específicos. Aquí están los primeros artículos del código para tu referencia:\n\n";
+            let contador = 0;
+            for (let seccion of leyEstructurada) {
+                if (seccion.articulos) {
+                    for (let art of seccion.articulos) {
+                        const textoLimpio = (art.texto || "").replace(/<[^>]*>/g, '').trim();
+                        contextoCortesia += `${art.tipo || 'Artículo'} ${art.numero}: ${art.titulo || ''}\n${textoLimpio}\n\n`;
+                        contador++;
+                        if (contador >= 12) break;
+                    }
+                }
+                if (contador >= 12) break;
+            }
+            return contextoCortesia;
+        }
+
+        // Si no es una ley estructurada gigante (index, argumentación, contratos, etc.), devolvemos el innerText recortado
         const mainContainer = document.querySelector('.container') || 
                               document.querySelector('main') || 
                               document.querySelector('.index-container') || 
                               document.querySelector('.curso-grid') || 
                               document.body;
         
-        return mainContainer.innerText || document.body.innerText || "";
+        let textoCompleto = mainContainer.innerText || document.body.innerText || "";
+        if (textoCompleto.length > 40000) {
+            textoCompleto = textoCompleto.substring(0, 40000);
+        }
+        return textoCompleto;
     }
 
     /**
@@ -137,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarCargando();
         
         try {
-            const contextoDeLey = await obtenerContextoLey();
+            const contextoDeLey = await obtenerContextoLey(mensajeUsuario);
             
             const promptFinal = `CONTENIDO Y CONTEXTO LEGAL CARGADO EN ESTA PÁGINA:\n${contextoDeLey}\n\nPREGUNTA DEL USUARIO:\n${mensajeUsuario}`;
             
