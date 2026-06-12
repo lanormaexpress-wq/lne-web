@@ -31,9 +31,10 @@
     },
     {
         "id": 3,
-        "titulo": "Hecho Imponible",
+        "titulo": "Criterios de Vinculación",
         "imagen": "https://images.unsplash.com/photo-1628108502318-932f995817d1?auto=format&fit=crop&q=80&w=800",
-        "contenido": "Análisis conceptual del hecho imponible o generador. Sus aspectos material, espacial, temporal y personal. Diferenciación entre inafectación y exoneración tributaria."
+        "htmlFile": "data/clases/criterios-vinculacion.html",
+        "contenido": "Estudio de los nexos subjetivos y objetivos de la tributación: el criterio del domicilio (domiciliados y no domiciliados) y el criterio de la fuente (renta de fuente peruana y extranjera)."
     },
     {
         "id": 4,

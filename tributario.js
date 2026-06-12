@@ -37,7 +37,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function abrirModal(curso) {
-        if (curso.imagenes && curso.imagenes.length > 0) {
+        if (curso.htmlFile) {
+            modalBody.innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #1b263b;">
+                    <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+                    <p style="margin-top: 15px; font-family: sans-serif; font-size: 1.1rem;">Cargando contenido interactivo...</p>
+                </div>`;
+            
+            fetch(curso.htmlFile)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar la clase.');
+                    return response.text();
+                })
+                .then(html => {
+                    modalBody.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error("Error cargando HTML:", error);
+                    modalBody.innerHTML = `
+                        <div class="curso-modal-header">
+                            <h2 class="curso-modal-title">${curso.titulo}</h2>
+                        </div>
+                        <p class="curso-modal-text">${curso.contenido}</p>
+                        <p style="color: #e63946; margin-top: 20px;"><i class="fa-solid fa-triangle-exclamation"></i> No se pudo cargar la clase detallada interactiva.</p>
+                    `;
+                });
+        } else if (curso.imagenes && curso.imagenes.length > 0) {
             // Precarga asíncrona en caché de todas las imágenes del carrusel
             curso.imagenes.forEach(src => {
                 const preloadImg = new Image();

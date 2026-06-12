@@ -1,0 +1,519 @@
+<style>
+/* Estilos premium para la clase de Criterios de Vinculación */
+.tributario-articulo {
+    font-family: 'Roboto', sans-serif;
+    color: #2b2b2b;
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+.tributario-articulo h1, 
+.tributario-articulo h2, 
+.tributario-articulo h3,
+.tributario-articulo h4 {
+    font-family: 'Playfair Display', serif;
+    color: #1b263b;
+    font-weight: 700;
+    margin-top: 0;
+}
+
+.tributario-header {
+    text-align: center;
+    margin-bottom: 35px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 25px;
+}
+
+.tributario-title {
+    font-size: 2.4rem;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.tributario-meta {
+    font-size: 0.85rem;
+    color: #d4af37; /* Acento dorado */
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.tributario-docente {
+    font-size: 0.95rem;
+    color: #718096;
+    margin-top: 5px;
+}
+
+.tributario-intro-box {
+    font-size: 1.1rem;
+    color: #4a5568;
+    background: #f7fafc;
+    border-left: 4px solid #1b263b;
+    padding: 22px;
+    margin-bottom: 30px;
+    border-radius: 0 8px 8px 0;
+    text-align: justify;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.tributario-seccion {
+    margin-bottom: 45px;
+}
+
+.tributario-seccion-title {
+    font-size: 1.8rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tributario-seccion-title i {
+    color: #1b263b;
+    font-size: 1.4rem;
+}
+
+.tributario-img-wrapper {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.tributario-img {
+    max-width: 100%;
+    max-height: 350px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.tributario-img-caption {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+.tributario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin: 25px 0;
+}
+
+@media (max-width: 768px) {
+    .tributario-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tributario-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.01);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tributario-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04);
+}
+
+.tributario-card h3 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #f4f6f9;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    color: #1b263b;
+}
+
+.tributario-card h4 {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 1.05rem;
+    color: #2d3748;
+}
+
+.tributario-highlight-blue {
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2ebf0 100%);
+    border-left: 4px solid #1b263b;
+    padding: 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 25px 0;
+}
+
+.tributario-highlight-gold {
+    background: linear-gradient(135deg, #fcf8e3 0%, #faf2cc 100%);
+    border-left: 4px solid #d4af37;
+    padding: 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 25px 0;
+}
+
+.tributario-highlight-red {
+    background: linear-gradient(135deg, #fdf2f2 0%, #fde8e8 100%);
+    border-left: 4px solid #e63946;
+    padding: 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 25px 0;
+}
+
+.tributario-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #1b263b;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tributario-badge-gold {
+    background-color: #d4af37;
+}
+
+.tributario-list {
+    padding-left: 0;
+    margin-bottom: 20px;
+}
+
+.tributario-list li {
+    margin-bottom: 8px;
+    position: relative;
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+.tributario-list li::before {
+    content: "•";
+    color: #d4af37;
+    font-weight: bold;
+    font-size: 1.3rem;
+    position: absolute;
+    left: 0;
+    top: -2px;
+}
+
+.tributario-icon-block {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.tributario-icon-block i {
+    font-size: 1.4rem;
+    color: #1b263b;
+    margin-top: 3px;
+    background: #f0f4f8;
+    padding: 10px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tributario-grid-4col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 25px 0;
+}
+
+@media (max-width: 600px) {
+    .tributario-grid-4col {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tributario-grid-4col .tributario-card {
+    border-top: 3px solid #1b263b;
+}
+
+.tributario-grid-4col .tributario-card:nth-child(even) {
+    border-top: 3px solid #d4af37;
+}
+</style>
+
+<div class="tributario-articulo">
+    <!-- Cabecera de la Clase -->
+    <header class="tributario-header">
+        <span class="tributario-meta">Tema N° 3 - Criterios de Vinculación</span>
+        <h1 class="tributario-title">Derecho Tributario Especial</h1>
+        <div class="tributario-docente">
+            <i class="fa-solid fa-graduation-cap"></i> Docente: Rodriguez Mogollon Cristobal
+        </div>
+    </header>
+
+    <!-- Introducción -->
+    <div class="tributario-intro-box">
+        <strong>Introducción:</strong> Para comprender cómo se aplica el Impuesto a la Renta en el Perú, primero debemos conocer las reglas y criterios que vinculan un determinado ingreso con la potestad del Estado. Estos criterios permiten determinar cuándo el Estado peruano puede gravar legítimamente un ingreso, ya sea porque la riqueza se genera dentro de nuestras fronteras o porque el contribuyente mantiene un vínculo personal con el país. A continuación, analizaremos a fondo la diferencia entre sujetos domiciliados y no domiciliados, así como las rentas de fuente peruana y extranjera.
+    </div>
+
+    <!-- Imagen Principal Conectora -->
+    <div class="tributario-img-wrapper">
+        <img class="tributario-img" src="assets/imagenes/tax_jurisdiction_concept.png" alt="Concepto de Jurisdicción Tributaria">
+        <div class="tributario-img-caption">
+            Ilustración de la soberanía tributaria y los nexos de vinculación internacional.
+        </div>
+    </div>
+
+    <!-- Sección 1: ¿Qué son los criterios de vinculación? -->
+    <section class="tributario-seccion">
+        <h2 class="tributario-seccion-title">
+            <i class="fa-solid fa-circle-question"></i> ¿Qué son los Criterios de Vinculación?
+        </h2>
+        <p>
+            Son las reglas o factores de conexión que permiten establecer una relación jurídicamente suficiente entre un Estado y un hecho imponible (un ingreso o ganancia). De esta manera, el Estado determina si tiene potestad tributaria para exigir el pago de impuestos sobre dicho ingreso.
+        </p>
+        
+        <div class="tributario-grid">
+            <div class="tributario-card">
+                <h3><i class="fa-solid fa-gears"></i> Principales Criterios</h3>
+                <p>Las legislaciones del mundo, y en especial la peruana, se basan en los siguientes factores de conexión:</p>
+                <ul class="tributario-list">
+                    <li><strong>Domicilio o Residencia:</strong> Vinculación de carácter subjetivo (basada en el sujeto).</li>
+                    <li><strong>Fuente:</strong> Vinculación de carácter objetivo (basada en la ubicación de la riqueza).</li>
+                    <li><strong>Territorio:</strong> Espacio físico donde ocurre la actividad.</li>
+                    <li><strong>Ubicación del bien o actividad:</strong> Dónde están situados los activos generadores.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <h3><i class="fa-solid fa-bullseye"></i> Finalidad de las Reglas</h3>
+                <p>El establecimiento de estas normas de vinculación busca dar respuesta clara a tres interrogantes fundamentales del Derecho Fiscal:</p>
+                <ul class="tributario-list">
+                    <li><strong>¿Quién tributa?:</strong> Delimitación de los sujetos obligados.</li>
+                    <li><strong>¿Por qué tributan?:</strong> El fundamento legal de la obligación (vínculo personal o económico).</li>
+                    <li><strong>¿Sobre qué rentas tributan?:</strong> El alcance de la base gravable (renta mundial o fuente local).</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 2: Criterio de Domiciliado o Residencia -->
+    <section class="tributario-seccion">
+        <h2 class="tributario-seccion-title">
+            <i class="fa-solid fa-house-chimney"></i> Criterio de Domiciliado o Residencia
+        </h2>
+        <p>
+            Este criterio es una regla de vinculación tributaria de carácter <strong>subjetivo</strong>, ya que no se enfoca en dónde se genera el dinero, sino en las características y la condición jurídica del sujeto que percibe dicho ingreso. Evalúa el lugar donde el contribuyente mantiene su residencia habitual, permanencia o un vínculo jurídico relevante con el Estado peruano.
+        </p>
+
+        <div class="tributario-highlight-blue">
+            <strong><i class="fa-solid fa-key"></i> IDEA CLAVE:</strong> 
+            El criterio del domicilio no mira principalmente el lugar geográfico donde nace o se produce la renta, sino quién es el que la recibe y qué vínculo de permanencia o nacionalidad tiene ese contribuyente con el país.
+        </div>
+
+        <div class="tributario-grid">
+            <div class="tributario-card">
+                <span class="tributario-badge">Sujeto Domiciliado</span>
+                <p>
+                    Son aquellos contribuyentes que mantienen una conexión estable y duradera con el territorio peruano (residen en el país).
+                </p>
+                <ul class="tributario-list">
+                    <li>Tributan bajo el principio de <strong>Renta Mundial</strong>.</li>
+                    <li>El Estado peruano grava tanto sus rentas obtenidas dentro del territorio nacional como las obtenidas en cualquier parte del extranjero.</li>
+                    <li><strong>Regla General:</strong> Si estás domiciliado en el Perú, pagas impuestos aquí por toda la renta que generes a nivel global.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <span class="tributario-badge tributario-badge-gold">Sujeto No Domiciliado</span>
+                <p>
+                    Contribuyentes que no tienen residencia fija o domicilio fiscal en el Perú según los parámetros de la ley.
+                </p>
+                <ul class="tributario-list">
+                    <li>Tributan bajo el principio de <strong>Fuente Territorial</strong>.</li>
+                    <li>El Estado peruano únicamente puede gravar las rentas que califiquen como de <strong>fuente peruana</strong>.</li>
+                    <li>Cualquier ganancia obtenida en el extranjero por estos sujetos queda totalmente fuera del ámbito tributario peruano.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="tributario-img-wrapper">
+            <img class="tributario-img" src="assets/imagenes/domicile_vs_non_domicile.png" alt="Domiciliados vs No Domiciliados">
+            <div class="tributario-img-caption">
+                Esquema comparativo del alcance impositivo según la condición de residencia.
+            </div>
+        </div>
+
+        <h3>¿Cómo se adquiere la condición de Domiciliado en el Perú?</h3>
+        <p>
+            Las reglas de la <strong>SUNAT</strong> determinan la adquisición de la condición de domiciliado basándose principalmente en la nacionalidad y en el tiempo físico de permanencia:
+        </p>
+
+        <div class="tributario-icon-block">
+            <i class="fa-solid fa-passport"></i>
+            <div>
+                <strong>Persona de Nacionalidad Peruana:</strong>
+                <p style="margin: 2px 0 0 0; color: #555;">
+                    Se consideran domiciliados por defecto si tienen su residencia habitual o su domicilio real dentro de las fronteras del territorio peruano.
+                </p>
+            </div>
+        </div>
+
+        <div class="tributario-icon-block">
+            <i class="fa-solid fa-plane-arrival"></i>
+            <div>
+                <strong>Persona Extranjera:</strong>
+                <p style="margin: 2px 0 0 0; color: #555;">
+                    Adquieren la condición de domiciliados en el Perú si permanecen físicamente en el país por <strong>más de 183 días calendario</strong> dentro de un período cualquiera de 12 meses.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 3: Renta de Fuente Peruana -->
+    <section class="tributario-seccion">
+        <h2 class="tributario-seccion-title">
+            <i class="fa-solid fa-landmark"></i> Renta de Fuente Peruana
+        </h2>
+        <p>
+            La renta de fuente peruana es un criterio de vinculación <strong>objetivo</strong>. Se configura cuando la ganancia se origina en una actividad económica desarrollada, un bien situado, o un derecho utilizado económicamente dentro del territorio nacional. Independientemente de si la persona que cobra es peruana, extranjera, viva aquí o en el extranjero, el Estado peruano tiene potestad de cobrar impuesto porque la riqueza "nació" en el Perú.
+        </p>
+
+        <div class="tributario-highlight-gold">
+            <strong>¿Qué determina la existencia de esta renta?</strong> Su configuración depende de la conexión relevante de la renta con el país, la cual puede darse bajo cuatro supuestos esenciales descritos por la Ley del Impuesto a la Renta:
+        </div>
+
+        <div class="tributario-grid-4col">
+            <div class="tributario-card">
+                <h3>1. Ubicación del Bien</h3>
+                <p>Ingresos provenientes de predios o bienes situados físicamente en el territorio nacional.</p>
+                <ul class="tributario-list" style="font-size: 0.95rem;">
+                    <li>Alquiler de inmuebles (predios).</li>
+                    <li>Venta de terrenos o departamentos en el país.</li>
+                    <li>Explotación de recursos naturales en territorio peruano.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <h3>2. Uso de Bienes o Derechos</h3>
+                <p>Ingresos derivados del uso o explotación de bienes o intangibles en el país.</p>
+                <ul class="tributario-list" style="font-size: 0.95rem;">
+                    <li>Regalías por marcas comerciales explotadas en el Perú.</li>
+                    <li>Uso de patentes de invención o derechos de autor locales.</li>
+                    <li>Cesión de licencias de software utilizadas en empresas peruanas.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <h3>3. Capital y Financiamiento</h3>
+                <p>Rentas originadas por capitales colocados o invertidos económicamente en el Perú.</p>
+                <ul class="tributario-list" style="font-size: 0.95rem;">
+                    <li>Intereses cobrados por préstamos concedidos a entidades peruanas.</li>
+                    <li>Comisiones o intereses bancarios en cuentas locales.</li>
+                    <li>Primas de financiamiento corporativo en el país.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <h3>4. Actividades y Trabajo</h3>
+                <p>Rentas de trabajo o comerciales realizadas en territorio peruano.</p>
+                <ul class="tributario-list" style="font-size: 0.95rem;">
+                    <li>Servicios profesionales presenciales.</li>
+                    <li>Actividades empresariales y comerciales físicas.</li>
+                    <li>Trabajos en relación de dependencia en el territorio.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Casos Especiales de Fuente Peruana</h3>
+        <p>La ley también contempla supuestos modernos adaptados a la globalización y a las economías digitales:</p>
+
+        <div class="tributario-grid">
+            <div class="tributario-card">
+                <h3><i class="fa-solid fa-laptop-code"></i> Aprovechamiento del Servicio</h3>
+                <p>
+                    Se considera renta de fuente peruana cuando el servicio —incluso si es prestado desde el extranjero— es utilizado, consumido o aprovechado económicamente dentro del Perú.
+                </p>
+                <ul class="tributario-list">
+                    <li><strong>Servicios Digitales:</strong> Soporte de TI remoto, hosting en la nube aprovechado por filiales locales.</li>
+                    <li><strong>Asistencia Técnica:</strong> Consultoría de ingeniería especializada remota orientada a operaciones peruanas.</li>
+                </ul>
+            </div>
+            <div class="tributario-card">
+                <h3><i class="fa-solid fa-users-rectangle"></i> Vínculo Societario o Financiero</h3>
+                <p>
+                    Ocurre cuando las ganancias provienen de la distribución interna de valor de empresas constituidas legalmente en el Perú.
+                </p>
+                <ul class="tributario-list">
+                    <li><strong>Dividendos:</strong> Reparto de utilidades a accionistas domiciliados o extranjeros.</li>
+                    <li><strong>Venta de Acciones:</strong> Ganancia por transferencias de acciones de empresas peruanas (incluso de manera indirecta en bolsas extranjeras).</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección 4: Renta de Fuente Extranjera -->
+    <section class="tributario-seccion">
+        <h2 class="tributario-seccion-title">
+            <i class="fa-solid fa-earth-americas"></i> Renta de Fuente Extranjera
+        </h2>
+        <p>
+            Es aquella ganancia que tiene su origen económico fuera del territorio peruano. Proviene de bienes ubicados en otros países, actividades ejecutadas íntegramente en el exterior, derechos de explotación comercial registrados en otros Estados o inversiones financieras en mercados internacionales.
+        </p>
+
+        <div class="tributario-card" style="margin-bottom: 25px;">
+            <h3>Naturaleza Jurídica</h3>
+            <p>Estas rentas se caracterizan por tres elementos clave en el derecho internacional:</p>
+            <ul class="tributario-list">
+                <li><strong>Independencia de cobro:</strong> No dependen del lugar geográfico donde se efectúe el pago.</li>
+                <li><strong>Independencia de percepción:</strong> No importa en qué país se reciba físicamente el dinero.</li>
+                <li><strong>Localización económica:</strong> Dependen única y exclusivamente de la ubicación geográfica de la fuente productora.</li>
+            </ul>
+        </div>
+
+        <h3>Tratamiento Tributario e Integración</h3>
+        <p>
+            Las rentas de fuente extranjera de los contribuyentes <strong>domiciliados</strong> en el Perú se calculan de manera conjunta y anualizada. El contribuyente debe sumar todos estos ingresos internacionales y restar los gastos o pérdidas reales permitidas que estén vinculadas directamente con su generación.
+        </p>
+        <p>
+            Si el resultado neto anual es <strong>positivo (ganancia)</strong>, este saldo se integra (suma) a sus rentas de trabajo (rentas de cuarta y quinta categoría) en su declaración jurada anual ante la SUNAT, aplicando la escala progresiva del Impuesto a la Renta. Si el resultado es negativo (pérdida), se aplica una regla muy estricta.
+        </p>
+
+        <div class="tributario-highlight-red">
+            <strong><i class="fa-solid fa-triangle-exclamation"></i> REGLA DE ORO (Pérdidas Extranjeras):</strong>
+            Las pérdidas generadas por inversiones o actividades en el extranjero <strong>no pueden utilizarse</strong> bajo ningún motivo para reducir o compensar las rentas obtenidas de fuente peruana. 
+        </div>
+
+        <div class="tributario-card">
+            <h4><i class="fa-solid fa-circle-info"></i> Ejemplo Práctico de la Regla de Pérdidas</h4>
+            <p>
+                Si un contribuyente peruano sufre una pérdida financiera de $5,000 en la Bolsa de Nueva York, pero obtiene un sueldo en el Perú con impuestos pendientes, **no puede restar** esa pérdida en la bolsa estadounidense para pagar menos impuestos sobre su sueldo peruano. La ley bloquea esto para proteger la recaudación nacional de riesgos y pérdidas ocurridas fuera de sus fronteras.
+            </p>
+        </div>
+    </section>
+
+    <!-- Conclusiones -->
+    <section class="tributario-seccion" style="margin-bottom: 0;">
+        <h2 class="tributario-seccion-title">
+            <i class="fa-solid fa-list-check"></i> Conclusiones
+        </h2>
+        
+        <div class="tributario-grid">
+            <div class="tributario-card">
+                <h3>1. Alcance para Domiciliados</h3>
+                <p>Tienen una vinculación de renta mundial: tributan al Perú por sus ganancias generadas localmente y también por las obtenidas en el extranjero.</p>
+            </div>
+            <div class="tributario-card">
+                <h3>2. Alcance para No Domiciliados</h3>
+                <p>Tienen una vinculación limitada: el Estado peruano solo les exige tributar por las ganancias que califiquen estrictamente como renta de fuente peruana.</p>
+            </div>
+            <div class="tributario-card">
+                <h3>3. Carácter de la Fuente Peruana</h3>
+                <p>Nace por un nexo de riqueza con el territorio (ubicación de activos, servicios locales, financiamiento concedido en el país).</p>
+            </div>
+            <div class="tributario-card">
+                <h3>4. Naturaleza de la Fuente Extranjera</h3>
+                <p>Es ajena al territorio peruano. Solo interesa al fisco local cuando quien la obtiene es una persona considerada domiciliada en el Perú.</p>
+            </div>
+        </div>
+    </section>
+</div>
