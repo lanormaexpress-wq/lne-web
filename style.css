@@ -786,6 +786,42 @@ header nav {
     margin: 0;
 }
 
+.titulo-cabecera {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    margin-top: 0;
+    color: #1b263b;
+    line-height: 1.1;
+    margin-bottom: 25px;
+}
+
+#contenedor-leyes h2,
+#contenedor-leyes h3,
+#contenedor-leyes .articulo-num {
+    color: #1b263b !important;
+}
+
+.contenedor-buscador-flotante {
+    position: fixed;
+    top: 150px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 2px solid #1b263b;
+    border-radius: 30px;
+    padding: 5px 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    opacity: 0.3;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.contenedor-buscador-flotante:hover,
+.contenedor-buscador-flotante:focus-within {
+    opacity: 1;
+}
+
 .contenedor-buscador-flotante input {
     border: none;
     outline: none;
@@ -797,6 +833,39 @@ header nav {
     background: transparent;
     color: #1b263b;
     font-weight: bold;
+}
+
+.contador-matches {
+    color: #777;
+    font-size: 0.85rem;
+    margin-right: 10px;
+    min-width: 50px;
+    text-align: right;
+}
+
+.btn-navegacion {
+    background: none;
+    border: none;
+    color: #1b263b;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-left: 5px;
+    transition: color 0.3s;
+}
+
+.btn-navegacion:hover {
+    color: #e63946;
+}
+
+mark {
+    background-color: #ffd166 !important;
+    color: black !important;
+    border-radius: 2px;
+}
+
+mark.resaltado-activo {
+    background-color: #e63946 !important;
+    color: white !important;
 }
 
 /* ==========================================================================

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initContratos() {
     // Array dinámico de contenidos del curso, escalable
     const contratosEstructura = [
         {
@@ -105,4 +105,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cerrarModal();
         }
     });
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContratos);
+} else {
+    initContratos();
+}

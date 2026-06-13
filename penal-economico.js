@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initPenalEconomico() {
     const grid = document.getElementById('penal-grid');
     const modal = document.getElementById('penal-modal');
     const modalBody = document.getElementById('penal-modal-body');
@@ -59,4 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('active')) cerrarModal();
     });
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPenalEconomico);
+} else {
+    initPenalEconomico();
+}

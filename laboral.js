@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initLaboral() {
     const grid = document.getElementById('laboral-grid');
     const modal = document.getElementById('laboral-modal');
     const modalBody = document.getElementById('laboral-modal-body');
@@ -59,4 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('active')) cerrarModal();
     });
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLaboral);
+} else {
+    initLaboral();
+}

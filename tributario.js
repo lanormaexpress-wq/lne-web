@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initTributario() {
     const grid = document.getElementById('tributario-grid');
     const modal = document.getElementById('tributario-modal');
     const modalBody = document.getElementById('tributario-modal-body');
@@ -239,4 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.classList.contains('active')) cerrarModal();
     });
-});
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTributario);
+} else {
+    initTributario();
+}

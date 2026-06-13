@@ -28,6 +28,70 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Ejecutar scripts de forma secuencial respetando el orden y la carga de archivos externos
+    function executeScriptsSequentially(scripts, index, callback) {
+        if (index >= scripts.length) {
+            if (callback) callback();
+            return;
+        }
+
+        const oldScript = scripts[index];
+        const src = oldScript.getAttribute('src');
+
+        // Evitar recargar las bases de datos gigantes si ya están en memoria (evita SyntaxError de const redeclaration)
+        if (src) {
+            if (src.endsWith('civil.js') && typeof CodigoCivil !== 'undefined') {
+                console.log('civil.js ya está cargado en memoria. Omitiendo recarga.');
+                executeScriptsSequentially(scripts, index + 1, callback);
+                return;
+            }
+            if (src.endsWith('penal.js') && typeof CodigoPenal !== 'undefined') {
+                console.log('penal.js ya está cargado en memoria. Omitiendo recarga.');
+                executeScriptsSequentially(scripts, index + 1, callback);
+                return;
+            }
+            if (src.endsWith('constitucion.js') && typeof Constitucion !== 'undefined') {
+                console.log('constitucion.js ya está cargado en memoria. Omitiendo recarga.');
+                executeScriptsSequentially(scripts, index + 1, callback);
+                return;
+            }
+        }
+
+        const newScript = document.createElement('script');
+
+        // Copiar todos los atributos (src, type, etc.)
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+
+        // Copiar contenido inline si lo hay
+        if (oldScript.innerHTML) {
+            newScript.innerHTML = oldScript.innerHTML;
+        }
+
+        // Si es un script externo con src, debemos esperar a que se cargue e instancie antes de continuar
+        if (newScript.src) {
+            newScript.onload = () => {
+                newScript.remove(); // Limpieza del DOM
+                executeScriptsSequentially(scripts, index + 1, callback);
+            };
+            newScript.onerror = () => {
+                console.error(`Error cargando el script externo: ${newScript.src}`);
+                newScript.remove(); // Limpieza del DOM
+                executeScriptsSequentially(scripts, index + 1, callback);
+            };
+            document.body.appendChild(newScript);
+            oldScript.remove();
+        } else {
+            // Si es un script inline, se ejecuta de forma síncrona al insertarse
+            document.body.appendChild(newScript);
+            oldScript.remove();
+            newScript.remove(); // Limpieza del DOM inmediata tras ejecución
+            // Ejecutar el siguiente script inmediatamente
+            executeScriptsSequentially(scripts, index + 1, callback);
+        }
+    }
+
     // Cargar contenido de la página de forma dinámica
     function loadPage(pathName) {
         let pageName = pathName === '/' ? 'home' : pathName.replace(/^\//, '').replace(/\.html$/, '');
@@ -50,33 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(html => {
                 appContent.innerHTML = html;
                 
-                // Ejecutar las etiquetas <script> del HTML cargado
-                const scripts = appContent.querySelectorAll('script');
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement('script');
-                    
-                    // Copiar todos los atributos (src, type, etc.)
-                    Array.from(oldScript.attributes).forEach(attr => {
-                        newScript.setAttribute(attr.name, attr.value);
-                    });
-                    
-                    // Copiar contenido inline si lo hay
-                    if (oldScript.innerHTML) {
-                        newScript.innerHTML = oldScript.innerHTML;
-                    }
-                    
-                    // Adjuntar al body para que el navegador lo ejecute
-                    document.body.appendChild(newScript);
-                    
-                    // Eliminar el script antiguo
-                    oldScript.remove();
+                // Extraer y ejecutar las etiquetas <script> del HTML cargado secuencialmente
+                const scripts = Array.from(appContent.querySelectorAll('script'));
+                
+                executeScriptsSequentially(scripts, 0, () => {
+                    // Re-enlazar clicks en el nuevo contenido inyectado
+                    bindLinks();
+                    // Desplazarse al inicio de la página con suavidad
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
-                
-                // Re-enlazar clicks en el nuevo contenido inyectado
-                bindLinks();
-                
-                // Desplazarse al inicio de la página con suavidad
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             })
             .catch(err => {
                 console.error('Error cargando la página:', err);
