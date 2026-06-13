@@ -1483,4 +1483,91 @@ mark.resaltado-activo {
         font-size: 0.9rem !important;
         padding: 6px 10px !important;
     }
+
+    /* Optimización del Hero y Video de Fondo */
+    .hero {
+        min-height: 240px !important; /* Altura responsiva más compacta para evitar espacios vacíos */
+        padding: 2.5rem 5% !important;
+    }
+    
+    .hero-content h1 {
+        font-size: 1.8rem !important; /* Título adaptado a móviles */
+    }
+    
+    .hero-content p {
+        font-size: 1rem !important;
+    }
+    
+    .search-box {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .search-box input {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    .search-box button {
+        width: 100% !important;
+    }
+
+    /* Buscador Flotante de Artículos adaptado a móviles */
+    .contenedor-buscador-flotante {
+        top: auto !important;
+        bottom: 20px !important;
+        left: 15px !important;
+        right: 90px !important; /* Deja espacio al botón flotante del chatbot */
+        width: auto !important;
+        opacity: 0.95 !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        padding: 6px 12px !important;
+    }
+    
+    .contenedor-buscador-flotante input {
+        width: 100% !important;
+        flex: 1;
+    }
+
+    /* Optimización de Modales de Cursos en móviles */
+    .curso-modal-content {
+        padding: 25px 15px !important;
+        width: 95% !important;
+        max-height: 90vh !important;
+    }
+
+    .curso-modal-title {
+        font-size: 1.6rem !important;
+    }
+
+    /* Adaptación del Carrusel en móviles */
+    .carrusel-presentacion {
+        min-height: 220px !important;
+    }
+
+    .btn-carrusel-nav {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 1.1rem !important;
+    }
+
+    #btn-prev {
+        left: 8px !important;
+    }
+
+    #btn-next {
+        right: 8px !important;
+    }
+
+    .carrusel-presentacion .btn-expand-pdf {
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        top: 8px !important;
+        right: 8px !important;
+    }
 }

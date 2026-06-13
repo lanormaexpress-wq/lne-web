@@ -29,8 +29,8 @@ app.use((req, res, next) => {
 app.get('*', (req, res, next) => {
     const requestPath = req.path.toLowerCase();
     
-    // Si es para la API, o un fragmento de página (/pages/...), continuar normal
-    if (requestPath.startsWith('/api/') || requestPath.startsWith('/pages/')) {
+    // Si es para la API, un fragmento de página (/pages/...), o datos (/data/...), continuar normal
+    if (requestPath.startsWith('/api/') || requestPath.startsWith('/pages/') || requestPath.startsWith('/data/')) {
         return next();
     }
     
