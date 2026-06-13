@@ -25,6 +25,23 @@ app.use((req, res, next) => {
     next();
 });
 
+// Redirigir peticiones de páginas HTML a la shell index.html de la SPA (YouTube Music style persistent chat)
+app.get('*', (req, res, next) => {
+    const requestPath = req.path.toLowerCase();
+    
+    // Si es para la API, o un fragmento de página (/pages/...), continuar normal
+    if (requestPath.startsWith('/api/') || requestPath.startsWith('/pages/')) {
+        return next();
+    }
+    
+    // Si es una petición de página HTML o no tiene extensión (deep linking), servir index.html
+    if (requestPath.endsWith('.html') || requestPath === '/' || !requestPath.includes('.')) {
+        return res.sendFile(path.join(__dirname, 'index.html'));
+    }
+    
+    next();
+});
+
 // Servir archivos estáticos del sitio
 app.use(express.static(__dirname));
 

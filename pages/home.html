@@ -1,0 +1,99 @@
+<section class="hero">
+        <video class="bg-video" autoplay loop muted playsinline preload="auto" poster="assets/imagenes/fondo-poster.png">
+            <source src="assets/fondo.mp4" type="video/mp4">
+        </video>
+
+        <div class="hero-content">
+            <h1>Bienvenido a La Norma Express</h1>
+            <p>Encuentra información sobre Derecho Civil, Penal y Constitucional.</p>
+            <div class="search-box">
+                <input type="text" placeholder="¿Qué tema legal buscas hoy?">
+                <button>Buscar</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="container">
+        <h2 style="margin-bottom: 25px;">Constitución, códigos y leyes.</h2>
+        <div class="grid-categorias">
+
+            <a href="constitucion.html" class="card" style="text-decoration: none; color: inherit; display: block;">
+                <img src="assets/imagenes/icono-consti.png" alt="Icono Constitución" class="icono-rama">
+                <h3>Constitución</h3>
+                <p>Base del Estado, garantía de derechos y expresión de la soberanía del pueblo.</p>
+            </a>
+
+            <a href="civil.html" class="card" style="text-decoration: none; color: inherit; display: block;">
+                <img src="assets/imagenes/icono-civil.png" alt="Icono Civil" class="icono-rama">
+                <h3>Derecho Civil</h3>
+                <p>La ley regula la convivencia y protege la dignidad de la persona.</p>
+            </a>
+
+            <a href="penal.html" class="card" style="text-decoration: none; color: inherit; display: block;">
+                <img src="assets/imagenes/icono-penal.png" alt="Icono Penal" class="icono-rama">
+                <h3>Derecho Penal</h3>
+                <p>Sin justicia no hay orden, y sin ley no hay justicia.</p>
+            </a>
+
+        </div>
+
+    </section>
+    <section style="padding: 40px;">
+        <h2>Tablón de Anuncios y Noticias</h2>
+        <div id="contenedor-articulos"
+            style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        </div>
+    </section>
+    
+
+    <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
+    
+
+    <!-- Botón Flotante Circular -->
+    
+
+    <!-- Ventana de Chat Elegante -->
+    
+
+    <script>
+        const contenedor = document.getElementById('contenedor-articulos');
+        const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+
+        // 1. DEFINIMOS QUÉ CATEGORÍAS SON "NOTICIAS" (La Lista VIP)
+        const categoriasNoticias = [
+            "🔴 URGENTE",
+            "📰 Noticia del Día",
+            "📅 Evento / Examen",
+            "⚠️ Mantenimiento"
+        ];
+
+        // 2. FILTRAMOS: Nos quedamos solo con las que coinciden con la lista
+        const noticiasParaMostrar = articulosGuardados.filter(articulo =>
+            categoriasNoticias.includes(articulo.categoria)
+        );
+
+        // 3. MOSTRAMOS
+        if (noticiasParaMostrar.length === 0) {
+            contenedor.innerHTML = '<p>No hay avisos urgentes por el momento.</p>';
+        } else {
+            contenedor.innerHTML = ''; // Limpiar
+
+            noticiasParaMostrar.forEach(articulo => {
+                const tarjeta = document.createElement('div');
+                // Estilo de Alerta (Amarillo/Rojo)
+                tarjeta.style.cssText = 'border-left: 5px solid #d9534f; background: #fff3cd; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);';
+
+                tarjeta.innerHTML = `
+                <span style="background: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
+                    ${articulo.categoria}
+                </span>
+                <h3 style="margin-top: 10px; color: #1b263b;">${articulo.titulo}</h3>
+                <p style="color: #666; margin-top: 5px;">Revisa los detalles...</p>
+            `;
+                contenedor.appendChild(tarjeta);
+            });
+        }
+    </script>
+    
+
+    <!-- Registro del Service Worker de la PWA -->

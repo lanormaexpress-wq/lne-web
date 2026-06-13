@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Norma Express | Tu fuente de conocimiento</title>
+    <title>La Norma Express - Legislación y Cursos del Perú</title>
     <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
@@ -12,11 +12,10 @@
     <link rel="manifest" href="manifest.json">
 </head>
 
-<body>
+<body style="background-color: #f4f6f9; margin: 0; font-family: 'Roboto', sans-serif; display: flex; flex-direction: column; min-height: 100vh;">
 
-    <header
-        style="background-color: #ffffff; display: flex; justify-content: space-between; align-items: center; padding: 10px 80px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10000;">
-
+    <!-- cabecera global y persistente (SPA Shell) -->
+    <header style="background-color: #ffffff; display: flex; justify-content: space-between; align-items: center; padding: 10px 80px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10000;">
         <div style="display: flex; align-items: center;">
             <a href="index.html">
                 <img src="assets/imagenes/logo.png" alt="Volver al Inicio" class="header-logo">
@@ -45,72 +44,24 @@
 
         <div class="header-right-stack">
             <div class="top-social-icons">
-                <a href="https://www.tiktok.com/@lanormaexpress" target="_blank" class="social-link tiktok"><i
-                        class="fa-brands fa-tiktok"></i></a>
-                <a href="https://www.facebook.com/profile.php?id=61584727995875" target="_blank"
-                    class="social-link facebook"><i class="fa-brands fa-facebook"></i></a>
-                <a href="https://www.instagram.com/lanormaexpress/" target="_blank" class="social-link instagram"><i
-                        class="fa-brands fa-instagram"></i></a>
-                <a href="https://x.com/LaNormaExpress" target="_blank" class="social-link x-twitter"><i
-                        class="fa-brands fa-x-twitter"></i></a>
-                <a href="https://www.youtube.com/@LaNormaExpress" target="_blank" class="social-link youtube"><i
-                        class="fa-brands fa-youtube"></i></a>
+                <a href="https://www.tiktok.com/@lanormaexpress" target="_blank" class="social-link tiktok"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="https://www.facebook.com/profile.php?id=61584727995875" target="_blank" class="social-link facebook"><i class="fa-brands fa-facebook"></i></a>
+                <a href="https://www.instagram.com/lanormaexpress/" target="_blank" class="social-link instagram"><i class="fa-brands fa-instagram"></i></a>
+                <a href="https://x.com/LaNormaExpress" target="_blank" class="social-link x-twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.youtube.com/@LaNormaExpress" target="_blank" class="social-link youtube"><i class="fa-brands fa-youtube"></i></a>
             </div>
         </div>
-
     </header>
 
-    <section class="hero">
-        <video class="bg-video" autoplay loop muted playsinline preload="auto" poster="assets/imagenes/fondo-poster.png">
-            <source src="assets/fondo.mp4" type="video/mp4">
-        </video>
+    <!-- Contenedor principal dinámico de la SPA -->
+    <main id="app-content" style="flex: 1;"></main>
 
-        <div class="hero-content">
-            <h1>Bienvenido a La Norma Express</h1>
-            <p>Encuentra información sobre Derecho Civil, Penal y Constitucional.</p>
-            <div class="search-box">
-                <input type="text" placeholder="¿Qué tema legal buscas hoy?">
-                <button>Buscar</button>
-            </div>
-        </div>
-    </section>
-
-    <section class="container">
-        <h2 style="margin-bottom: 25px;">Constitución, códigos y leyes.</h2>
-        <div class="grid-categorias">
-
-            <a href="constitucion.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-consti.png" alt="Icono Constitución" class="icono-rama">
-                <h3>Constitución</h3>
-                <p>Base del Estado, garantía de derechos y expresión de la soberanía del pueblo.</p>
-            </a>
-
-            <a href="civil.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-civil.png" alt="Icono Civil" class="icono-rama">
-                <h3>Derecho Civil</h3>
-                <p>La ley regula la convivencia y protege la dignidad de la persona.</p>
-            </a>
-
-            <a href="penal.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-penal.png" alt="Icono Penal" class="icono-rama">
-                <h3>Derecho Penal</h3>
-                <p>Sin justicia no hay orden, y sin ley no hay justicia.</p>
-            </a>
-
-        </div>
-
-    </section>
-    <section style="padding: 40px;">
-        <h2>Tablón de Anuncios y Noticias</h2>
-        <div id="contenedor-articulos"
-            style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-        </div>
-    </section>
-    <footer>
-        <p>&copy; 2026 La Norma Express - Perú. Todos los derechos reservados.</p>
+    <!-- Pie de página global y persistente (SPA Shell) -->
+    <footer style="background-color: #111b29; text-align: center; padding: 25px 20px; color: #6c757d; width: 100%; box-sizing: border-box;">
+        <p style="margin: 0; font-size: 0.9rem;">&copy; 2026 La Norma Express - Perú. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
+    <!-- Asistente de Chat Flotante y Persistente (SPA Shell) -->
     <input type="checkbox" id="legal-chat-toggle" class="legal-chat-checkbox">
 
     <!-- Botón Flotante Circular -->
@@ -142,14 +93,13 @@
             <!-- Mensaje de bienvenida del Bot -->
             <div class="legal-chat-msg bot-msg">
                 <div class="msg-bubble">
-                    ¡Hola! Bienvenido a <strong>La Norma Express</strong>. Soy tu asistente legal con Inteligencia
-                    Artificial. ¿Qué código o tema del derecho deseas consultar hoy?
+                    ¡Hola! Bienvenido a <strong>La Norma Express</strong>. Soy tu asistente legal con Inteligencia Artificial. ¿Qué código o tema del derecho deseas consultar hoy?
                 </div>
                 <span class="msg-time">Ahora</span>
             </div>
         </div>
 
-        <!-- Cajita de Entrada de Texto (Sin JS) -->
+        <!-- Cajita de Entrada de Texto -->
         <form class="legal-chat-input-area" onsubmit="return false;">
             <textarea rows="1" placeholder="Escribe tu consulta aquí..." class="legal-chat-input"></textarea>
             <button type="submit" class="legal-chat-send-btn" title="Enviar">
@@ -158,46 +108,9 @@
         </form>
     </div>
 
-    <script>
-        const contenedor = document.getElementById('contenedor-articulos');
-        const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
-
-        // 1. DEFINIMOS QUÉ CATEGORÍAS SON "NOTICIAS" (La Lista VIP)
-        const categoriasNoticias = [
-            "🔴 URGENTE",
-            "📰 Noticia del Día",
-            "📅 Evento / Examen",
-            "⚠️ Mantenimiento"
-        ];
-
-        // 2. FILTRAMOS: Nos quedamos solo con las que coinciden con la lista
-        const noticiasParaMostrar = articulosGuardados.filter(articulo =>
-            categoriasNoticias.includes(articulo.categoria)
-        );
-
-        // 3. MOSTRAMOS
-        if (noticiasParaMostrar.length === 0) {
-            contenedor.innerHTML = '<p>No hay avisos urgentes por el momento.</p>';
-        } else {
-            contenedor.innerHTML = ''; // Limpiar
-
-            noticiasParaMostrar.forEach(articulo => {
-                const tarjeta = document.createElement('div');
-                // Estilo de Alerta (Amarillo/Rojo)
-                tarjeta.style.cssText = 'border-left: 5px solid #d9534f; background: #fff3cd; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);';
-
-                tarjeta.innerHTML = `
-                <span style="background: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
-                    ${articulo.categoria}
-                </span>
-                <h3 style="margin-top: 10px; color: #1b263b;">${articulo.titulo}</h3>
-                <p style="color: #666; margin-top: 5px;">Revisa los detalles...</p>
-            `;
-                contenedor.appendChild(tarjeta);
-            });
-        }
-    </script>
+    <!-- Scripts globales y persistentes -->
     <script src="asistente.js"></script>
+    <script src="router.js"></script>
 
     <!-- Registro del Service Worker de la PWA -->
     <script>

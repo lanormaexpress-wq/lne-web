@@ -1,148 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Código Civil - La Norma Express</title>
-    <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        .titulo-cabecera {
-            font-family: 'Playfair Display', serif;
-            font-size: 3rem;
-            margin-top: 0;
-            color: #1b263b;
-            line-height: 1.1;
-            margin-bottom: 25px;
-        }
-
-        #contenedor-leyes h2,
-        #contenedor-leyes h3,
-        #contenedor-leyes .articulo-num {
-            color: #1b263b !important;
-        }
-
-        .contenedor-buscador-flotante {
-            position: fixed;
-            top: 150px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            background-color: #ffffff;
-            border: 2px solid #1b263b;
-            border-radius: 30px;
-            padding: 5px 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            opacity: 0.3;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .contenedor-buscador-flotante:hover,
-        .contenedor-buscador-flotante:focus-within {
-            opacity: 1;
-        }
-
-        .contenedor-buscador-flotante input {
-            border: none;
-            outline: none;
-            font-size: 1rem;
-            padding: 5px;
-            width: 145px;
-            font-family: 'Roboto', sans-serif;
-            background: transparent;
-            color: #1b263b;
-            font-weight: bold;
-        }
-
-        .contador-matches {
-            color: #777;
-            font-size: 0.85rem;
-            margin-right: 10px;
-            min-width: 50px;
-            text-align: right;
-        }
-
-        .btn-navegacion {
-            background: none;
-            border: none;
-            color: #1b263b;
-            font-size: 1.1rem;
-            cursor: pointer;
-            margin-left: 5px;
-            transition: color 0.3s;
-        }
-
-        .btn-navegacion:hover {
-            color: #e63946;
-        }
-
-        mark {
-            background-color: #ffd166 !important;
-            color: black !important;
-            border-radius: 2px;
-        }
-
-        mark.resaltado-activo {
-            background-color: #e63946 !important;
-            color: white !important;
-        }
-    </style>
-    <link rel="manifest" href="manifest.json">
-</head>
-
-<body style="background-color: #f4f6f9; margin: 0; font-family: 'Roboto', sans-serif;">
-
-    <header
-        style="background-color: #ffffff; display: flex; justify-content: space-between; align-items: center; padding: 10px 80px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10000;">
-
-        <div style="display: flex; align-items: center;">
-            <a href="index.html">
-                <img src="assets/imagenes/logo.png" alt="Volver al Inicio" class="header-logo">
-            </a>
-
-            <div class="dropdown" style="margin-left: 75px;">
-                <button class="dropbtn">Legislación</button>
-                <div class="dropdown-content">
-                    <a href="constitucion.html">Constitución Política</a>
-                    <a href="civil.html">Código Civil</a>
-                    <a href="penal.html">Código Penal</a>
-                </div>
-            </div>
-
-            <div class="dropdown" style="margin-left: 30px;">
-                <button class="dropbtn">Cursos</button>
-                <div class="dropdown-content">
-                    <a href="argumentacion.html">Argumentación Jurídica</a>
-                    <a href="contratos.html">Contratos</a>
-                    <a href="tributario.html">Derecho Tributario Especial</a>
-                    <a href="laboral.html">Derecho Laboral</a>
-                    <a href="penal-economico.html">Derecho Penal Económico</a>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="header-right-stack">
-            <div class="top-social-icons">
-                <a href="https://www.tiktok.com/@lanormaexpress" target="_blank" class="social-link tiktok"><i
-                        class="fa-brands fa-tiktok"></i></a>
-                <a href="https://www.facebook.com/profile.php?id=61584727995875" target="_blank"
-                    class="social-link facebook"><i class="fa-brands fa-facebook"></i></a>
-                <a href="https://www.instagram.com/lanormaexpress/" target="_blank" class="social-link instagram"><i
-                        class="fa-brands fa-instagram"></i></a>
-                <a href="https://x.com/LaNormaExpress" target="_blank" class="social-link x-twitter"><i
-                        class="fa-brands fa-x-twitter"></i></a>
-                <a href="https://www.youtube.com/@LaNormaExpress" target="_blank" class="social-link youtube"><i
-                        class="fa-brands fa-youtube"></i></a>
-            </div>
-        </div>
-
-    </header>
-    <div class="contenedor-buscador-flotante">
+<div class="contenedor-buscador-flotante">
         <input type="text" id="inputBuscadorFlotante" placeholder="Busca tu artículo..."
             oninput="realizarBusquedaRealTime()">
         <span id="contadorMatches" class="contador-matches"></span>
@@ -185,9 +41,7 @@
 
     </div>
 
-    <footer>
-        <p>&copy; 2026 La Norma Express - Perú. Todos los derechos reservados.</p>
-    </footer>
+    
 
     <script src="civil.js"></script>
     <script>
@@ -346,64 +200,13 @@
         });
     </script>
     <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
-    <input type="checkbox" id="legal-chat-toggle" class="legal-chat-checkbox">
+    
 
     <!-- Botón Flotante Circular -->
-    <label for="legal-chat-toggle" class="legal-chat-btn" title="Abrir Asistente IA">
-        <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-icon-main chat-logo-img">
-        <i class="fa-solid fa-xmark chat-icon-close"></i>
-    </label>
+    
 
     <!-- Ventana de Chat Elegante -->
-    <div class="legal-chat-window">
-        <!-- Cabecera -->
-        <div class="legal-chat-header">
-            <div class="legal-chat-header-info">
-                <div class="legal-chat-avatar">
-                    <img src="assets/imagenes/logo5.png" alt="Logo" class="chat-header-logo-img">
-                </div>
-                <div>
-                    <h3>Asistente IA - La Norma Express</h3>
-                    <span>En línea | Soporte Legal</span>
-                </div>
-            </div>
-            <label for="legal-chat-toggle" class="legal-chat-close-btn" title="Cerrar chat">
-                <i class="fa-solid fa-chevron-down"></i>
-            </label>
-        </div>
-
-        <!-- Área de Mensajes -->
-        <div class="legal-chat-messages">
-            <!-- Mensaje de bienvenida del Bot -->
-            <div class="legal-chat-msg bot-msg">
-                <div class="msg-bubble">
-                    ¡Hola! Bienvenido a <strong>La Norma Express</strong>. Soy tu asistente legal con Inteligencia
-                    Artificial. ¿Qué código o tema del derecho deseas consultar hoy?
-                </div>
-                <span class="msg-time">Ahora</span>
-            </div>
-        </div>
-
-        <!-- Cajita de Entrada de Texto (Sin JS) -->
-        <form class="legal-chat-input-area" onsubmit="return false;">
-            <textarea rows="1" placeholder="Escribe tu consulta aquí..." class="legal-chat-input"></textarea>
-            <button type="submit" class="legal-chat-send-btn" title="Enviar">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </form>
-    </div>
-    <script src="asistente.js"></script>
+    
+    
 
     <!-- Registro del Service Worker de la PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker registrado con éxito', reg))
-                    .catch(err => console.error('Error al registrar el Service Worker', err));
-            });
-        }
-    </script>
-</body>
-
-</html>
