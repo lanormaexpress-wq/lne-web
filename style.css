@@ -61,27 +61,18 @@ header nav a {
 /* --- PEGA ESTO EN LUGAR DE TUS BLOQUES .hero, .bg-video Y .hero-content --- */
 
 .hero {
-    position: relative;
-    background-color: #ffffff !important;
-    overflow: hidden;
-    padding: 0 !important;
-    width: 100%;
-}
-
-.hero-wrapper {
-    position: relative;
-    max-width: 1300px;
-    width: 100%;
-    aspect-ratio: 16/9;
-    margin: 0 auto;
-    overflow: hidden;
+    min-height: 400px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 0 5%;
-    box-sizing: border-box;
+    position: relative;
     background-color: #1b263b;
+    color: #ffffff !important;
+    overflow: hidden;
+    padding: 3rem 5%;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .bg-video {
@@ -100,12 +91,14 @@ header nav a {
     position: relative;
     z-index: 2;
     width: 100%;
-
-    /* 5. Limitamos el ancho para que solo ocupe la mitad izquierda */
     max-width: 550px;
-
-    /* 6. El texto dentro también se alinea a la izquierda */
     text-align: left;
+    color: #ffffff !important;
+}
+
+.hero-content h1,
+.hero-content p {
+    color: #ffffff !important;
 }
 
 /* El video se queda igual, no hace falta tocarlo */
@@ -1489,10 +1482,10 @@ mark.resaltado-activo {
 
     /* Optimización de Proporciones del Hero en Tablets/Móviles */
     .hero {
-        min-height: auto !important;
+        min-height: 250px !important; /* Altura responsiva para móviles */
         height: auto !important;
-        padding: 0 !important;
-        background-color: #ffffff !important;
+        padding: 2.5rem 5% !important; /* Padding para que el contenido respire */
+        background-color: #1b263b !important; /* Volver al color azul oscuro */
     }
     
     .hero-content {
@@ -1696,7 +1689,7 @@ mark.resaltado-activo {
     .hero-content p {
         display: none !important;
     }
-    .hero-wrapper {
+    .hero {
         justify-content: center !important;
         align-items: center !important;
         padding: 0 15px !important;
