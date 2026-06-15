@@ -94,6 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cargar contenido de la página de forma dinámica
     function loadPage(pathName) {
+        // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
+        document.body.style.overflow = '';
+
         let pageName = pathName === '/' ? 'home' : pathName.replace(/^\//, '').replace(/\.html$/, '');
         if (pageName === 'index') pageName = 'home';
         

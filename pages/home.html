@@ -56,42 +56,44 @@
     
 
     <script>
-        const contenedor = document.getElementById('contenedor-articulos');
-        const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+        {
+            const contenedor = document.getElementById('contenedor-articulos');
+            const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
 
-        // 1. DEFINIMOS QUÉ CATEGORÍAS SON "NOTICIAS" (La Lista VIP)
-        const categoriasNoticias = [
-            "🔴 URGENTE",
-            "📰 Noticia del Día",
-            "📅 Evento / Examen",
-            "⚠️ Mantenimiento"
-        ];
+            // 1. DEFINIMOS QUÉ CATEGORÍAS SON "NOTICIAS" (La Lista VIP)
+            const categoriasNoticias = [
+                "🔴 URGENTE",
+                "📰 Noticia del Día",
+                "📅 Evento / Examen",
+                "⚠️ Mantenimiento"
+            ];
 
-        // 2. FILTRAMOS: Nos quedamos solo con las que coinciden con la lista
-        const noticiasParaMostrar = articulosGuardados.filter(articulo =>
-            categoriasNoticias.includes(articulo.categoria)
-        );
+            // 2. FILTRAMOS: Nos quedamos solo con las que coinciden con la lista
+            const noticiasParaMostrar = articulosGuardados.filter(articulo =>
+                categoriasNoticias.includes(articulo.categoria)
+            );
 
-        // 3. MOSTRAMOS
-        if (noticiasParaMostrar.length === 0) {
-            contenedor.innerHTML = '<p>No hay avisos urgentes por el momento.</p>';
-        } else {
-            contenedor.innerHTML = ''; // Limpiar
+            // 3. MOSTRAMOS
+            if (noticiasParaMostrar.length === 0) {
+                contenedor.innerHTML = '<p>No hay avisos urgentes por el momento.</p>';
+            } else {
+                contenedor.innerHTML = ''; // Limpiar
 
-            noticiasParaMostrar.forEach(articulo => {
-                const tarjeta = document.createElement('div');
-                // Estilo de Alerta (Amarillo/Rojo)
-                tarjeta.style.cssText = 'border-left: 5px solid #d9534f; background: #fff3cd; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);';
+                noticiasParaMostrar.forEach(articulo => {
+                    const tarjeta = document.createElement('div');
+                    // Estilo de Alerta (Amarillo/Rojo)
+                    tarjeta.style.cssText = 'border-left: 5px solid #d9534f; background: #fff3cd; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);';
 
-                tarjeta.innerHTML = `
-                <span style="background: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
-                    ${articulo.categoria}
-                </span>
-                <h3 style="margin-top: 10px; color: #1b263b;">${articulo.titulo}</h3>
-                <p style="color: #666; margin-top: 5px;">Revisa los detalles...</p>
-            `;
-                contenedor.appendChild(tarjeta);
-            });
+                    tarjeta.innerHTML = `
+                    <span style="background: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
+                        ${articulo.categoria}
+                    </span>
+                    <h3 style="margin-top: 10px; color: #1b263b;">${articulo.titulo}</h3>
+                    <p style="color: #666; margin-top: 5px;">Revisa los detalles...</p>
+                `;
+                    contenedor.appendChild(tarjeta);
+                });
+            }
         }
     </script>
     

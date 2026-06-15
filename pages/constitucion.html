@@ -1,12 +1,11 @@
 <div class="contenedor-buscador-flotante">
-        <input type="text" id="inputBuscadorFlotante" placeholder="Busca tu artículo..."
-            oninput="realizarBusquedaRealTime()">
+        <input type="text" id="inputBuscadorFlotante" placeholder="Busca tu artículo...">
         <span id="contadorMatches" class="contador-matches"></span>
-        <button onclick="navegarResultados('arriba')" class="btn-navegacion"><i class="fa fa-chevron-up"></i></button>
-        <button onclick="navegarResultados('abajo')" class="btn-navegacion"><i class="fa fa-chevron-down"></i></button>
+        <button id="btnNavegarArriba" class="btn-navegacion" title="Resultado anterior"><i class="fa fa-chevron-up"></i></button>
+        <button id="btnNavegarAbajo" class="btn-navegacion" title="Siguiente resultado"><i class="fa fa-chevron-down"></i></button>
     </div>
 
-    <div class="container" style="padding: 40px; max-width: 950px; margin: 0 auto;">
+    <div class="container" style="max-width: 950px; margin: 0 auto;">
 
         <div style="display: flex; align-items: flex-start; margin-bottom: 50px; gap: 30px;">
 
@@ -39,160 +38,176 @@
 
     </div>
 
-    
-
     <script src="constitucion.js"></script>
     <script>
-        if (typeof Constitucion !== 'undefined') {
-            const contenedorLeyes = document.getElementById('contenedor-leyes');
+        {
+            if (typeof Constitucion !== 'undefined') {
+                const contenedorLeyes = document.getElementById('contenedor-leyes');
 
-            if (contenedorLeyes) {
-                let htmlFinal = "";
+                if (contenedorLeyes) {
+                    let htmlFinal = "";
 
-                htmlFinal += `
-                <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px;">
-                    <div style="text-align: center; margin-bottom: 50px;">
-                        <h1 style="font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b263b; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 15px; display: inline-block; width: 80%;">
-                            Constitución Política<br>del Perú
-                        </h1>
-                    </div>
-                `;
-
-                Constitucion.forEach(seccion => {
-
-                    if (seccion.nuevaHoja) {
-                        htmlFinal += `</div>`;
-                        htmlFinal += `<div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 50px;">`;
-                    }
-
-                    const htmlTitulos = `
-                        <h2 style="text-align: center; font-weight: bold; text-transform: uppercase; margin-top: 40px; margin-bottom: 15px; color: #1b263b;">${seccion.titulo}</h2>
-                        <h3 style="text-align: center; font-weight: bold; margin-top: 0; margin-bottom: 40px; color: #1b263b;">${seccion.capitulo}</h3>
+                    htmlFinal += `
+                    <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px;">
+                        <div style="text-align: center; margin-bottom: 50px;">
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b263b; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 15px; display: inline-block; width: 80%;">
+                                Constitución Política<br>del Perú
+                            </h1>
+                        </div>
                     `;
-                    htmlFinal += htmlTitulos;
 
-                    seccion.articulos.forEach(art => {
-                        const textoDelTitulo = art.titulo ? `.- ${art.titulo}` : "";
-                        let encabezadoHTML = "";
+                    Constitucion.forEach(seccion => {
 
-                        if (!art.esDeclaracion) {
-                            let palabraClave = "Artículo ";
-                            if (art.hasOwnProperty("tipo")) {
-                                palabraClave = art.tipo !== "" ? art.tipo + " " : "";
-                            }
-                            encabezadoHTML = `<span class="articulo-num" style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 10px; color: #1b263b;">${palabraClave}${art.numero}${textoDelTitulo}</span>`;
+                        if (seccion.nuevaHoja) {
+                            htmlFinal += `</div>`;
+                            htmlFinal += `<div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 50px;">`;
                         }
 
-                        const lineaDivisoria = art.esDeclaracion ? "" : `<hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">`;
-
-                        const htmlArticulo = `
-                            <div style="margin-bottom: 30px;">
-                                ${encabezadoHTML}
-                                <div style="color: #444444;">${art.texto}</div>
-                                ${lineaDivisoria}
-                            </div>
+                        const htmlTitulos = `
+                            <h2 style="text-align: center; font-weight: bold; text-transform: uppercase; margin-top: 40px; margin-bottom: 15px; color: #1b263b;">${seccion.titulo}</h2>
+                            <h3 style="text-align: center; font-weight: bold; margin-top: 0; margin-bottom: 40px; color: #1b263b;">${seccion.capitulo}</h3>
                         `;
-                        htmlFinal += htmlArticulo;
-                    });
-                });
+                        htmlFinal += htmlTitulos;
 
-                htmlFinal += `</div>`;
-                contenedorLeyes.innerHTML = htmlFinal;
+                        seccion.articulos.forEach(art => {
+                            const textoDelTitulo = art.titulo ? `.- ${art.titulo}` : "";
+                            let encabezadoHTML = "";
+
+                            if (!art.esDeclaracion) {
+                                let palabraClave = "Artículo ";
+                                if (art.hasOwnProperty("tipo")) {
+                                    palabraClave = art.tipo !== "" ? art.tipo + " " : "";
+                                }
+                                encabezadoHTML = `<span class="articulo-num" style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 10px; color: #1b263b;">${palabraClave}${art.numero}${textoDelTitulo}</span>`;
+                            }
+
+                            const lineaDivisoria = art.esDeclaracion ? "" : `<hr style="border: 0; border-top: 1px solid #eee; margin-top: 20px;">`;
+
+                            const htmlArticulo = `
+                                <div style="margin-bottom: 30px;">
+                                    ${encabezadoHTML}
+                                    <div class="articulo-texto">${art.texto}</div>
+                                    ${lineaDivisoria}
+                                </div>
+                            `;
+                            htmlFinal += htmlArticulo;
+                        });
+                    });
+
+                    htmlFinal += `</div>`;
+                    contenedorLeyes.innerHTML = htmlFinal;
+                }
+            } else {
+                console.log("Aún no se ha creado o enlazado constitucion.js");
             }
-        } else {
-            console.log("Aún no se ha creado o enlazado constitucion.js");
         }
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js"></script>
 
     <script>
-        let contentToMark = document.querySelector("#contenedor-leyes");
-        let inputSearch = document.querySelector("#inputBuscadorFlotante");
-        let resultsCounter = document.querySelector("#contadorMatches");
+        {
+            const contentToMark = document.querySelector("#contenedor-leyes");
+            const inputSearch = document.querySelector("#inputBuscadorFlotante");
+            const resultsCounter = document.querySelector("#contadorMatches");
+            const btnArriba = document.querySelector("#btnNavegarArriba");
+            const btnAbajo = document.querySelector("#btnNavegarAbajo");
 
-        let results = [];
-        let currentIndex = -1;
+            let results = [];
+            let currentIndex = -1;
 
-        const markInstance = new Mark(contentToMark);
+            const markInstance = new Mark(contentToMark);
 
-        function resetMark() {
-            markInstance.unmark();
-            results = [];
-            currentIndex = -1;
-            resultsCounter.textContent = "";
-        }
+            function resetMark() {
+                markInstance.unmark();
+                results = [];
+                currentIndex = -1;
+                resultsCounter.textContent = "";
+            }
 
-        // AQUÍ ESTÁ EL CAMBIO PARA QUE BUSQUE DESDE 1 SOLA LETRA O NÚMERO
-        let searchTimeout = null;
+            let searchTimeout = null;
 
-        function realizarBusquedaRealTime() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                ejecutarBusqueda();
-            }, 300);
-        }
+            function realizarBusquedaRealTime() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    ejecutarBusqueda();
+                }, 300);
+            }
 
-        function ejecutarBusqueda() {
-            resetMark();
-            let searchText = inputSearch.value.trim();
+            function ejecutarBusqueda() {
+                resetMark();
+                let searchText = inputSearch.value.trim();
 
-            if (searchText !== "" && (searchText.length >= 3 || !isNaN(searchText))) {
-                markInstance.mark(searchText, {
-                    "done": function () {
-                        results = contentToMark.querySelectorAll("mark");
-                        let totalMatches = results.length;
+                if (searchText !== "" && (searchText.length >= 3 || !isNaN(searchText))) {
+                    markInstance.mark(searchText, {
+                        "done": function () {
+                            results = contentToMark.querySelectorAll("mark");
+                            let totalMatches = results.length;
 
-                        if (totalMatches > 0) {
-                            currentIndex = 0;
-                            scrollAndHighlight();
-                        } else {
-                            resultsCounter.textContent = "0 of 0";
+                            if (totalMatches > 0) {
+                                currentIndex = 0;
+                                scrollAndHighlight();
+                            } else {
+                                resultsCounter.textContent = "0 of 0";
+                            }
                         }
+                    });
+                }
+            }
+
+            function navegarResultados(direccion) {
+                let totalMatches = results.length;
+                if (totalMatches === 0) return;
+
+                if (direccion === "abajo") {
+                    if (currentIndex < totalMatches - 1) {
+                        currentIndex++;
+                    } else {
+                        currentIndex = 0;
+                    }
+                } else if (direccion === "arriba") {
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                    } else {
+                        currentIndex = totalMatches - 1;
+                    }
+                }
+                scrollAndHighlight();
+            }
+
+            function scrollAndHighlight() {
+                let totalMatches = results.length;
+                if (totalMatches === 0) return;
+
+                results.forEach(el => el.classList.remove("resaltado-activo"));
+
+                let currentMark = results[currentIndex];
+                currentMark.classList.add("resaltado-activo");
+
+                currentMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                resultsCounter.textContent = `${currentIndex + 1} of ${totalMatches}`;
+            }
+
+            if (inputSearch) {
+                inputSearch.addEventListener("input", realizarBusquedaRealTime);
+                inputSearch.addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        navegarResultados('abajo');
                     }
                 });
             }
-        }
 
-        function navegarResultados(direccion) {
-            let totalMatches = results.length;
-            if (totalMatches === 0) return;
-
-            if (direccion === "abajo") {
-                if (currentIndex < totalMatches - 1) {
-                    currentIndex++;
-                } else {
-                    currentIndex = 0;
-                }
-            } else if (direccion === "arriba") {
-                if (currentIndex > 0) {
-                    currentIndex--;
-                } else {
-                    currentIndex = totalMatches - 1;
-                }
+            if (btnArriba) {
+                btnArriba.addEventListener("click", () => navegarResultados('arriba'));
             }
-            scrollAndHighlight();
-        }
 
-        function scrollAndHighlight() {
-            let totalMatches = results.length;
-            if (totalMatches === 0) return;
-
-            results.forEach(el => el.classList.remove("resaltado-activo"));
-
-            let currentMark = results[currentIndex];
-            currentMark.classList.add("resaltado-activo");
-
-            currentMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-            resultsCounter.textContent = `${currentIndex + 1} of ${totalMatches}`;
-        }
-
-        inputSearch.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                navegarResultados('abajo');
+            if (btnAbajo) {
+                btnAbajo.addEventListener("click", () => navegarResultados('abajo'));
             }
+        }
+    </script>    }
         });
     </script>
     <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->

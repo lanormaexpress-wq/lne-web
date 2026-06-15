@@ -1436,7 +1436,7 @@ mark.resaltado-activo {
 /* =========================================
    PANTALLAS MÓVILES (MOBILE OPTIMIZATION)
    ========================================= */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     header {
         /* Evita colapsos en móviles reduciendo el padding inline y ajustando el espaciado */
         padding: 10px 15px !important;
@@ -1484,38 +1484,53 @@ mark.resaltado-activo {
         padding: 6px 10px !important;
     }
 
-    /* Optimización del Hero y Video de Fondo */
+    /* Optimización de Proporciones del Hero en Tablets/Móviles (Evita espacios negros) */
     .hero {
-        min-height: 240px !important; /* Altura responsiva más compacta para evitar espacios vacíos */
-        padding: 2.5rem 5% !important;
+        min-height: auto !important;
+        height: auto !important;
+        padding: 2.2rem 5% !important;
+        box-sizing: border-box;
+        background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%) !important;
     }
     
+    .hero-content {
+        max-width: 450px !important;
+    }
+
     .hero-content h1 {
-        font-size: 1.8rem !important; /* Título adaptado a móviles */
+        font-size: 1.35rem !important; /* Título adaptado */
+        margin-bottom: 5px !important;
+        line-height: 1.2 !important;
     }
     
     .hero-content p {
-        font-size: 1rem !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 8px !important;
+        line-height: 1.3 !important;
     }
     
     .search-box {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        width: 100%;
-        margin-top: 15px;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-top: 15px !important;
     }
     
     .search-box input {
-        width: 100% !important;
+        width: 70% !important;
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
         box-sizing: border-box;
     }
     
     .search-box button {
-        width: 100% !important;
+        width: 30% !important;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
     }
 
-    /* Buscador Flotante de Artículos adaptado a móviles */
+    /* Buscador Flotante de Artículos adaptado a móviles y tablets (Evita solaparse con texto) */
     .contenedor-buscador-flotante {
         top: auto !important;
         bottom: 20px !important;
@@ -1570,4 +1585,83 @@ mark.resaltado-activo {
         top: 8px !important;
         right: 8px !important;
     }
+}
+
+/* Optimización extra para pantallas de celulares muy pequeñas */
+@media (max-width: 600px) {
+    .hero {
+        padding: 1.2rem 5% !important;
+    }
+    .hero-content {
+        max-width: 280px !important;
+    }
+    .hero-content h1 {
+        font-size: 1.05rem !important;
+        margin-bottom: 4px !important;
+    }
+    .hero-content p {
+        font-size: 0.7rem !important;
+        margin-bottom: 6px !important;
+    }
+    .search-box {
+        margin-top: 5px !important;
+        gap: 4px !important;
+    }
+    .search-box input {
+        padding: 5px 8px !important;
+        font-size: 0.7rem !important;
+    }
+    .search-box button {
+        padding: 5px 10px !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* Evitar colisiones del buscador flotante en pantallas medianas y grandes (laptops y pantallas secundarias) */
+@media (min-width: 993px) and (max-width: 1600px) {
+    .container {
+        padding-right: 290px !important; /* Deja un canal limpio para que flote el buscador y no choque con el texto */
+    }
+    .contenedor-buscador-flotante {
+        right: 30px !important;
+        opacity: 0.8 !important;
+    }
+}
+
+/* =========================================
+   MEJORAS GENERALES DE LECTURA (LEGISLACIÓN)
+   ========================================= */
+
+/* Ensanchar el contenedor de las leyes (extremo a extremo) */
+.container {
+    max-width: 1050px !important;
+    margin: 0 auto;
+}
+
+@media (max-width: 992px) {
+    .container {
+        padding: 0 10px !important; /* Minimiza espacio lateral para que el texto sea de extremo a extremo */
+        padding-bottom: 140px !important; /* Relleno inferior para evitar solaparse con buscador flotante e icono chatbot */
+    }
+}
+
+/* Ensanchar las tarjetas de fondo blanco reduciendo padding */
+#contenedor-leyes > div {
+    padding: 35px !important;
+}
+
+@media (max-width: 768px) {
+    #contenedor-leyes > div {
+        padding: 20px 15px !important;
+    }
+}
+
+/* Estilos de lectura premium para el texto de los artículos (letras pequeñas, alineado a la izquierda) */
+.articulo-texto, 
+.articulo-texto div, 
+.articulo-texto p {
+    font-size: 0.88rem !important; /* Más compacto y profesional para mejor legibilidad */
+    text-align: left !important; /* Apegado a la izquierda */
+    line-height: 1.6 !important;
+    color: #2c3e50 !important; /* Gris pizarra oscuro premium para alto contraste */
 }
