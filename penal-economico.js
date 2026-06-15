@@ -32,6 +32,17 @@ function initPenalEconomico() {
             card.addEventListener('click', () => abrirModal(curso));
             grid.appendChild(card);
         });
+
+        // Abrir modal de forma automática si viene un parámetro en la URL (?class=ID o ?clase=ID)
+        const urlParams = new URLSearchParams(window.location.search);
+        const classParam = urlParams.get('class') || urlParams.get('clase');
+        if (classParam) {
+            const idBuscado = parseInt(classParam, 10);
+            const cursoEncontrado = penalDatos.find(c => c.id === idBuscado);
+            if (cursoEncontrado) {
+                abrirModal(cursoEncontrado);
+            }
+        }
     }
 
     function abrirModal(curso) {

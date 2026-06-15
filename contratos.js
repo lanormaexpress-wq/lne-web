@@ -67,6 +67,17 @@ function initContratos() {
         gridContainer.appendChild(card);
     });
 
+    // Abrir modal de forma automática si viene un parámetro en la URL (?class=ID o ?clase=ID)
+    const urlParams = new URLSearchParams(window.location.search);
+    const classParam = urlParams.get('class') || urlParams.get('clase');
+    if (classParam) {
+        const idBuscado = parseInt(classParam, 10);
+        const cursoEncontrado = contratosEstructura.find(c => c.id === idBuscado);
+        if (cursoEncontrado) {
+            abrirModal(cursoEncontrado);
+        }
+    }
+
     // Funciones de control de Modal
     function abrirModal(curso) {
         // Inyectar contenido en el modal

@@ -1,14 +1,17 @@
 <section class="hero">
-        <video class="bg-video" autoplay loop muted playsinline preload="auto" poster="assets/imagenes/fondo-poster.png">
-            <source src="assets/fondo.mp4" type="video/mp4">
-        </video>
+        <div class="hero-wrapper">
+            <video class="bg-video" autoplay loop muted playsinline preload="auto" poster="assets/imagenes/fondo-poster.png">
+                <source src="assets/fondo.mp4" type="video/mp4">
+            </video>
 
-        <div class="hero-content">
-            <h1>Bienvenido a La Norma Express</h1>
-            <p>Encuentra información sobre Derecho Civil, Penal y Constitucional.</p>
-            <div class="search-box">
-                <input type="text" placeholder="¿Qué tema legal buscas hoy?">
-                <button>Buscar</button>
+            <div class="hero-content">
+                <h1>Bienvenido a La Norma Express</h1>
+                <p>Encuentra información sobre Derecho Civil, Penal y Constitucional.</p>
+                <div class="search-box">
+                    <input type="text" id="buscador-principal" placeholder="¿Qué tema legal buscas hoy?" autocomplete="off">
+                    <button id="btn-buscar-principal">Buscar</button>
+                    <div id="buscador-sugerencias" class="sugerencias-box" style="display: none;"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -38,64 +41,303 @@
         </div>
 
     </section>
-    <section style="padding: 40px;">
-        <h2>Tablón de Anuncios y Noticias</h2>
-        <div id="contenedor-articulos"
-            style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-        </div>
-    </section>
-    
-
-    <!-- Asistente de Chat Flotante (Interactividad sin JS vía Checkbox) -->
-    
-
-    <!-- Botón Flotante Circular -->
-    
-
-    <!-- Ventana de Chat Elegante -->
-    
 
     <script>
         {
-            const contenedor = document.getElementById('contenedor-articulos');
-            const articulosGuardados = JSON.parse(localStorage.getItem('misArticulos')) || [];
+            let searchIndex = [];
+            let databasesLoaded = false;
 
-            // 1. DEFINIMOS QUÉ CATEGORÍAS SON "NOTICIAS" (La Lista VIP)
-            const categoriasNoticias = [
-                "🔴 URGENTE",
-                "📰 Noticia del Día",
-                "📅 Evento / Examen",
-                "⚠️ Mantenimiento"
-            ];
-
-            // 2. FILTRAMOS: Nos quedamos solo con las que coinciden con la lista
-            const noticiasParaMostrar = articulosGuardados.filter(articulo =>
-                categoriasNoticias.includes(articulo.categoria)
-            );
-
-            // 3. MOSTRAMOS
-            if (noticiasParaMostrar.length === 0) {
-                contenedor.innerHTML = '<p>No hay avisos urgentes por el momento.</p>';
-            } else {
-                contenedor.innerHTML = ''; // Limpiar
-
-                noticiasParaMostrar.forEach(articulo => {
-                    const tarjeta = document.createElement('div');
-                    // Estilo de Alerta (Amarillo/Rojo)
-                    tarjeta.style.cssText = 'border-left: 5px solid #d9534f; background: #fff3cd; padding: 20px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);';
-
-                    tarjeta.innerHTML = `
-                    <span style="background: #d9534f; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
-                        ${articulo.categoria}
-                    </span>
-                    <h3 style="margin-top: 10px; color: #1b263b;">${articulo.titulo}</h3>
-                    <p style="color: #666; margin-top: 5px;">Revisa los detalles...</p>
-                `;
-                    contenedor.appendChild(tarjeta);
+            function loadScript(src) {
+                return new Promise((resolve, reject) => {
+                    const existing = document.querySelector(`script[src="${src}"]`);
+                    if (existing) {
+                        resolve();
+                        return;
+                    }
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                    document.body.appendChild(script);
                 });
             }
+
+            async function loadSearchDatabases() {
+                if (databasesLoaded) return;
+                try {
+                    // Cargar JSON de cursos
+                    const [laboral, tributario, penal] = await Promise.all([
+                        fetch('data/laboral.json').then(r => r.json()).catch(() => []),
+                        fetch('data/tributario.json').then(r => r.json()).catch(() => []),
+                        fetch('data/penal.json').then(r => r.json()).catch(() => [])
+                    ]);
+
+                    // Contratos estáticos
+                    const contratos = [
+                        { id: 1, titulo: "Teoría General del Contrato", contenido: "El contrato es un acuerdo de voluntades entre dos o más partes que produce consecuencias jurídicas." },
+                        { id: 2, titulo: "Contrato de Compraventa", contenido: "Análisis exhaustivo del contrato de compraventa, sus características, obligaciones del vendedor y del comprador." },
+                        { id: 3, titulo: "Contrato de Arrendamiento", contenido: "Estudio detallado del arrendamiento. Derechos y obligaciones del arrendador y arrendatario, resolución de contrato." },
+                        { id: 4, titulo: "Prestación de Servicios", contenido: "Régimen legal aplicable a la locación de servicios, diferencias con el contrato de trabajo, honorarios." },
+                        { id: 5, titulo: "Contrato de Obra", contenido: "Reglas principales sobre la ejecución de obras, la responsabilidad del contratista, plazos y riesgos." },
+                        { id: 6, titulo: "Contratos Modernos", contenido: "Módulo sobre contratos atípicos: Leasing, Factoring, Franchising, Joint Venture y Know How." }
+                    ];
+
+                    // Insertar cursos en índice
+                    laboral.forEach(c => searchIndex.push({
+                        tipo: 'curso',
+                        curso: 'laboral',
+                        id: c.id,
+                        titulo: c.titulo,
+                        contenido: c.contenido || '',
+                        textoBusqueda: `curso de laboral - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
+                    }));
+
+                    tributario.forEach(c => searchIndex.push({
+                        tipo: 'curso',
+                        curso: 'tributario',
+                        id: c.id,
+                        titulo: c.titulo,
+                        contenido: c.contenido || '',
+                        textoBusqueda: `curso de tributario especial - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
+                    }));
+
+                    penal.forEach(c => searchIndex.push({
+                        tipo: 'curso',
+                        curso: 'penal-economico',
+                        id: c.id,
+                        titulo: c.titulo,
+                        contenido: c.contenido || '',
+                        textoBusqueda: `curso de penal economico - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
+                    }));
+
+                    contratos.forEach(c => searchIndex.push({
+                        tipo: 'curso',
+                        curso: 'contratos',
+                        id: c.id,
+                        titulo: c.titulo,
+                        contenido: c.contenido || '',
+                        textoBusqueda: `curso de contratos - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
+                    }));
+
+                    // Cargar grandes bases de datos de leyes
+                    await Promise.all([
+                        loadScript('constitucion.js?v=2.2'),
+                        loadScript('civil.js?v=2.2'),
+                        loadScript('penal.js?v=2.2')
+                    ]);
+
+                    // Indexar Constitución
+                    if (window.Constitucion) {
+                        window.Constitucion.forEach(seccion => {
+                            if (seccion.articulos) {
+                                seccion.articulos.forEach(art => {
+                                    searchIndex.push({
+                                        tipo: 'ley',
+                                        ley: 'constitucion',
+                                        numero: art.numero,
+                                        titulo: art.titulo || '',
+                                        contenido: art.texto || '',
+                                        textoBusqueda: `constitucion de 1993 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
+                                    });
+                                });
+                            }
+                        });
+                    }
+
+                    // Indexar Código Civil
+                    if (window.CodigoCivil) {
+                        window.CodigoCivil.forEach(seccion => {
+                            if (seccion.articulos) {
+                                seccion.articulos.forEach(art => {
+                                    searchIndex.push({
+                                        tipo: 'ley',
+                                        ley: 'civil',
+                                        numero: art.numero,
+                                        titulo: art.titulo || '',
+                                        contenido: art.texto || '',
+                                        textoBusqueda: `codigo civil de 1984 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
+                                    });
+                                });
+                            }
+                        });
+                    }
+
+                    // Indexar Código Penal
+                    if (window.CodigoPenal) {
+                        window.CodigoPenal.forEach(seccion => {
+                            if (seccion.articulos) {
+                                seccion.articulos.forEach(art => {
+                                    searchIndex.push({
+                                        tipo: 'ley',
+                                        ley: 'penal',
+                                        numero: art.numero,
+                                        titulo: art.titulo || '',
+                                        contenido: art.texto || '',
+                                        textoBusqueda: `codigo penal de 1991 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
+                                    });
+                                });
+                            }
+                        });
+                    }
+
+                    databasesLoaded = true;
+                    console.log("Autocomplete indexed successfully:", searchIndex.length, "items.");
+                } catch (err) {
+                    console.error("Error cargando bases de datos de búsqueda:", err);
+                }
+            }
+
+            const input = document.getElementById('buscador-principal');
+            const suggestionsBox = document.getElementById('buscador-sugerencias');
+            const btnBuscar = document.getElementById('btn-buscar-principal');
+
+            if (input) {
+                // Iniciar carga en background a los 500ms
+                setTimeout(loadSearchDatabases, 500);
+
+                input.addEventListener('focus', loadSearchDatabases);
+                input.addEventListener('input', () => {
+                    const query = input.value.trim();
+                    if (query.length < 2) {
+                        ocultarSugerencias();
+                        return;
+                    }
+                    if (!databasesLoaded) {
+                        loadSearchDatabases();
+                        return;
+                    }
+                    buscarYMostrar(query);
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        ejecutarBusqueda();
+                    }
+                });
+            }
+
+            if (btnBuscar) {
+                btnBuscar.addEventListener('click', ejecutarBusqueda);
+            }
+
+            function buscarYMostrar(query) {
+                const cleanQuery = query.toLowerCase().trim();
+                const tokens = cleanQuery.split(/\s+/);
+                
+                // Buscar coincidencia por número de artículo específico si se escribe "articulo X"
+                let artNumMatch = cleanQuery.match(/^(?:articulo|artículo|art\.?)\s+(\w+)/i);
+                let targetArtNum = artNumMatch ? artNumMatch[1] : null;
+
+                const matches = searchIndex.filter(item => {
+                    if (targetArtNum && item.tipo === 'ley') {
+                        return item.numero.toLowerCase() === targetArtNum.toLowerCase();
+                    }
+                    return tokens.every(token => item.textoBusqueda.includes(token));
+                });
+
+                // Ordenar: artículos exactos o coincidencias en título primero
+                matches.sort((a, b) => {
+                    if (targetArtNum) {
+                        const aMatch = a.numero && a.numero.toLowerCase() === targetArtNum.toLowerCase();
+                        const bMatch = b.numero && b.numero.toLowerCase() === targetArtNum.toLowerCase();
+                        if (aMatch && !bMatch) return -1;
+                        if (!aMatch && bMatch) return 1;
+                    }
+                    const aTitleMatch = a.titulo.toLowerCase().includes(cleanQuery);
+                    const bTitleMatch = b.titulo.toLowerCase().includes(cleanQuery);
+                    if (aTitleMatch && !bTitleMatch) return -1;
+                    if (!aTitleMatch && bTitleMatch) return 1;
+                    return 0;
+                });
+
+                renderSuggestions(matches);
+            }
+
+            function renderSuggestions(matches) {
+                if (!suggestionsBox) return;
+                if (matches.length === 0) {
+                    suggestionsBox.innerHTML = `<div class="sugerencia-sin-resultados">No se encontraron resultados para tu búsqueda.</div>`;
+                    suggestionsBox.style.display = 'block';
+                    return;
+                }
+
+                suggestionsBox.innerHTML = '';
+                matches.slice(0, 10).forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'sugerencia-item';
+
+                    let badgeHtml = '';
+                    if (item.tipo === 'ley') {
+                        if (item.ley === 'constitucion') badgeHtml = `<span class="badge badge-const">Constitución</span>`;
+                        else if (item.ley === 'civil') badgeHtml = `<span class="badge badge-civil">Cód. Civil</span>`;
+                        else if (item.ley === 'penal') badgeHtml = `<span class="badge badge-penal">Cód. Penal</span>`;
+                    } else {
+                        if (item.curso === 'laboral') badgeHtml = `<span class="badge badge-laboral">Laboral</span>`;
+                        else if (item.curso === 'tributario') badgeHtml = `<span class="badge badge-tributario">Tributario</span>`;
+                        else if (item.curso === 'penal-economico') badgeHtml = `<span class="badge badge-penal-eco">Penal Eco.</span>`;
+                        else if (item.curso === 'contratos') badgeHtml = `<span class="badge badge-contratos">Contratos</span>`;
+                    }
+
+                    let titleText = item.tipo === 'ley' ? `Artículo ${item.numero}: ${item.titulo}` : item.titulo;
+                    let rawContent = item.contenido.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                    let snippet = rawContent.substring(0, 85) + (rawContent.length > 85 ? '...' : '');
+
+                    div.innerHTML = `
+                        <div class="sugerencia-header">
+                            ${badgeHtml}
+                            <span class="sugerencia-titulo">${titleText}</span>
+                        </div>
+                        <div class="sugerencia-snippet">${snippet}</div>
+                    `;
+
+                    div.addEventListener('click', () => {
+                        if (item.tipo === 'ley') {
+                            window.location.hash = `#/${item.ley}?art=${encodeURIComponent(item.numero)}`;
+                        } else {
+                            window.location.hash = `#/${item.curso}?class=${item.id}`;
+                        }
+                        ocultarSugerencias();
+                        if (input) input.value = '';
+                    });
+
+                    suggestionsBox.appendChild(div);
+                });
+
+                suggestionsBox.style.display = 'block';
+            }
+
+            function ejecutarBusqueda() {
+                if (!input) return;
+                const query = input.value.trim();
+                if (!query) return;
+
+                const cleanQuery = query.toLowerCase();
+                const tokens = cleanQuery.split(/\s+/);
+
+                const matches = searchIndex.filter(item => tokens.every(token => item.textoBusqueda.includes(token)));
+                if (matches.length > 0) {
+                    const firstMatch = matches[0];
+                    if (firstMatch.tipo === 'ley') {
+                        window.location.hash = `#/${firstMatch.ley}?art=${encodeURIComponent(firstMatch.numero)}`;
+                    } else {
+                        window.location.hash = `#/${firstMatch.curso}?class=${firstMatch.id}`;
+                    }
+                    input.value = '';
+                    ocultarSugerencias();
+                }
+            }
+
+            function ocultarSugerencias() {
+                if (suggestionsBox) {
+                    suggestionsBox.style.display = 'none';
+                }
+            }
+
+            document.addEventListener('click', (e) => {
+                const searchBox = document.querySelector('.search-box');
+                if (searchBox && !searchBox.contains(e.target)) {
+                    ocultarSugerencias();
+                }
+            });
         }
     </script>
-    
-
-    <!-- Registro del Service Worker de la PWA -->

@@ -61,24 +61,27 @@ header nav a {
 /* --- PEGA ESTO EN LUGAR DE TUS BLOQUES .hero, .bg-video Y .hero-content --- */
 
 .hero {
-    /* 1. Mantiene el tamaño flexible */
-    min-height: 400px;
+    position: relative;
+    background-color: #ffffff !important;
+    overflow: hidden;
+    padding: 0 !important;
+    width: 100%;
+}
 
-    /* 2. Alineación: Todo se va a la izquierda */
+.hero-wrapper {
+    position: relative;
+    max-width: 1300px;
+    width: 100%;
+    aspect-ratio: 16/9;
+    margin: 0 auto;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    /* <--- ESTO MUEVE TODO A LA IZQUIERDA */
-
-    /* 3. Estilos base */
-    position: relative;
+    padding: 0 5%;
+    box-sizing: border-box;
     background-color: #1b263b;
-    color: white;
-    overflow: hidden;
-
-    /* 4. Espaciado: 10% a la izquierda para que no quede pegado al borde */
-    padding: 3rem 5% 3rem 5%
 }
 
 .bg-video {
@@ -1484,13 +1487,12 @@ mark.resaltado-activo {
         padding: 6px 10px !important;
     }
 
-    /* Optimización de Proporciones del Hero en Tablets/Móviles (Evita espacios negros) */
+    /* Optimización de Proporciones del Hero en Tablets/Móviles */
     .hero {
         min-height: auto !important;
         height: auto !important;
-        padding: 2.2rem 5% !important;
-        box-sizing: border-box;
-        background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%) !important;
+        padding: 0 !important;
+        background-color: #ffffff !important;
     }
     
     .hero-content {
@@ -1590,18 +1592,10 @@ mark.resaltado-activo {
 /* Optimización extra para pantallas de celulares muy pequeñas */
 @media (max-width: 600px) {
     .hero {
-        padding: 1.2rem 5% !important;
+        padding: 0 !important;
     }
     .hero-content {
         max-width: 280px !important;
-    }
-    .hero-content h1 {
-        font-size: 1.05rem !important;
-        margin-bottom: 4px !important;
-    }
-    .hero-content p {
-        font-size: 0.7rem !important;
-        margin-bottom: 6px !important;
     }
     .search-box {
         margin-top: 5px !important;
@@ -1617,14 +1611,35 @@ mark.resaltado-activo {
     }
 }
 
-/* Evitar colisiones del buscador flotante en pantallas medianas y grandes (laptops y pantallas secundarias) */
-@media (min-width: 993px) and (max-width: 1600px) {
-    .container {
-        padding-right: 290px !important; /* Deja un canal limpio para que flote el buscador y no choque con el texto */
+/* Evitar colisiones del buscador flotante en pantallas medianas y grandes */
+@media (min-width: 1351px) {
+    .container-ley {
+        padding-right: 20px !important; /* Mantiene centrado el texto sin desplazamiento forzado a la izquierda */
     }
     .contenedor-buscador-flotante {
-        right: 30px !important;
+        right: 40px !important;
+        top: 150px !important;
         opacity: 0.8 !important;
+        position: fixed !important;
+    }
+}
+
+@media (max-width: 1350px) {
+    .contenedor-buscador-flotante {
+        top: auto !important;
+        bottom: 20px !important;
+        left: 15px !important;
+        right: 90px !important; /* Espacio para el chatbot flotante */
+        width: auto !important;
+        opacity: 0.95 !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        padding: 6px 12px !important;
+    }
+    .contenedor-buscador-flotante input {
+        width: 100% !important;
+        flex: 1;
     }
 }
 
@@ -1633,13 +1648,13 @@ mark.resaltado-activo {
    ========================================= */
 
 /* Ensanchar el contenedor de las leyes (extremo a extremo) */
-.container {
+.container-ley {
     max-width: 1050px !important;
     margin: 0 auto;
 }
 
 @media (max-width: 992px) {
-    .container {
+    .container-ley {
         padding: 0 10px !important; /* Minimiza espacio lateral para que el texto sea de extremo a extremo */
         padding-bottom: 140px !important; /* Relleno inferior para evitar solaparse con buscador flotante e icono chatbot */
     }
@@ -1664,4 +1679,153 @@ mark.resaltado-activo {
     text-align: left !important; /* Apegado a la izquierda */
     line-height: 1.6 !important;
     color: #2c3e50 !important; /* Gris pizarra oscuro premium para alto contraste */
+}
+
+/* Forzar justificación en celulares y pantallas pequeñas (<= 992px) */
+@media (max-width: 992px) {
+    .articulo-texto, 
+    .articulo-texto div, 
+    .articulo-texto p {
+        text-align: justify !important;
+    }
+}
+
+/* Ocultar textos del Hero en celulares muy pequeños */
+@media (max-width: 768px) {
+    .hero-content h1,
+    .hero-content p {
+        display: none !important;
+    }
+    .hero-wrapper {
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 0 15px !important;
+    }
+    .hero-content {
+        max-width: 100% !important;
+        text-align: center !important;
+    }
+}
+
+/* Sugerencias de búsqueda Google-style */
+.search-box {
+    position: relative;
+}
+
+.sugerencias-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 10000;
+    margin-top: 5px;
+    text-align: left;
+}
+
+.sugerencia-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.sugerencia-item:last-child {
+    border-bottom: none;
+}
+
+.sugerencia-item:hover {
+    background-color: #f7f9fc;
+}
+
+.sugerencia-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.sugerencia-titulo {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #1b263b;
+}
+
+.sugerencia-snippet {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sugerencia-sin-resultados {
+    padding: 16px;
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Badges de color para sugerencias */
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-const {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-civil {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.badge-penal {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.badge-laboral {
+    background-color: #fff3e0;
+    color: #ef6c00;
+}
+
+.badge-tributario {
+    background-color: #f3e5f5;
+    color: #6a1b9a;
+}
+
+.badge-penal-eco {
+    background-color: #eceff1;
+    color: #37474f;
+}
+
+.badge-contratos {
+    background-color: #efebe9;
+    color: #4e342e;
+}
+
+/* Resaltado de artículo temporal */
+.articulo-resaltado-temporal {
+    animation: iluminarArticulo 3s ease-out;
+}
+
+@keyframes iluminarArticulo {
+    0% {
+        background-color: rgba(212, 175, 55, 0.4);
+    }
+    100% {
+        background-color: transparent;
+    }
 }

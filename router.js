@@ -97,7 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
         document.body.style.overflow = '';
 
-        let pageName = pathName === '/' ? 'home' : pathName.replace(/^\//, '').replace(/\.html$/, '');
+        // Separar la ruta limpia de los parámetros de consulta y hashes (?class=3, #etc)
+        const parts = pathName.split('?');
+        const cleanPath = parts[0].split('#')[0];
+
+        let pageName = cleanPath === '/' ? 'home' : cleanPath.replace(/^\//, '').replace(/\.html$/, '');
         if (pageName === 'index') pageName = 'home';
         
         const pageUrl = `/pages/${pageName}.html`;
