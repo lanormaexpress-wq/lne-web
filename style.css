@@ -1221,7 +1221,7 @@ mark.resaltado-activo {
 }
 
 .intro-parrafo {
-    text-align: justify;
+    text-align: justify !important;
     line-height: 1.6;
     color: #444;
     font-size: 1rem;
@@ -1273,7 +1273,7 @@ mark.resaltado-activo {
     }
 
     .intro-parrafo {
-        text-align: justify;
+        text-align: justify !important;
     }
 
     .intro-portada,
@@ -1610,7 +1610,8 @@ mark.resaltado-activo {
         padding-right: 20px !important; /* Mantiene centrado el texto sin desplazamiento forzado a la izquierda */
     }
     .contenedor-buscador-flotante {
-        right: 40px !important;
+        right: auto !important;
+        left: calc(50% + 430px) !important; /* Posicionamiento dinámico en el espacio vacío lateral derecho */
         top: 150px !important;
         opacity: 0.8 !important;
         position: fixed !important;
@@ -1640,16 +1641,16 @@ mark.resaltado-activo {
    MEJORAS GENERALES DE LECTURA (LEGISLACIÓN)
    ========================================= */
 
-/* Ensanchar el contenedor de las leyes (extremo a extremo) */
+/* Centrar y limitar el ancho de la hoja de lectura del código (820px) */
 .container-ley {
-    max-width: 1050px !important;
-    margin: 0 auto;
+    max-width: 820px !important;
+    margin: 40px auto !important;
 }
 
 @media (max-width: 992px) {
     .container-ley {
-        padding: 0 10px !important; /* Minimiza espacio lateral para que el texto sea de extremo a extremo */
-        padding-bottom: 140px !important; /* Relleno inferior para evitar solaparse con buscador flotante e icono chatbot */
+        margin: 20px auto !important; /* Margen superior moderado en móviles */
+        padding: 20px 10px 140px 10px !important; /* Relleno superior para despejar cabecera y espacio inferior para chatbot */
     }
 }
 
