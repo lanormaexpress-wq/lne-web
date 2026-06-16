@@ -1222,9 +1222,9 @@ mark.resaltado-activo {
 
 .intro-parrafo {
     text-align: justify !important;
-    line-height: 1.6;
+    line-height: 1.55 !important;
     color: #444;
-    font-size: 1rem;
+    font-size: 0.95rem !important;
     margin: 0;
 }
 
@@ -1525,24 +1525,7 @@ mark.resaltado-activo {
         font-size: 0.85rem !important;
     }
 
-    /* Buscador Flotante de Artículos adaptado a móviles y tablets (Evita solaparse con texto) */
-    .contenedor-buscador-flotante {
-        top: auto !important;
-        bottom: 20px !important;
-        left: 15px !important;
-        right: 90px !important; /* Deja espacio al botón flotante del chatbot */
-        width: auto !important;
-        opacity: 0.95 !important;
-        background-color: rgba(255, 255, 255, 0.95) !important;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-        padding: 6px 12px !important;
-    }
-    
-    .contenedor-buscador-flotante input {
-        width: 100% !important;
-        flex: 1;
-    }
+
 
     /* Optimización de Modales de Cursos en móviles */
     .curso-modal-content {
@@ -1604,21 +1587,30 @@ mark.resaltado-activo {
     }
 }
 
-/* Evitar colisiones del buscador flotante en pantallas medianas y grandes */
-@media (min-width: 1600px) {
+/* Evitar colisiones del buscador flotante en pantallas medianas y grandes (computadoras, laptops y tabletas) */
+@media (min-width: 769px) {
     .container-ley {
         padding-right: 20px !important; /* Mantiene centrado el texto sin desplazamiento forzado a la izquierda */
     }
     .contenedor-buscador-flotante {
-        right: auto !important;
-        left: calc(50% + 545px) !important; /* Posicionamiento dinámico en el espacio vacío lateral derecho (1050px + 20px de espacio) */
+        right: clamp(20px, calc(50% - 670px), 50%) !important; /* Posicionado a la derecha de la hoja con 20px de separación */
+        left: auto !important;
         top: 150px !important;
         opacity: 0.8 !important;
         position: fixed !important;
+        width: 200px !important; /* Buscador más compacto para pantallas ajustadas */
+        padding: 5px 10px !important;
+    }
+    .contenedor-buscador-flotante input {
+        width: 100px !important; /* Caja de entrada más angosta en desktop/tablet */
+    }
+    .contador-matches {
+        min-width: 40px !important;
     }
 }
 
-@media (max-width: 1599px) {
+/* En teléfonos celulares, el buscador se acopla en la parte inferior */
+@media (max-width: 768px) {
     .contenedor-buscador-flotante {
         top: auto !important;
         bottom: 20px !important;
@@ -1641,9 +1633,9 @@ mark.resaltado-activo {
    MEJORAS GENERALES DE LECTURA (LEGISLACIÓN)
    ========================================= */
 
-/* Centrar y limitar el ancho de la hoja de lectura del código (1050px) */
+/* Centrar y limitar el ancho de la hoja de lectura del código (900px) */
 .container-ley {
-    max-width: 1050px !important;
+    max-width: 900px !important;
     margin: 40px auto !important;
 }
 
