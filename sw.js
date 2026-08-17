@@ -1,11 +1,12 @@
-const CACHE_NAME = 'lne-cache-v2';
+const CACHE_NAME = 'lne-cache-v3';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
     '/style.css',
-    '/asistente.js',
+    '/asistente.js?v=2.2',
+    '/router.js?v=3',
     '/assets/imagenes/logo.png',
     '/assets/imagenes/logo4.png',
     '/assets/imagenes/logo5.png'
@@ -35,10 +36,35 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Interceptar peticiones (Estrategia: Stale-While-Revalidate para estáticos y assets)
+// Interceptar peticiones. Los fragmentos y scripts legales usan Network-First
+// para impedir que una versión antigua deje vacío el listado de artículos.
 self.addEventListener('fetch', event => {
     // Ignorar peticiones de API (como /api/chat) y esquemas externos no admitidos
     if (!event.request.url.startsWith(self.location.origin) || event.request.url.includes('/api/')) {
+        return;
+    }
+
+    const requestUrl = new URL(event.request.url);
+    const isCriticalRequest = event.request.mode === 'navigate'
+        || requestUrl.pathname.startsWith('/pages/')
+        || requestUrl.pathname === '/router.js'
+        || requestUrl.pathname === '/civil.js'
+        || requestUrl.pathname === '/penal.js'
+        || requestUrl.pathname === '/constitucion.js';
+
+    if (isCriticalRequest) {
+        event.respondWith(
+            caches.open(CACHE_NAME).then(cache => {
+                return fetch(event.request)
+                    .then(networkResponse => {
+                        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    })
+                    .catch(() => cache.match(event.request));
+            })
+        );
         return;
     }
 

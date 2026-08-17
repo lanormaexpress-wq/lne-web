@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let activeNavigation = 0;
+
     // Interceptar clicks en enlaces para la navegación SPA
     function bindLinks() {
         const links = document.querySelectorAll('a');
@@ -29,7 +31,39 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Ejecutar scripts de forma secuencial respetando el orden y la carga de archivos externos
-    function executeScriptsSequentially(scripts, index, callback) {
+    function getDataScriptName(src) {
+        if (!src) return null;
+
+        const path = new URL(src, window.location.origin).pathname;
+        if (path.endsWith('/civil.js')) return 'civil';
+        if (path.endsWith('/penal.js')) return 'penal';
+        if (path.endsWith('/constitucion.js')) return 'constitucion';
+        return null;
+    }
+
+    function isDataScriptReady(dataScriptName) {
+        if (dataScriptName === 'civil') return typeof CodigoCivil !== 'undefined';
+        if (dataScriptName === 'penal') return typeof CodigoPenal !== 'undefined';
+        if (dataScriptName === 'constitucion') return typeof Constitucion !== 'undefined';
+        return false;
+    }
+
+    function showDataLoadError() {
+        const container = document.getElementById('contenedor-leyes');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div style="background:#fff; padding:30px; margin-top:30px; text-align:center; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                <p style="margin:0 0 15px; color:#1b263b;">No se pudieron cargar los artículos.</p>
+                <button type="button" onclick="window.location.reload()" style="border:0; border-radius:4px; padding:10px 18px; background:#1b263b; color:#fff; cursor:pointer;">
+                    Reintentar
+                </button>
+            </div>`;
+    }
+
+    function executeScriptsSequentially(scripts, index, callback, navigationId) {
+        if (navigationId !== activeNavigation) return;
+
         if (index >= scripts.length) {
             if (callback) callback();
             return;
@@ -37,63 +71,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const oldScript = scripts[index];
         const src = oldScript.getAttribute('src');
+        const dataScriptName = getDataScriptName(src);
 
         // Evitar recargar las bases de datos gigantes si ya están en memoria (evita SyntaxError de const redeclaration)
+        if (dataScriptName && isDataScriptReady(dataScriptName)) {
+            console.log(`${dataScriptName}.js ya está cargado en memoria. Omitiendo recarga.`);
+            executeScriptsSequentially(scripts, index + 1, callback, navigationId);
+            return;
+        }
+
         if (src) {
-            if (src.endsWith('civil.js') && typeof CodigoCivil !== 'undefined') {
-                console.log('civil.js ya está cargado en memoria. Omitiendo recarga.');
-                executeScriptsSequentially(scripts, index + 1, callback);
-                return;
-            }
-            if (src.endsWith('penal.js') && typeof CodigoPenal !== 'undefined') {
-                console.log('penal.js ya está cargado en memoria. Omitiendo recarga.');
-                executeScriptsSequentially(scripts, index + 1, callback);
-                return;
-            }
-            if (src.endsWith('constitucion.js') && typeof Constitucion !== 'undefined') {
-                console.log('constitucion.js ya está cargado en memoria. Omitiendo recarga.');
-                executeScriptsSequentially(scripts, index + 1, callback);
-                return;
-            }
-        }
-
-        const newScript = document.createElement('script');
-
-        // Copiar todos los atributos (src, type, etc.)
-        Array.from(oldScript.attributes).forEach(attr => {
-            newScript.setAttribute(attr.name, attr.value);
-        });
-
-        // Copiar contenido inline si lo hay
-        if (oldScript.innerHTML) {
-            newScript.innerHTML = oldScript.innerHTML;
-        }
-
-        // Si es un script externo con src, debemos esperar a que se cargue e instancie antes de continuar
-        if (newScript.src) {
-            newScript.onload = () => {
-                newScript.remove(); // Limpieza del DOM
-                executeScriptsSequentially(scripts, index + 1, callback);
-            };
-            newScript.onerror = () => {
-                console.error(`Error cargando el script externo: ${newScript.src}`);
-                newScript.remove(); // Limpieza del DOM
-                executeScriptsSequentially(scripts, index + 1, callback);
-            };
-            document.body.appendChild(newScript);
             oldScript.remove();
+
+            const loadExternalScript = attempt => {
+                if (navigationId !== activeNavigation) return;
+
+                const newScript = document.createElement('script');
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+
+                if (attempt > 0) {
+                    const retryUrl = new URL(src, window.location.href);
+                    retryUrl.searchParams.set('retry', Date.now().toString());
+                    newScript.src = retryUrl.href;
+                }
+
+                const handleFailure = () => {
+                    newScript.remove();
+
+                    if (dataScriptName && isDataScriptReady(dataScriptName)) {
+                        executeScriptsSequentially(scripts, index + 1, callback, navigationId);
+                        return;
+                    }
+
+                    if (dataScriptName && attempt === 0) {
+                        loadExternalScript(1);
+                        return;
+                    }
+
+                    console.error(`Error cargando el script externo: ${newScript.src}`);
+                    if (dataScriptName) {
+                        showDataLoadError();
+                        return;
+                    }
+
+                    executeScriptsSequentially(scripts, index + 1, callback, navigationId);
+                };
+
+                newScript.onload = () => {
+                    if (dataScriptName && !isDataScriptReady(dataScriptName)) {
+                        handleFailure();
+                        return;
+                    }
+
+                    newScript.remove();
+                    executeScriptsSequentially(scripts, index + 1, callback, navigationId);
+                };
+                newScript.onerror = handleFailure;
+                document.body.appendChild(newScript);
+            };
+
+            loadExternalScript(0);
         } else {
+            const newScript = document.createElement('script');
+
+            if (oldScript.innerHTML) {
+                newScript.innerHTML = oldScript.innerHTML;
+            }
+
             // Si es un script inline, se ejecuta de forma síncrona al insertarse
             document.body.appendChild(newScript);
             oldScript.remove();
             newScript.remove(); // Limpieza del DOM inmediata tras ejecución
             // Ejecutar el siguiente script inmediatamente
-            executeScriptsSequentially(scripts, index + 1, callback);
+            executeScriptsSequentially(scripts, index + 1, callback, navigationId);
         }
     }
 
     // Cargar contenido de la página de forma dinámica
     function loadPage(pathName) {
+        const navigationId = ++activeNavigation;
+
         // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
         document.body.style.overflow = '';
 
@@ -119,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return response.text();
             })
             .then(html => {
+                if (navigationId !== activeNavigation) return;
+
                 appContent.innerHTML = html;
                 
                 // Extraer y ejecutar las etiquetas <script> del HTML cargado secuencialmente
@@ -129,9 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     bindLinks();
                     // Desplazarse al inicio de la página con suavidad
                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
+                }, navigationId);
             })
             .catch(err => {
+                if (navigationId !== activeNavigation) return;
+
                 console.error('Error cargando la página:', err);
                 appContent.innerHTML = `
                     <div style="padding: 50px; text-align: center; font-family: 'Roboto', sans-serif;">

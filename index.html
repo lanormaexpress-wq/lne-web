@@ -110,13 +110,13 @@
 
     <!-- Scripts globales y persistentes -->
     <script src="asistente.js?v=2.2"></script>
-    <script src="router.js?v=2.2"></script>
+    <script src="router.js?v=3"></script>
 
     <!-- Registro del Service Worker de la PWA -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
+                navigator.serviceWorker.register('sw.js?v=3')
                     .then(reg => console.log('Service Worker registrado con éxito', reg))
                     .catch(err => console.error('Error al registrar el Service Worker', err));
             });

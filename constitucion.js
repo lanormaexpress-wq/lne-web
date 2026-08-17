@@ -3888,6 +3888,7 @@ const Constitucion = [
         ]
     }
 ];// penal.js
+{
 const CodigoPenal = [
     {
         nuevaHoja: false,
@@ -4494,3 +4495,4 @@ const CodigoPenal = [
     }
 ];
 // <-- Cierre final definitivo del archivo
+}
