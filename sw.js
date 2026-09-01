@@ -1,12 +1,15 @@
-const CACHE_NAME = 'lne-cache-v3';
+const CACHE_NAME = 'lne-cache-v4';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css',
+    '/style.css?v=2.2',
     '/asistente.js?v=2.2',
-    '/router.js?v=3',
+    '/normas.js?v=1',
+    '/legislacion.js?v=1',
+    '/router.js?v=5',
+    '/pages/codigo.html',
     '/assets/imagenes/logo.png',
     '/assets/imagenes/logo4.png',
     '/assets/imagenes/logo5.png'
@@ -27,7 +30,7 @@ self.addEventListener('activate', event => {
         caches.keys().then(keys => {
             return Promise.all(
                 keys.map(key => {
-                    if (key !== CACHE_NAME) {
+                    if (key.startsWith('lne-cache-') && key !== CACHE_NAME) {
                         return caches.delete(key);
                     }
                 })
@@ -47,10 +50,8 @@ self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
     const isCriticalRequest = event.request.mode === 'navigate'
         || requestUrl.pathname.startsWith('/pages/')
-        || requestUrl.pathname === '/router.js'
-        || requestUrl.pathname === '/civil.js'
-        || requestUrl.pathname === '/penal.js'
-        || requestUrl.pathname === '/constitucion.js';
+        || requestUrl.pathname.startsWith('/data/')
+        || (requestUrl.pathname.endsWith('.js') && requestUrl.pathname !== '/sw.js');
 
     if (isCriticalRequest) {
         event.respondWith(

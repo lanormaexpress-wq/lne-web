@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
     <title>La Norma Express - Legislación y Cursos del Perú</title>
     <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
     <link rel="stylesheet" href="style.css?v=2.2">
@@ -17,27 +18,23 @@
     <!-- cabecera global y persistente (SPA Shell) -->
     <header style="background-color: #ffffff; display: flex; justify-content: space-between; align-items: center; padding: 10px 80px; width: 100%; box-sizing: border-box; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10000;">
         <div style="display: flex; align-items: center;">
-            <a href="index.html">
+            <a href="/">
                 <img src="assets/imagenes/logo.png" alt="Volver al Inicio" class="header-logo">
             </a>
 
             <div class="dropdown" style="margin-left: 75px;">
                 <button class="dropbtn">Legislación</button>
-                <div class="dropdown-content">
-                    <a href="constitucion.html">Constitución Política</a>
-                    <a href="civil.html">Código Civil</a>
-                    <a href="penal.html">Código Penal</a>
-                </div>
+                <div id="legislacion-menu" class="dropdown-content"></div>
             </div>
 
             <div class="dropdown" style="margin-left: 30px;">
                 <button class="dropbtn">Cursos</button>
                 <div class="dropdown-content">
-                    <a href="argumentacion.html">Argumentación Jurídica</a>
-                    <a href="contratos.html">Contratos</a>
-                    <a href="tributario.html">Derecho Tributario Especial</a>
-                    <a href="laboral.html">Derecho Laboral</a>
-                    <a href="penal-economico.html">Derecho Penal Económico</a>
+                    <a href="/cursos/argumentacion-juridica">Argumentación Jurídica</a>
+                    <a href="/cursos/contratos">Contratos</a>
+                    <a href="/cursos/derecho-tributario-especial">Derecho Tributario Especial</a>
+                    <a href="/cursos/derecho-laboral">Derecho Laboral</a>
+                    <a href="/cursos/derecho-penal-economico">Derecho Penal Económico</a>
                 </div>
             </div>
         </div>
@@ -109,16 +106,20 @@
     </div>
 
     <!-- Scripts globales y persistentes -->
+    <script src="normas.js?v=1"></script>
     <script src="asistente.js?v=2.2"></script>
-    <script src="router.js?v=3"></script>
-
-    <!-- Registro del Service Worker de la PWA -->
+    <script src="legislacion.js?v=1"></script>
+    <script src="router.js?v=5"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js?v=3')
-                    .then(reg => console.log('Service Worker registrado con éxito', reg))
-                    .catch(err => console.error('Error al registrar el Service Worker', err));
+                navigator.serviceWorker.register('/sw.js?v=4')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Error al registrar el Service Worker:', error);
+                    });
             });
         }
     </script>

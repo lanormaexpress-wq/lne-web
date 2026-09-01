@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const normas = require('./normas');
 require('dotenv').config();
 
 const app = express();
@@ -23,6 +24,35 @@ app.use((req, res, next) => {
         return res.status(403).send('Acceso denegado: Archivo protegido.');
     }
     next();
+});
+
+// Mantener compatibles los enlaces públicos anteriores mediante redirecciones permanentes.
+const legacyRedirects = new Map([
+    ['/index.html', '/'],
+    ['/home.html', '/'],
+    ['/argumentacion.html', '/cursos/argumentacion-juridica'],
+    ['/argumentacion', '/cursos/argumentacion-juridica'],
+    ['/contratos.html', '/cursos/contratos'],
+    ['/contratos', '/cursos/contratos'],
+    ['/tributario.html', '/cursos/derecho-tributario-especial'],
+    ['/tributario', '/cursos/derecho-tributario-especial'],
+    ['/laboral.html', '/cursos/derecho-laboral'],
+    ['/laboral', '/cursos/derecho-laboral'],
+    ['/penal-economico.html', '/cursos/derecho-penal-economico'],
+    ['/penal-economico', '/cursos/derecho-penal-economico']
+]);
+
+normas.forEach(norma => {
+    (norma.legacyPaths || []).forEach(legacyPath => {
+        legacyRedirects.set(legacyPath.toLowerCase(), norma.url);
+    });
+});
+
+app.get(Array.from(legacyRedirects.keys()), (req, res) => {
+    const destination = legacyRedirects.get(req.path.toLowerCase());
+    const queryIndex = req.originalUrl.indexOf('?');
+    const queryString = queryIndex >= 0 ? req.originalUrl.slice(queryIndex) : '';
+    res.redirect(301, `${destination}${queryString}`);
 });
 
 // Redirigir peticiones de páginas HTML a la shell index.html de la SPA (YouTube Music style persistent chat)

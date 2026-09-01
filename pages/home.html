@@ -16,27 +16,7 @@
 
     <section class="container">
         <h2 style="margin-bottom: 25px;">Constitución, códigos y leyes.</h2>
-        <div class="grid-categorias">
-
-            <a href="constitucion.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-consti.png" alt="Icono Constitución" class="icono-rama">
-                <h3>Constitución</h3>
-                <p>Base del Estado, garantía de derechos y expresión de la soberanía del pueblo.</p>
-            </a>
-
-            <a href="civil.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-civil.png" alt="Icono Civil" class="icono-rama">
-                <h3>Derecho Civil</h3>
-                <p>La ley regula la convivencia y protege la dignidad de la persona.</p>
-            </a>
-
-            <a href="penal.html" class="card" style="text-decoration: none; color: inherit; display: block;">
-                <img src="assets/imagenes/icono-penal.png" alt="Icono Penal" class="icono-rama">
-                <h3>Derecho Penal</h3>
-                <p>Sin justicia no hay orden, y sin ley no hay justicia.</p>
-            </a>
-
-        </div>
+        <div id="legislacion-home-cards" class="grid-categorias"></div>
 
     </section>
 
@@ -45,18 +25,21 @@
             let searchIndex = [];
             let databasesLoaded = false;
 
-            function loadScript(src) {
-                return new Promise((resolve, reject) => {
-                    const existing = document.querySelector(`script[src="${src}"]`);
-                    if (existing) {
-                        resolve();
-                        return;
-                    }
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.onload = () => resolve();
-                    script.onerror = () => reject(new Error(`Failed to load ${src}`));
-                    document.body.appendChild(script);
+            const legislationCards = document.getElementById('legislacion-home-cards');
+            if (legislationCards) {
+                window.LNENormas.all.forEach(norma => {
+                    if (!norma.homeCard) return;
+
+                    const card = document.createElement('a');
+                    card.href = norma.url;
+                    card.className = 'card';
+                    card.style.cssText = 'text-decoration: none; color: inherit; display: block;';
+                    card.innerHTML = `
+                        <img src="${norma.homeCard.image}" alt="${norma.homeCard.imageAlt}" class="icono-rama">
+                        <h3>${norma.homeCard.title}</h3>
+                        <p>${norma.homeCard.description}</p>
+                    `;
+                    legislationCards.appendChild(card);
                 });
             }
 
@@ -117,66 +100,32 @@
                         textoBusqueda: `curso de contratos - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
                     }));
 
-                    // Cargar grandes bases de datos de leyes
-                    await Promise.all([
-                        loadScript('constitucion.js?v=2.2'),
-                        loadScript('civil.js?v=2.2'),
-                        loadScript('penal.js?v=2.2')
-                    ]);
+                    // Cargar e indexar las normas registradas centralmente
+                    const registeredNorms = window.LNENormas.all;
+                    const normData = await Promise.all(
+                        registeredNorms.map(norma => window.LNELegislacion.loadNormData(norma))
+                    );
 
-                    // Indexar Constitución
-                    if (window.Constitucion) {
-                        window.Constitucion.forEach(seccion => {
-                            if (seccion.articulos) {
-                                seccion.articulos.forEach(art => {
-                                    searchIndex.push({
-                                        tipo: 'ley',
-                                        ley: 'constitucion',
-                                        numero: art.numero,
-                                        titulo: art.titulo || '',
-                                        contenido: art.texto || '',
-                                        textoBusqueda: `constitucion de 1993 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
-                                    });
-                                });
-                            }
-                        });
-                    }
+                    registeredNorms.forEach((norma, index) => {
+                        const sections = normData[index];
+                        if (!Array.isArray(sections)) return;
 
-                    // Indexar Código Civil
-                    if (window.CodigoCivil) {
-                        window.CodigoCivil.forEach(seccion => {
-                            if (seccion.articulos) {
-                                seccion.articulos.forEach(art => {
-                                    searchIndex.push({
-                                        tipo: 'ley',
-                                        ley: 'civil',
-                                        numero: art.numero,
-                                        titulo: art.titulo || '',
-                                        contenido: art.texto || '',
-                                        textoBusqueda: `codigo civil de 1984 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
-                                    });
+                        sections.forEach(seccion => {
+                            if (!Array.isArray(seccion.articulos)) return;
+                            seccion.articulos.forEach(art => {
+                                searchIndex.push({
+                                    tipo: 'ley',
+                                    normaId: norma.id,
+                                    route: norma.url,
+                                    badge: norma.searchBadge || { className: '', label: norma.menuLabel || norma.title },
+                                    numero: art.numero,
+                                    titulo: art.titulo || '',
+                                    contenido: art.texto || '',
+                                    textoBusqueda: `${norma.searchTerms || norma.title} articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
                                 });
-                            }
+                            });
                         });
-                    }
-
-                    // Indexar Código Penal
-                    if (window.CodigoPenal) {
-                        window.CodigoPenal.forEach(seccion => {
-                            if (seccion.articulos) {
-                                seccion.articulos.forEach(art => {
-                                    searchIndex.push({
-                                        tipo: 'ley',
-                                        ley: 'penal',
-                                        numero: art.numero,
-                                        titulo: art.titulo || '',
-                                        contenido: art.texto || '',
-                                        textoBusqueda: `codigo penal de 1991 articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
-                                    });
-                                });
-                            }
-                        });
-                    }
+                    });
 
                     databasesLoaded = true;
                     console.log("Autocomplete indexed successfully:", searchIndex.length, "items.");
@@ -266,9 +215,7 @@
 
                     let badgeHtml = '';
                     if (item.tipo === 'ley') {
-                        if (item.ley === 'constitucion') badgeHtml = `<span class="badge badge-const">Constitución</span>`;
-                        else if (item.ley === 'civil') badgeHtml = `<span class="badge badge-civil">Cód. Civil</span>`;
-                        else if (item.ley === 'penal') badgeHtml = `<span class="badge badge-penal">Cód. Penal</span>`;
+                        badgeHtml = `<span class="badge ${item.badge.className}">${item.badge.label}</span>`;
                     } else {
                         if (item.curso === 'laboral') badgeHtml = `<span class="badge badge-laboral">Laboral</span>`;
                         else if (item.curso === 'tributario') badgeHtml = `<span class="badge badge-tributario">Tributario</span>`;
@@ -290,9 +237,9 @@
 
                     div.addEventListener('click', () => {
                         if (item.tipo === 'ley') {
-                            window.location.hash = `#/${item.ley}?art=${encodeURIComponent(item.numero)}`;
+                            window.LNERouter.navigate(`${item.route}?art=${encodeURIComponent(item.numero)}`);
                         } else {
-                            window.location.hash = `#/${item.curso}?class=${item.id}`;
+                            window.LNERouter.navigate(`${window.LNERouter.getCourseUrl(item.curso)}?class=${item.id}`);
                         }
                         ocultarSugerencias();
                         if (input) input.value = '';
@@ -316,9 +263,9 @@
                 if (matches.length > 0) {
                     const firstMatch = matches[0];
                     if (firstMatch.tipo === 'ley') {
-                        window.location.hash = `#/${firstMatch.ley}?art=${encodeURIComponent(firstMatch.numero)}`;
+                        window.LNERouter.navigate(`${firstMatch.route}?art=${encodeURIComponent(firstMatch.numero)}`);
                     } else {
-                        window.location.hash = `#/${firstMatch.curso}?class=${firstMatch.id}`;
+                        window.LNERouter.navigate(`${window.LNERouter.getCourseUrl(firstMatch.curso)}?class=${firstMatch.id}`);
                     }
                     input.value = '';
                     ocultarSugerencias();

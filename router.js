@@ -1,66 +1,86 @@
 document.addEventListener('DOMContentLoaded', () => {
     let activeNavigation = 0;
+    const courseRoutes = [
+        { pageName: 'argumentacion', url: '/cursos/argumentacion-juridica', legacyPaths: ['/argumentacion.html', '/argumentacion'] },
+        { pageName: 'contratos', url: '/cursos/contratos', legacyPaths: ['/contratos.html', '/contratos'] },
+        { pageName: 'tributario', url: '/cursos/derecho-tributario-especial', legacyPaths: ['/tributario.html', '/tributario'] },
+        { pageName: 'laboral', url: '/cursos/derecho-laboral', legacyPaths: ['/laboral.html', '/laboral'] },
+        { pageName: 'penal-economico', url: '/cursos/derecho-penal-economico', legacyPaths: ['/penal-economico.html', '/penal-economico'] }
+    ];
+
+    function resolvePage(pathName) {
+        const cleanPath = window.LNENormas.normalizePath(pathName);
+        const norma = window.LNENormas.getByPath(cleanPath);
+
+        if (norma) {
+            return { pageName: 'codigo', norma, canonicalUrl: norma.url };
+        }
+
+        const normalizedPath = cleanPath.toLowerCase();
+        const course = courseRoutes.find(item => {
+            if (item.url === normalizedPath) return true;
+            return item.legacyPaths.includes(normalizedPath);
+        });
+        if (course) {
+            return { pageName: course.pageName, norma: null, canonicalUrl: course.url };
+        }
+
+        let pageName = cleanPath === '/' ? 'home' : cleanPath.replace(/^\//, '').replace(/\.html$/, '');
+        if (pageName === 'index') pageName = 'home';
+        if (pageName === 'home') return { pageName, norma: null, canonicalUrl: '/' };
+        return { pageName, norma: null, canonicalUrl: cleanPath };
+    }
+
+    function navigate(targetPath) {
+        const targetUrl = new URL(targetPath, document.baseURI);
+        const route = resolvePage(targetUrl.pathname);
+        const destination = `${route.canonicalUrl}${targetUrl.search}${targetUrl.hash}`;
+
+        history.pushState(null, '', destination);
+        loadPage(destination);
+    }
+
+    function getCourseUrl(pageName) {
+        return courseRoutes.find(course => course.pageName === pageName)?.url || `/${pageName}`;
+    }
+
+    function renderLegislationMenu() {
+        const menu = document.getElementById('legislacion-menu');
+        if (!menu) return;
+
+        menu.replaceChildren(...window.LNENormas.all.map(norma => {
+            const link = document.createElement('a');
+            link.href = norma.url;
+            link.textContent = norma.menuLabel || norma.title;
+            return link;
+        }));
+    }
 
     // Interceptar clicks en enlaces para la navegación SPA
     function bindLinks() {
         const links = document.querySelectorAll('a');
         links.forEach(link => {
             const href = link.getAttribute('href');
-            // Verificar si el enlace es una página HTML interna
-            if (href && (href.endsWith('.html') || href === 'index.html' || href === '/' || href.startsWith('/'))) {
-                // Omitir enlaces externos
-                if (href.startsWith('http') && !href.startsWith(window.location.origin)) {
-                    return;
+            if (href && !link.dataset.lneRouterBound) {
+                const targetUrl = new URL(href, document.baseURI);
+                const isInternal = targetUrl.origin === window.location.origin;
+                const isRoutable = href.endsWith('.html') || href === 'index.html' || href === '/' || href.startsWith('/');
+
+                if (isInternal && isRoutable) {
+                    link.dataset.lneRouterBound = 'true';
+                    link.addEventListener('click', e => {
+                        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                        if (link.target && link.target !== '_self') return;
+
+                        e.preventDefault();
+                        navigate(href);
+                    });
                 }
-                
-                // Evitar enlazar múltiples veces clonando el nodo
-                const newLink = link.cloneNode(true);
-                link.parentNode.replaceChild(newLink, link);
-                
-                newLink.addEventListener('click', e => {
-                    e.preventDefault();
-                    let targetPath = href;
-                    if (targetPath === 'index.html') targetPath = '/';
-                    if (!targetPath.startsWith('/')) targetPath = '/' + targetPath;
-                    
-                    history.pushState(null, "", targetPath);
-                    loadPage(targetPath);
-                });
             }
         });
     }
 
     // Ejecutar scripts de forma secuencial respetando el orden y la carga de archivos externos
-    function getDataScriptName(src) {
-        if (!src) return null;
-
-        const path = new URL(src, window.location.origin).pathname;
-        if (path.endsWith('/civil.js')) return 'civil';
-        if (path.endsWith('/penal.js')) return 'penal';
-        if (path.endsWith('/constitucion.js')) return 'constitucion';
-        return null;
-    }
-
-    function isDataScriptReady(dataScriptName) {
-        if (dataScriptName === 'civil') return typeof CodigoCivil !== 'undefined';
-        if (dataScriptName === 'penal') return typeof CodigoPenal !== 'undefined';
-        if (dataScriptName === 'constitucion') return typeof Constitucion !== 'undefined';
-        return false;
-    }
-
-    function showDataLoadError() {
-        const container = document.getElementById('contenedor-leyes');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div style="background:#fff; padding:30px; margin-top:30px; text-align:center; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
-                <p style="margin:0 0 15px; color:#1b263b;">No se pudieron cargar los artículos.</p>
-                <button type="button" onclick="window.location.reload()" style="border:0; border-radius:4px; padding:10px 18px; background:#1b263b; color:#fff; cursor:pointer;">
-                    Reintentar
-                </button>
-            </div>`;
-    }
-
     function executeScriptsSequentially(scripts, index, callback, navigationId) {
         if (navigationId !== activeNavigation) return;
 
@@ -71,68 +91,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const oldScript = scripts[index];
         const src = oldScript.getAttribute('src');
-        const dataScriptName = getDataScriptName(src);
-
-        // Evitar recargar las bases de datos gigantes si ya están en memoria (evita SyntaxError de const redeclaration)
-        if (dataScriptName && isDataScriptReady(dataScriptName)) {
-            console.log(`${dataScriptName}.js ya está cargado en memoria. Omitiendo recarga.`);
-            executeScriptsSequentially(scripts, index + 1, callback, navigationId);
-            return;
-        }
 
         if (src) {
             oldScript.remove();
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(attr => {
+                newScript.setAttribute(attr.name, attr.value);
+            });
 
-            const loadExternalScript = attempt => {
-                if (navigationId !== activeNavigation) return;
-
-                const newScript = document.createElement('script');
-                Array.from(oldScript.attributes).forEach(attr => {
-                    newScript.setAttribute(attr.name, attr.value);
-                });
-
-                if (attempt > 0) {
-                    const retryUrl = new URL(src, window.location.href);
-                    retryUrl.searchParams.set('retry', Date.now().toString());
-                    newScript.src = retryUrl.href;
-                }
-
-                const handleFailure = () => {
-                    newScript.remove();
-
-                    if (dataScriptName && isDataScriptReady(dataScriptName)) {
-                        executeScriptsSequentially(scripts, index + 1, callback, navigationId);
-                        return;
-                    }
-
-                    if (dataScriptName && attempt === 0) {
-                        loadExternalScript(1);
-                        return;
-                    }
-
-                    console.error(`Error cargando el script externo: ${newScript.src}`);
-                    if (dataScriptName) {
-                        showDataLoadError();
-                        return;
-                    }
-
-                    executeScriptsSequentially(scripts, index + 1, callback, navigationId);
-                };
-
-                newScript.onload = () => {
-                    if (dataScriptName && !isDataScriptReady(dataScriptName)) {
-                        handleFailure();
-                        return;
-                    }
-
-                    newScript.remove();
-                    executeScriptsSequentially(scripts, index + 1, callback, navigationId);
-                };
-                newScript.onerror = handleFailure;
-                document.body.appendChild(newScript);
+            newScript.onload = () => {
+                newScript.remove();
+                executeScriptsSequentially(scripts, index + 1, callback, navigationId);
             };
-
-            loadExternalScript(0);
+            newScript.onerror = () => {
+                console.error(`Error cargando el script externo: ${newScript.src}`);
+                newScript.remove();
+                executeScriptsSequentially(scripts, index + 1, callback, navigationId);
+            };
+            document.body.appendChild(newScript);
         } else {
             const newScript = document.createElement('script');
 
@@ -160,10 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const parts = pathName.split('?');
         const cleanPath = parts[0].split('#')[0];
 
-        let pageName = cleanPath === '/' ? 'home' : cleanPath.replace(/^\//, '').replace(/\.html$/, '');
-        if (pageName === 'index') pageName = 'home';
-        
-        const pageUrl = `/pages/${pageName}.html`;
+        const route = resolvePage(cleanPath);
+        window.LNEActiveNorm = route.norma;
+
+        const pageUrl = `/pages/${route.pageName}.html`;
         const appContent = document.getElementById('app-content');
         
         // Mostrar spinner de carga
@@ -208,10 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Manejar botones de atrás/adelante del navegador
     window.addEventListener('popstate', () => {
-        loadPage(window.location.pathname);
+        loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
     });
 
-    // Inicializar SPA
+    window.LNERouter = Object.freeze({ navigate, getCourseUrl });
+
+    renderLegislationMenu();
     bindLinks();
-    loadPage(window.location.pathname);
+    loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
 });

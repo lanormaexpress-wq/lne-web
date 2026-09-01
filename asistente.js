@@ -121,19 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
      * utilizando el mensaje del usuario para filtrar el contexto si es una ley muy grande.
      */
     async function obtenerContextoLey(mensajeUsuario = "") {
-        // 1. Identificar si estamos en la página de legislación correspondiente y tenemos las bases de datos cargadas
-        const pathname = window.location.pathname.toLowerCase();
-        const isCivilPage = pathname.includes('civil');
-        const isPenalPage = pathname.includes('penal') && !pathname.includes('penal-economico');
-        const isConstitucionPage = pathname.includes('constitucion');
-
-        const activeCivil = (isCivilPage && typeof CodigoCivil !== 'undefined') ? CodigoCivil : undefined;
-        const activePenal = (isPenalPage && typeof CodigoPenal !== 'undefined') ? CodigoPenal : undefined;
-        const activeConstitucion = (isConstitucionPage && typeof Constitucion !== 'undefined') ? Constitucion : undefined;
+        // 1. Identificar la norma activa mediante el registro central
+        const activeNorm = window.LNEActiveNorm
+            || (window.LNENormas ? window.LNENormas.getByPath(window.location.pathname) : null);
+        const activeNormData = activeNorm && window.LNENormas
+            ? window.LNENormas.captureData(activeNorm)
+            : undefined;
 
         // Si es una página con gran volumen de datos estructurados
-        if (activeCivil || activePenal || activeConstitucion) {
-            const leyEstructurada = activeCivil || activePenal || activeConstitucion;
+        if (activeNormData) {
+            const leyEstructurada = activeNormData;
             
             // Si la consulta del usuario es vacía o es corta, devolvemos un resumen inicial
             if (!mensajeUsuario.trim()) {
