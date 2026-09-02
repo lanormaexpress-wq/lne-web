@@ -4,7 +4,7 @@ const CACHE_NAME = 'lne-cache-v6';
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=2.4',
+    '/style.css?v=2.7',
     '/asistente.js?v=2.2',
     '/normas.js?v=1',
     '/formacion.js?v=2',
