@@ -1,0 +1,27 @@
+<main class="formacion-page">
+    <section class="formacion-directory">
+        <div class="formacion-heading">
+            <span class="formacion-kicker">La Norma Express</span>
+            <h1>Formación Jurídica</h1>
+            <p>Selecciona un área para explorar sus cursos.</p>
+        </div>
+        <div id="formacion-area-grid" class="formacion-area-grid"></div>
+    </section>
+</main>
+
+<div id="formacion-area-modal" class="curso-modal-overlay formacion-area-modal" aria-hidden="true">
+    <div class="curso-modal-content formacion-area-modal-content" role="dialog" aria-modal="true" aria-labelledby="formacion-area-title">
+        <button id="formacion-area-close" class="curso-modal-close" type="button" aria-label="Cerrar área">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="formacion-area-modal-header">
+            <h2 id="formacion-area-title"></h2>
+            <p id="formacion-area-description"></p>
+        </div>
+        <div id="formacion-area-courses" class="formacion-course-grid"></div>
+    </div>
+</div>
+
+<script>
+    window.LNEFormacionUI.mountDirectory();
+</script>

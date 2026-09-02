@@ -1,0 +1,23 @@
+<main class="formacion-page">
+    <section class="formacion-course-shell">
+        <a href="/formacion" class="formacion-back-link"><i class="fa-solid fa-arrow-left"></i> Formación Jurídica</a>
+        <div class="formacion-course-heading">
+            <h1 id="formacion-course-title"></h1>
+            <p id="formacion-course-description"></p>
+        </div>
+        <div id="formacion-course-content"></div>
+    </section>
+</main>
+
+<div id="formacion-topic-modal" class="curso-modal-overlay" aria-hidden="true">
+    <div class="curso-modal-content" role="dialog" aria-modal="true">
+        <button id="formacion-topic-modal-close" class="curso-modal-close" type="button" aria-label="Cerrar contenido">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="formacion-topic-modal-body"></div>
+    </div>
+</div>
+
+<script>
+    window.LNEFormacionUI.mountCourse();
+</script>

@@ -1,15 +1,22 @@
-const CACHE_NAME = 'lne-cache-v4';
+const CACHE_NAME = 'lne-cache-v6';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=2.2',
+    '/style.css?v=2.4',
     '/asistente.js?v=2.2',
     '/normas.js?v=1',
+    '/formacion.js?v=2',
     '/legislacion.js?v=1',
-    '/router.js?v=5',
+    '/formacion-ui.js?v=2',
+    '/router.js?v=7',
+    '/manifest.json',
+    '/pages/home.html',
     '/pages/codigo.html',
+    '/pages/formacion.html',
+    '/pages/curso.html',
+    '/assets/iconos/formacion.svg',
     '/assets/imagenes/logo.png',
     '/assets/imagenes/logo4.png',
     '/assets/imagenes/logo5.png'
@@ -63,7 +70,12 @@ self.addEventListener('fetch', event => {
                         }
                         return networkResponse;
                     })
-                    .catch(() => cache.match(event.request));
+                    .catch(async () => {
+                        const cachedResponse = await cache.match(event.request);
+                        if (cachedResponse) return cachedResponse;
+                        if (event.request.mode === 'navigate') return cache.match('/index.html');
+                        return Response.error();
+                    });
             })
         );
         return;

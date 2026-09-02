@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const normas = require('./normas');
+const formacion = require('./formacion');
 require('dotenv').config();
 
 const app = express();
@@ -29,22 +30,18 @@ app.use((req, res, next) => {
 // Mantener compatibles los enlaces públicos anteriores mediante redirecciones permanentes.
 const legacyRedirects = new Map([
     ['/index.html', '/'],
-    ['/home.html', '/'],
-    ['/argumentacion.html', '/cursos/argumentacion-juridica'],
-    ['/argumentacion', '/cursos/argumentacion-juridica'],
-    ['/contratos.html', '/cursos/contratos'],
-    ['/contratos', '/cursos/contratos'],
-    ['/tributario.html', '/cursos/derecho-tributario-especial'],
-    ['/tributario', '/cursos/derecho-tributario-especial'],
-    ['/laboral.html', '/cursos/derecho-laboral'],
-    ['/laboral', '/cursos/derecho-laboral'],
-    ['/penal-economico.html', '/cursos/derecho-penal-economico'],
-    ['/penal-economico', '/cursos/derecho-penal-economico']
+    ['/home.html', '/']
 ]);
 
 normas.forEach(norma => {
     (norma.legacyPaths || []).forEach(legacyPath => {
         legacyRedirects.set(legacyPath.toLowerCase(), norma.url);
+    });
+});
+
+formacion.courses.forEach(course => {
+    course.legacyPaths.forEach(legacyPath => {
+        legacyRedirects.set(legacyPath.toLowerCase(), course.route);
     });
 });
 

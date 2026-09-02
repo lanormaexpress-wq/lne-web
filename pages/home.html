@@ -22,8 +22,16 @@
 
     <script>
         {
-            let searchIndex = [];
-            let databasesLoaded = false;
+            const SEARCH_SUGGESTION_LIMIT = 5;
+            const SEARCH_DEBOUNCE_MS = 120;
+            let visibleResults = [];
+            let activeResultIndex = -1;
+            let debounceTimer = null;
+
+            if (window.LNEHomeSearchController) window.LNEHomeSearchController.abort();
+            const searchController = new AbortController();
+            window.LNEHomeSearchController = searchController;
+            const { signal } = searchController;
 
             const legislationCards = document.getElementById('legislacion-home-cards');
             if (legislationCards) {
@@ -43,246 +51,192 @@
                 });
             }
 
-            async function loadSearchDatabases() {
-                if (databasesLoaded) return;
-                try {
-                    // Cargar JSON de cursos
-                    const [laboral, tributario, penal] = await Promise.all([
-                        fetch('data/laboral.json').then(r => r.json()).catch(() => []),
-                        fetch('data/tributario.json').then(r => r.json()).catch(() => []),
-                        fetch('data/penal.json').then(r => r.json()).catch(() => [])
-                    ]);
-
-                    // Contratos estáticos
-                    const contratos = [
-                        { id: 1, titulo: "Teoría General del Contrato", contenido: "El contrato es un acuerdo de voluntades entre dos o más partes que produce consecuencias jurídicas." },
-                        { id: 2, titulo: "Contrato de Compraventa", contenido: "Análisis exhaustivo del contrato de compraventa, sus características, obligaciones del vendedor y del comprador." },
-                        { id: 3, titulo: "Contrato de Arrendamiento", contenido: "Estudio detallado del arrendamiento. Derechos y obligaciones del arrendador y arrendatario, resolución de contrato." },
-                        { id: 4, titulo: "Prestación de Servicios", contenido: "Régimen legal aplicable a la locación de servicios, diferencias con el contrato de trabajo, honorarios." },
-                        { id: 5, titulo: "Contrato de Obra", contenido: "Reglas principales sobre la ejecución de obras, la responsabilidad del contratista, plazos y riesgos." },
-                        { id: 6, titulo: "Contratos Modernos", contenido: "Módulo sobre contratos atípicos: Leasing, Factoring, Franchising, Joint Venture y Know How." }
-                    ];
-
-                    // Insertar cursos en índice
-                    laboral.forEach(c => searchIndex.push({
-                        tipo: 'curso',
-                        curso: 'laboral',
-                        id: c.id,
-                        titulo: c.titulo,
-                        contenido: c.contenido || '',
-                        textoBusqueda: `curso de laboral - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
-                    }));
-
-                    tributario.forEach(c => searchIndex.push({
-                        tipo: 'curso',
-                        curso: 'tributario',
-                        id: c.id,
-                        titulo: c.titulo,
-                        contenido: c.contenido || '',
-                        textoBusqueda: `curso de tributario especial - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
-                    }));
-
-                    penal.forEach(c => searchIndex.push({
-                        tipo: 'curso',
-                        curso: 'penal-economico',
-                        id: c.id,
-                        titulo: c.titulo,
-                        contenido: c.contenido || '',
-                        textoBusqueda: `curso de penal economico - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
-                    }));
-
-                    contratos.forEach(c => searchIndex.push({
-                        tipo: 'curso',
-                        curso: 'contratos',
-                        id: c.id,
-                        titulo: c.titulo,
-                        contenido: c.contenido || '',
-                        textoBusqueda: `curso de contratos - ${c.titulo} - ${c.contenido || ''}`.toLowerCase()
-                    }));
-
-                    // Cargar e indexar las normas registradas centralmente
-                    const registeredNorms = window.LNENormas.all;
-                    const normData = await Promise.all(
-                        registeredNorms.map(norma => window.LNELegislacion.loadNormData(norma))
-                    );
-
-                    registeredNorms.forEach((norma, index) => {
-                        const sections = normData[index];
-                        if (!Array.isArray(sections)) return;
-
-                        sections.forEach(seccion => {
-                            if (!Array.isArray(seccion.articulos)) return;
-                            seccion.articulos.forEach(art => {
-                                searchIndex.push({
-                                    tipo: 'ley',
-                                    normaId: norma.id,
-                                    route: norma.url,
-                                    badge: norma.searchBadge || { className: '', label: norma.menuLabel || norma.title },
-                                    numero: art.numero,
-                                    titulo: art.titulo || '',
-                                    contenido: art.texto || '',
-                                    textoBusqueda: `${norma.searchTerms || norma.title} articulo ${art.numero} ${art.titulo || ''} ${art.texto || ''}`.toLowerCase()
-                                });
-                            });
-                        });
-                    });
-
-                    databasesLoaded = true;
-                    console.log("Autocomplete indexed successfully:", searchIndex.length, "items.");
-                } catch (err) {
-                    console.error("Error cargando bases de datos de búsqueda:", err);
-                }
+            function normalizeSearchText(value) {
+                return String(value || '')
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .trim();
             }
+
+            function plainText(value) {
+                return String(value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+
+            const searchIndex = [
+                ...window.LNENormas.all.map(norma => {
+                    const name = plainText(norma.documentHeading || norma.menuLabel || norma.title);
+                    return {
+                        type: 'norma',
+                        name,
+                        normalizedName: normalizeSearchText(name),
+                        aliases: [norma.title, norma.menuLabel, norma.searchTerms, norma.id, norma.slug, ...(norma.legacyPaths || [])]
+                            .map(normalizeSearchText)
+                            .filter(Boolean),
+                        route: norma.url
+                    };
+                }),
+                ...window.LNEFormacion.courses.map(course => ({
+                    type: 'curso',
+                    name: course.name,
+                    normalizedName: normalizeSearchText(course.name),
+                    aliases: [course.id, course.slug, ...(course.legacyPaths || [])]
+                        .map(normalizeSearchText)
+                        .filter(Boolean),
+                    route: course.route
+                }))
+            ];
 
             const input = document.getElementById('buscador-principal');
             const suggestionsBox = document.getElementById('buscador-sugerencias');
             const btnBuscar = document.getElementById('btn-buscar-principal');
 
-            if (input) {
-                // Iniciar carga en background a los 500ms
-                setTimeout(loadSearchDatabases, 500);
-
-                input.addEventListener('focus', loadSearchDatabases);
-                input.addEventListener('input', () => {
-                    const query = input.value.trim();
-                    if (query.length < 2) {
-                        ocultarSugerencias();
-                        return;
-                    }
-                    if (!databasesLoaded) {
-                        loadSearchDatabases();
-                        return;
-                    }
-                    buscarYMostrar(query);
-                });
-
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        ejecutarBusqueda();
-                    }
-                });
+            if (input && suggestionsBox) {
+                input.setAttribute('role', 'combobox');
+                input.setAttribute('aria-autocomplete', 'list');
+                input.setAttribute('aria-controls', 'buscador-sugerencias');
+                input.setAttribute('aria-expanded', 'false');
+                suggestionsBox.setAttribute('role', 'listbox');
             }
 
-            if (btnBuscar) {
-                btnBuscar.addEventListener('click', ejecutarBusqueda);
+            function nameRelevance(normalizedName, query) {
+                if (normalizedName === query) return 0;
+                if (normalizedName.startsWith(query)) return 100 + normalizedName.length;
+
+                const words = normalizedName.split(' ');
+                const wordIndex = words.findIndex(word => word.startsWith(query));
+                if (wordIndex >= 0) return 200 + wordIndex * 10 + normalizedName.length;
+
+                const containedAt = normalizedName.indexOf(query);
+                if (containedAt >= 0) return 300 + containedAt + normalizedName.length;
+                return Number.POSITIVE_INFINITY;
             }
 
-            function buscarYMostrar(query) {
-                const cleanQuery = query.toLowerCase().trim();
-                const tokens = cleanQuery.split(/\s+/);
-                
-                // Buscar coincidencia por número de artículo específico si se escribe "articulo X"
-                let artNumMatch = cleanQuery.match(/^(?:articulo|artículo|art\.?)\s+(\w+)/i);
-                let targetArtNum = artNumMatch ? artNumMatch[1] : null;
+            function itemRelevance(item, query) {
+                const primaryScore = nameRelevance(item.normalizedName, query);
+                if (Number.isFinite(primaryScore)) return primaryScore;
 
-                const matches = searchIndex.filter(item => {
-                    if (targetArtNum && item.tipo === 'ley') {
-                        return item.numero.toLowerCase() === targetArtNum.toLowerCase();
-                    }
-                    return tokens.every(token => item.textoBusqueda.includes(token));
-                });
-
-                // Ordenar: artículos exactos o coincidencias en título primero
-                matches.sort((a, b) => {
-                    if (targetArtNum) {
-                        const aMatch = a.numero && a.numero.toLowerCase() === targetArtNum.toLowerCase();
-                        const bMatch = b.numero && b.numero.toLowerCase() === targetArtNum.toLowerCase();
-                        if (aMatch && !bMatch) return -1;
-                        if (!aMatch && bMatch) return 1;
-                    }
-                    const aTitleMatch = a.titulo.toLowerCase().includes(cleanQuery);
-                    const bTitleMatch = b.titulo.toLowerCase().includes(cleanQuery);
-                    if (aTitleMatch && !bTitleMatch) return -1;
-                    if (!aTitleMatch && bTitleMatch) return 1;
-                    return 0;
-                });
-
-                renderSuggestions(matches);
+                const aliasScore = item.aliases.reduce((best, alias) => {
+                    return Math.min(best, nameRelevance(alias, query));
+                }, Number.POSITIVE_INFINITY);
+                return Number.isFinite(aliasScore) ? 1000 + aliasScore : aliasScore;
             }
 
-            function renderSuggestions(matches) {
-                if (!suggestionsBox) return;
-                if (matches.length === 0) {
-                    suggestionsBox.innerHTML = `<div class="sugerencia-sin-resultados">No se encontraron resultados para tu búsqueda.</div>`;
-                    suggestionsBox.style.display = 'block';
+            function findResults(query) {
+                const normalizedQuery = normalizeSearchText(query);
+                if (!normalizedQuery) return [];
+
+                return searchIndex
+                    .map(item => ({ item, score: itemRelevance(item, normalizedQuery) }))
+                    .filter(result => Number.isFinite(result.score))
+                    .sort((a, b) => a.score - b.score || a.item.name.localeCompare(b.item.name, 'es', { sensitivity: 'base' }))
+                    .slice(0, SEARCH_SUGGESTION_LIMIT)
+                    .map(result => result.item);
+            }
+
+            function updateActiveResult(nextIndex) {
+                const rows = Array.from(suggestionsBox.querySelectorAll('.sugerencia-item'));
+                if (!rows.length) {
+                    activeResultIndex = -1;
                     return;
                 }
 
-                suggestionsBox.innerHTML = '';
-                matches.slice(0, 10).forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'sugerencia-item';
+                activeResultIndex = (nextIndex + rows.length) % rows.length;
+                rows.forEach((row, index) => {
+                    const active = index === activeResultIndex;
+                    row.classList.toggle('is-active', active);
+                    row.setAttribute('aria-selected', String(active));
+                });
+                input.setAttribute('aria-activedescendant', rows[activeResultIndex].id);
+            }
 
-                    let badgeHtml = '';
-                    if (item.tipo === 'ley') {
-                        badgeHtml = `<span class="badge ${item.badge.className}">${item.badge.label}</span>`;
-                    } else {
-                        if (item.curso === 'laboral') badgeHtml = `<span class="badge badge-laboral">Laboral</span>`;
-                        else if (item.curso === 'tributario') badgeHtml = `<span class="badge badge-tributario">Tributario</span>`;
-                        else if (item.curso === 'penal-economico') badgeHtml = `<span class="badge badge-penal-eco">Penal Eco.</span>`;
-                        else if (item.curso === 'contratos') badgeHtml = `<span class="badge badge-contratos">Contratos</span>`;
-                    }
+            function hideSuggestions() {
+                visibleResults = [];
+                activeResultIndex = -1;
+                suggestionsBox.replaceChildren();
+                suggestionsBox.style.display = 'none';
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+            }
 
-                    let titleText = item.tipo === 'ley' ? `Artículo ${item.numero}: ${item.titulo}` : item.titulo;
-                    let rawContent = item.contenido.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-                    let snippet = rawContent.substring(0, 85) + (rawContent.length > 85 ? '...' : '');
+            function openResult(item) {
+                if (!item) return;
+                input.value = '';
+                hideSuggestions();
+                window.LNERouter.navigate(item.route);
+            }
 
-                    div.innerHTML = `
-                        <div class="sugerencia-header">
-                            ${badgeHtml}
-                            <span class="sugerencia-titulo">${titleText}</span>
-                        </div>
-                        <div class="sugerencia-snippet">${snippet}</div>
-                    `;
+            function renderSuggestions(results) {
+                visibleResults = results;
+                suggestionsBox.replaceChildren();
+                activeResultIndex = -1;
 
-                    div.addEventListener('click', () => {
-                        if (item.tipo === 'ley') {
-                            window.LNERouter.navigate(`${item.route}?art=${encodeURIComponent(item.numero)}`);
-                        } else {
-                            window.LNERouter.navigate(`${window.LNERouter.getCourseUrl(item.curso)}?class=${item.id}`);
-                        }
-                        ocultarSugerencias();
-                        if (input) input.value = '';
-                    });
+                if (!results.length) {
+                    hideSuggestions();
+                    return;
+                }
 
-                    suggestionsBox.appendChild(div);
+                results.forEach((item, index) => {
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.id = `buscador-opcion-${index}`;
+                    row.className = 'sugerencia-item';
+                    row.setAttribute('role', 'option');
+                    row.setAttribute('aria-selected', 'false');
+                    row.textContent = item.name;
+                    row.addEventListener('mouseenter', () => updateActiveResult(index), { signal });
+                    row.addEventListener('click', () => openResult(item), { signal });
+                    suggestionsBox.appendChild(row);
                 });
 
                 suggestionsBox.style.display = 'block';
+                input.setAttribute('aria-expanded', 'true');
             }
 
-            function ejecutarBusqueda() {
-                if (!input) return;
-                const query = input.value.trim();
-                if (!query) return;
+            function refreshSuggestions() {
+                renderSuggestions(findResults(input.value));
+            }
 
-                const cleanQuery = query.toLowerCase();
-                const tokens = cleanQuery.split(/\s+/);
-
-                const matches = searchIndex.filter(item => tokens.every(token => item.textoBusqueda.includes(token)));
-                if (matches.length > 0) {
-                    const firstMatch = matches[0];
-                    if (firstMatch.tipo === 'ley') {
-                        window.LNERouter.navigate(`${firstMatch.route}?art=${encodeURIComponent(firstMatch.numero)}`);
-                    } else {
-                        window.LNERouter.navigate(`${window.LNERouter.getCourseUrl(firstMatch.curso)}?class=${firstMatch.id}`);
-                    }
-                    input.value = '';
-                    ocultarSugerencias();
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                if (!normalizeSearchText(input.value)) {
+                    hideSuggestions();
+                    return;
                 }
-            }
+                debounceTimer = setTimeout(refreshSuggestions, SEARCH_DEBOUNCE_MS);
+            }, { signal });
 
-            function ocultarSugerencias() {
-                if (suggestionsBox) {
-                    suggestionsBox.style.display = 'none';
+            input.addEventListener('focus', () => {
+                if (normalizeSearchText(input.value)) refreshSuggestions();
+            }, { signal });
+
+            input.addEventListener('keydown', event => {
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    if (!visibleResults.length) refreshSuggestions();
+                    if (visibleResults.length) updateActiveResult(activeResultIndex + 1);
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    if (!visibleResults.length) refreshSuggestions();
+                    if (visibleResults.length) updateActiveResult(activeResultIndex < 0 ? visibleResults.length - 1 : activeResultIndex - 1);
+                } else if (event.key === 'Enter' && activeResultIndex >= 0) {
+                    event.preventDefault();
+                    openResult(visibleResults[activeResultIndex]);
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    hideSuggestions();
                 }
-            }
+            }, { signal });
 
-            document.addEventListener('click', (e) => {
+            btnBuscar.addEventListener('click', () => {
+                const [firstResult] = findResults(input.value);
+                if (firstResult) openResult(firstResult);
+            }, { signal });
+
+            document.addEventListener('click', event => {
                 const searchBox = document.querySelector('.search-box');
-                if (searchBox && !searchBox.contains(e.target)) {
-                    ocultarSugerencias();
-                }
-            });
+                if (searchBox && !searchBox.contains(event.target)) hideSuggestions();
+            }, { signal });
         }
     </script>

@@ -1,12 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     let activeNavigation = 0;
-    const courseRoutes = [
-        { pageName: 'argumentacion', url: '/cursos/argumentacion-juridica', legacyPaths: ['/argumentacion.html', '/argumentacion'] },
-        { pageName: 'contratos', url: '/cursos/contratos', legacyPaths: ['/contratos.html', '/contratos'] },
-        { pageName: 'tributario', url: '/cursos/derecho-tributario-especial', legacyPaths: ['/tributario.html', '/tributario'] },
-        { pageName: 'laboral', url: '/cursos/derecho-laboral', legacyPaths: ['/laboral.html', '/laboral'] },
-        { pageName: 'penal-economico', url: '/cursos/derecho-penal-economico', legacyPaths: ['/penal-economico.html', '/penal-economico'] }
-    ];
 
     function resolvePage(pathName) {
         const cleanPath = window.LNENormas.normalizePath(pathName);
@@ -16,19 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return { pageName: 'codigo', norma, canonicalUrl: norma.url };
         }
 
-        const normalizedPath = cleanPath.toLowerCase();
-        const course = courseRoutes.find(item => {
-            if (item.url === normalizedPath) return true;
-            return item.legacyPaths.includes(normalizedPath);
-        });
+        const course = window.LNEFormacion.getCourseByPath(cleanPath);
         if (course) {
-            return { pageName: course.pageName, norma: null, canonicalUrl: course.url };
+            return { pageName: 'curso', norma: null, course, area: null, canonicalUrl: course.route };
+        }
+
+        const area = window.LNEFormacion.getAreaByPath(cleanPath);
+        if (area) {
+            return { pageName: 'formacion', norma: null, course: null, area, canonicalUrl: area.route };
+        }
+
+        if (cleanPath.toLowerCase() === '/formacion') {
+            return { pageName: 'formacion', norma: null, course: null, area: null, canonicalUrl: '/formacion' };
         }
 
         let pageName = cleanPath === '/' ? 'home' : cleanPath.replace(/^\//, '').replace(/\.html$/, '');
         if (pageName === 'index') pageName = 'home';
-        if (pageName === 'home') return { pageName, norma: null, canonicalUrl: '/' };
-        return { pageName, norma: null, canonicalUrl: cleanPath };
+        if (pageName === 'home') return { pageName, norma: null, course: null, area: null, canonicalUrl: '/' };
+        return { pageName, norma: null, course: null, area: null, canonicalUrl: cleanPath };
     }
 
     function navigate(targetPath) {
@@ -40,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPage(destination);
     }
 
-    function getCourseUrl(pageName) {
-        return courseRoutes.find(course => course.pageName === pageName)?.url || `/${pageName}`;
+    function getCourseUrl(courseId) {
+        return window.LNEFormacion.getCourseById(courseId)?.route || `/formacion/${courseId}`;
     }
 
     function renderLegislationMenu() {
@@ -52,6 +50,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const link = document.createElement('a');
             link.href = norma.url;
             link.textContent = norma.menuLabel || norma.title;
+            return link;
+        }));
+    }
+
+    function renderFormationMenu() {
+        const menu = document.getElementById('formacion-menu');
+        if (!menu) return;
+
+        menu.replaceChildren(...window.LNEFormacion.areas.map(area => {
+            const link = document.createElement('a');
+            link.href = area.route;
+            link.textContent = area.name;
             return link;
         }));
     }
@@ -130,6 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const navigationId = ++activeNavigation;
 
         // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
+        if (window.LNEHomeSearchController) {
+            window.LNEHomeSearchController.abort();
+            window.LNEHomeSearchController = null;
+        }
+        if (window.LNEFormacionUI) window.LNEFormacionUI.unmount();
         document.body.style.overflow = '';
 
         // Separar la ruta limpia de los parámetros de consulta y hashes (?class=3, #etc)
@@ -138,6 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const route = resolvePage(cleanPath);
         window.LNEActiveNorm = route.norma;
+        window.LNEActiveCourse = route.course || null;
+        window.LNEActiveFormationArea = route.area || null;
 
         const pageUrl = `/pages/${route.pageName}.html`;
         const appContent = document.getElementById('app-content');
@@ -190,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.LNERouter = Object.freeze({ navigate, getCourseUrl });
 
     renderLegislationMenu();
+    renderFormationMenu();
     bindLinks();
     loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
 });

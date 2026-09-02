@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="area-fundamentos" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 18h18a8 8 0 0 1 8 8v25H20a8 8 0 0 0-8 8z"/><path d="M52 18H38v33h6a8 8 0 0 1 8 8z"/><path d="M32 9v9"/><path d="m27 12 5-5 5 5"/>
+    </symbol>
+    <symbol id="area-civil" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 54h48M13 49h38M17 24v25m10-25v25m10-25v25m10-25v25M10 24h44L32 8z"/>
+    </symbol>
+    <symbol id="area-publico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 7 53 17v14c0 14-9 23-21 27C20 54 11 45 11 31V17z"/><path d="M21 30h22M25 30v13m7-13v13m7-13v13M21 43h22M32 16l7 7H25z"/>
+    </symbol>
+    <symbol id="area-penal" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 48 22-22m-8-8 14 14M21 13l24 24M36 43l15 15M8 52l4 4"/><rect x="8" y="50" width="18" height="7" rx="2"/>
+    </symbol>
+    <symbol id="area-procesal" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 12h30l8 8v36H13z"/><path d="M43 12v9h8M21 29h22M21 37h22M21 45h13"/><circle cx="48" cy="46" r="8"/><path d="m54 52 5 5"/>
+    </symbol>
+    <symbol id="area-empresarial" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="20" width="48" height="34" rx="3"/><path d="M23 20v-6h18v6M8 32h48M26 32v5h12v-5"/><path d="M17 43h10m10 0h10"/>
+    </symbol>
+    <symbol id="area-practica" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="25" cy="25" r="14"/><path d="m35 35 16 16M17 25l5 5 11-12M45 13v13m-6-6h13"/>
+    </symbol>
+
+    <symbol id="introduccion-derecho" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 14h18a7 7 0 0 1 7 7v34H17a7 7 0 0 0-7 7zM54 14H35v41h12a7 7 0 0 1 7 7z"/><path d="M22 27h7m-7 8h7m12-8h7m-7 8h7"/>
+    </symbol>
+    <symbol id="historia-derecho-romano" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 54h46M14 49h36M18 24v25m9-25v25m10-25v25m9-25v25M13 24h38L32 8z"/><path d="M24 17h16"/>
+    </symbol>
+    <symbol id="filosofia-derecho" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 29a13 13 0 1 1 22 9c-4 3-5 6-5 10H26c0-4-1-7-5-10a13 13 0 0 1 0-9zM27 54h10M28 48h8"/><path d="M26 28h12M32 22v12"/>
+    </symbol>
+    <symbol id="ciencia-politica" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 53h48M12 48h40M16 25v23m11-23v23m10-23v23m11-23v23M11 25h42L32 8z"/><circle cx="32" cy="17" r="3"/>
+    </symbol>
+    <symbol id="derecho-personas" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="32" cy="19" r="10"/><path d="M13 55c2-14 9-21 19-21s17 7 19 21z"/><path d="M26 45h12"/>
+    </symbol>
+    <symbol id="instituciones-civil" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 54h46M13 49h38M17 25v24m10-24v24m10-24v24m10-24v24M11 25h42L32 9z"/><path d="M28 18h8"/>
+    </symbol>
+    <symbol id="acto-juridico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 8h27l10 10v38H13zM40 8v11h10"/><path d="M21 29h18M21 37h12M21 46c8-5 13-5 20 0"/><path d="m40 39 12-12 4 4-12 12z"/>
+    </symbol>
+    <symbol id="familia-sucesiones" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="21" cy="22" r="7"/><circle cx="43" cy="22" r="7"/><circle cx="32" cy="35" r="5"/><path d="M8 52c1-11 6-17 13-17 4 0 7 2 9 5m26 12c-1-11-6-17-13-17-4 0-7 2-9 5M23 56c1-9 4-14 9-14s8 5 9 14"/>
+    </symbol>
+    <symbol id="derechos-reales" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m9 30 23-19 23 19M15 27v29h34V27M27 56V39h10v17"/><circle cx="49" cy="42" r="5"/><path d="m45 46-8 8m4-4 3 3"/>
+    </symbol>
+    <symbol id="obligaciones" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m8 28 10-8 12 9 5-3 21 16-8 10-11-8-5 4-17-13z"/><path d="m30 29-6 6 7 5 6-4m-22-1-7 7m40 10 8 5"/>
+    </symbol>
+    <symbol id="contratos" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 8h29l10 10v38H12zM41 8v11h10M20 28h22M20 36h18"/><path d="M20 48c7-5 13-5 21 0m2-1 12-12 3 3-12 12z"/>
+    </symbol>
+    <symbol id="responsabilidad-civil" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 7 52 16v15c0 13-8 22-20 27C20 53 12 44 12 31V16z"/><path d="M22 31h20M32 21v20M24 48l8 4 8-4"/>
+    </symbol>
+    <symbol id="internacional-privado" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="29" cy="31" r="22"/><path d="M7 31h44M29 9c7 7 11 14 11 22s-4 15-11 22c-7-7-11-14-11-22s4-15 11-22"/><rect x="39" y="39" width="17" height="14" rx="2"/><path d="M43 39v-4a5 5 0 0 1 10 0v4"/>
+    </symbol>
+    <symbol id="derechos-humanos" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 53S11 42 11 25a11 11 0 0 1 20-6 11 11 0 0 1 22 6c0 17-21 28-21 28z"/><path d="M22 30h20M32 20v20"/>
+    </symbol>
+    <symbol id="derecho-constitucional" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 9h30v46H17zM22 16h20M22 24h20M22 32h14"/><path d="M11 15h6m30 34h6M11 15v34m42-34v34M11 49h6m30-34h6"/>
+    </symbol>
+    <symbol id="derecho-administrativo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 54h48M12 49h27M16 26v23m9-23v23m9-23v23M11 26h32L27 10z"/><circle cx="48" cy="42" r="8"/><path d="M48 30v5m0 14v5m-12-12h5m14 0h5m-18-8 3 3m6 6 3 3m0-12-3 3m-6 6-3 3"/>
+    </symbol>
+    <symbol id="internacional-publico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="25" cy="30" r="19"/><path d="M6 30h38M25 11c6 6 9 12 9 19s-3 13-9 19c-6-6-9-12-9-19s3-13 9-19"/><path d="m38 42 7-5 12 8-7 10zM45 37l5-5 8 6"/>
+    </symbol>
+    <symbol id="penal-general" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 47 21-21m-8-8 14 14M20 13l24 24M35 42l15 15"/><rect x="8" y="50" width="20" height="7" rx="2"/>
+    </symbol>
+    <symbol id="penal-especial" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 8c-11 0-20 9-20 20 0 12 8 20 8 28m12-40c-7 0-12 5-12 12 0 11 8 15 8 28m4-32c-3 0-5 2-5 5 0 8 9 11 9 27m8-43c5 4 8 9 8 15 0 13-8 19-8 28m-6-38c4 2 7 6 7 11 0 8-5 13-5 21"/>
+    </symbol>
+    <symbol id="penal-economico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 7 51 16v14c0 13-8 21-19 26-11-5-19-13-19-26V16z"/><circle cx="32" cy="31" r="10"/><path d="M36 25h-6a4 4 0 0 0 0 8h4a4 4 0 0 1 0 8h-7m5-20v24"/>
+    </symbol>
+    <symbol id="ejecucion-penal" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="9" y="8" width="35" height="48" rx="3"/><path d="M18 8v48m9-48v48m9-48v48"/><circle cx="50" cy="39" r="6"/><path d="m46 43-9 9m4-4 3 3"/>
+    </symbol>
+    <symbol id="teoria-proceso" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="13" cy="18" r="5"/><circle cx="51" cy="18" r="5"/><circle cx="32" cy="48" r="5"/><path d="M18 18h28m2 5-12 20m-8 0L16 23"/><path d="m41 14 5 4-5 4M27 38l5 5 5-5"/>
+    </symbol>
+    <symbol id="procesal-constitucional" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 10h27l9 9v37H12zM39 10v10h9M20 29h20M20 37h14"/><path d="M45 36 56 41v8c0 6-4 10-11 13-7-3-11-7-11-13v-8z"/>
+    </symbol>
+    <symbol id="procesal-civil-i" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 19h20l5 6h23v30H8zM8 19v-7h19l5 7"/><path d="M25 33h14M25 41h14M32 48V30"/>
+    </symbol>
+    <symbol id="procesal-civil-ii" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 53h46M13 48h38M17 27v21m10-21v21m10-21v21m10-21v21M12 27h40L32 11z"/><path d="M46 9h10v10m0-10L42 23"/>
+    </symbol>
+    <symbol id="procesal-administrativo" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 54h31M12 49h27M16 27v22m9-22v22m9-22v22M11 27h32L27 11z"/><path d="M44 32h12v24H44zM48 38h4m-4 7h4m-4 7h4"/>
+    </symbol>
+    <symbol id="procesal-penal-i" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m10 43 18-18m-7-7 13 13M17 13l22 22"/><rect x="7" y="46" width="21" height="7" rx="2"/><path d="M44 13h12v42H36V21zM44 13v9h-8M42 31h8m-8 8h8"/>
+    </symbol>
+    <symbol id="procesal-penal-ii" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 53h48M12 48h40M16 27v21m10-21v21m10-21v21m10-21v21M11 27h40L31 10z"/><path d="m42 14 7-7 8 8-7 7zM39 17l-8 8"/>
+    </symbol>
+    <symbol id="procesal-laboral" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="23" width="32" height="27" rx="3"/><path d="M18 23v-7h13v7M8 34h32M21 34v5h7v-5"/><path d="m38 43 10-10 8 8-10 10zM44 53h14"/>
+    </symbol>
+    <symbol id="argumentacion-juridica" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 12h35v27H22L12 48v-9H8z"/><path d="M17 22h17M17 29h12"/><path d="M46 27h10v25H37v-8"/><path d="m43 48 4 4 8-10"/>
+    </symbol>
+    <symbol id="derecho-laboral" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="20" width="48" height="35" rx="3"/><path d="M22 20v-7h20v7M8 33h48M27 33v6h10v-6"/>
+    </symbol>
+    <symbol id="tributario-general" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="10" y="8" width="44" height="48" rx="4"/><path d="M18 16h28v10H18zM18 34h6m8 0h6m8 0h1M18 42h6m8 0h6m8 0h1M18 50h6m8 0h6m8 0h1"/>
+    </symbol>
+    <symbol id="tributario-especial" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 8h29l9 9v39H13zM42 8v10h9M21 29h22M21 37h22M21 45h13"/><circle cx="45" cy="47" r="9"/><path d="M48 42h-5a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-5m3-15v18"/>
+    </symbol>
+    <symbol id="corporativo-i" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 55V13h28v42M39 24h14v31M18 21h5m8 0h1M18 30h5m8 0h1M18 39h5m8 0h1M18 48h5m8 0h1M46 32h3m-3 8h3m-3 8h3M7 55h50"/>
+    </symbol>
+    <symbol id="corporativo-ii" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="8" y="10" width="20" height="18" rx="2"/><rect x="36" y="10" width="20" height="18" rx="2"/><rect x="22" y="40" width="20" height="14" rx="2"/><path d="M18 28v6h14v6m14-12v6H32"/><path d="M15 19h6m22 0h6m-20 28h6"/>
+    </symbol>
+    <symbol id="notarial-registral" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 8h28l9 9v30H14zM42 8v10h9M22 27h20M22 35h14"/><circle cx="43" cy="46" r="11"/><path d="m38 46 4 4 7-9M35 57h16"/>
+    </symbol>
+    <symbol id="propiedad-consumidor" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 22h36l-3 31H17zM23 22a9 9 0 0 1 18 0"/><path d="M25 36h14M32 29v14"/><circle cx="51" cy="13" r="7"/><path d="M51 9v8m-4-4h8"/>
+    </symbol>
+    <symbol id="clinica-juridica" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 16h40v40H12zM24 16V9h16v7"/><path d="M27 25h10v8h8v10h-8v8H27v-8h-8V33h8z"/><path d="M8 25h4m40 0h4"/>
+    </symbol>
+    <symbol id="etica-profesional" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="32" cy="32" r="24"/><path d="m32 14 5 13 13 5-13 5-5 13-5-13-13-5 13-5z"/><path d="m25 33 5 5 10-12"/>
+    </symbol>
+  </defs>
+</svg>

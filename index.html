@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/">
-    <title>La Norma Express - Legislación y Cursos del Perú</title>
+    <title>La Norma Express - Legislación y Formación Jurídica del Perú</title>
     <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
-    <link rel="stylesheet" href="style.css?v=2.2">
+    <link rel="stylesheet" href="style.css?v=2.4">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="manifest" href="manifest.json">
@@ -27,15 +27,12 @@
                 <div id="legislacion-menu" class="dropdown-content"></div>
             </div>
 
-            <div class="dropdown" style="margin-left: 30px;">
-                <button class="dropbtn">Cursos</button>
-                <div class="dropdown-content">
-                    <a href="/cursos/argumentacion-juridica">Argumentación Jurídica</a>
-                    <a href="/cursos/contratos">Contratos</a>
-                    <a href="/cursos/derecho-tributario-especial">Derecho Tributario Especial</a>
-                    <a href="/cursos/derecho-laboral">Derecho Laboral</a>
-                    <a href="/cursos/derecho-penal-economico">Derecho Penal Económico</a>
-                </div>
+            <div class="dropdown formacion-nav" style="margin-left: 30px;">
+                <button class="dropbtn formacion-menu-button" aria-label="Formación Jurídica">
+                    <span>Formación</span>
+                    <span>Jurídica</span>
+                </button>
+                <div id="formacion-menu" class="dropdown-content formacion-menu"></div>
             </div>
         </div>
 
@@ -107,13 +104,15 @@
 
     <!-- Scripts globales y persistentes -->
     <script src="normas.js?v=1"></script>
+    <script src="formacion.js?v=2"></script>
     <script src="asistente.js?v=2.2"></script>
     <script src="legislacion.js?v=1"></script>
-    <script src="router.js?v=5"></script>
+    <script src="formacion-ui.js?v=2"></script>
+    <script src="router.js?v=7"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js?v=4')
+                navigator.serviceWorker.register('/sw.js?v=6')
                     .then(registration => {
                         console.log('Service Worker registrado con éxito:', registration.scope);
                     })
