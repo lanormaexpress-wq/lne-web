@@ -199,7 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.LNEActiveCourse = route.course || null;
         window.LNEActiveFormationArea = route.area || null;
 
-        const pageUrl = `/pages/${route.pageName}.html`;
+        const pageUrl = route.pageName === 'home'
+            ? '/pages/home.html?v=3'
+            : `/pages/${route.pageName}.html`;
         const appContent = document.getElementById('app-content');
         
         // Mostrar spinner de carga

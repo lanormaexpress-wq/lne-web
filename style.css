@@ -2705,3 +2705,44 @@ mark.resaltado-activo {
     color: #667085;
     font-size: 1.05rem;
 }
+
+/* Resultados compactos del buscador universal de Inicio */
+.sugerencias-box {
+    max-height: min(390px, 58vh);
+    overflow-y: auto;
+}
+
+.sugerencia-grupo {
+    padding: 5px 0;
+}
+
+.sugerencia-grupo + .sugerencia-grupo {
+    border-top: 1px solid #eef1f4;
+}
+
+#buscador-sugerencias .sugerencia-grupo-titulo {
+    display: block !important;
+    margin: 0;
+    padding: 4px 14px 3px;
+    color: #1b263b !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    #buscador-sugerencias {
+        max-height: 322px;
+    }
+}
+
+.sugerencia-item {
+    min-height: 32px;
+    padding: 6px 14px;
+    overflow: hidden;
+    font-size: 0.86rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
