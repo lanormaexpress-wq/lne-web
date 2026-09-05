@@ -124,6 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Identificar la norma activa mediante el registro central
         const activeNorm = window.LNEActiveNorm
             || (window.LNENormas ? window.LNENormas.getByPath(window.location.pathname) : null);
+
+        if (activeNorm?.status === 'preparing') {
+            return `La norma ${activeNorm.title} está registrada, pero su contenido jurídico aún se encuentra en preparación. No hay artículos disponibles para responder esta consulta.`;
+        }
+
         const activeNormData = activeNorm && window.LNENormas
             ? window.LNENormas.captureData(activeNorm)
             : undefined;

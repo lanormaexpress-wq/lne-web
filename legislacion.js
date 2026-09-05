@@ -82,6 +82,19 @@
         container.replaceChildren(introContainer);
     }
 
+    function renderPreparingState(container, norma) {
+        const state = document.createElement('section');
+        const title = document.createElement('h1');
+        const message = document.createElement('p');
+
+        state.className = 'norma-preparacion';
+        title.textContent = norma.title;
+        message.textContent = 'Contenido en preparación';
+
+        state.append(title, message);
+        container.replaceChildren(state);
+    }
+
     function renderArticles(container, norma, sections) {
         let htmlFinal = `
             <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px;">
@@ -237,6 +250,8 @@
     }
 
     async function loadNormData(norma) {
+        if (!norma?.contentScript) return undefined;
+
         const existingData = window.LNENormas.captureData(norma);
         if (existingData) return existingData;
 
@@ -252,6 +267,11 @@
         if (!norma || !introMount || !articlesMount) return;
 
         renderIntroduction(introMount, norma);
+
+        if (norma.status === 'preparing' || !norma.contentScript || !Array.isArray(norma.dataVariables)) {
+            renderPreparingState(articlesMount, norma);
+            return;
+        }
 
         try {
             await Promise.all([

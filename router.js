@@ -46,12 +46,55 @@ document.addEventListener('DOMContentLoaded', () => {
         const menu = document.getElementById('legislacion-menu');
         if (!menu) return;
 
-        menu.replaceChildren(...window.LNENormas.all.map(norma => {
+        const featuredNormas = window.LNENormas.all
+            .filter(norma => norma.featured)
+            .sort((first, second) => (first.featuredOrder || 0) - (second.featuredOrder || 0));
+
+        const featuredLinks = featuredNormas.map(norma => {
             const link = document.createElement('a');
             link.href = norma.url;
             link.textContent = norma.menuLabel || norma.title;
             return link;
-        }));
+        });
+
+        const explorerButton = document.createElement('button');
+        explorerButton.type = 'button';
+        explorerButton.className = 'legislation-explorer-menu-link';
+        explorerButton.dataset.openLegislationExplorer = 'true';
+        explorerButton.innerHTML = '<i class="fa-solid fa-grid-2" aria-hidden="true"></i> Explorar legislación';
+
+        menu.replaceChildren(...featuredLinks, explorerButton);
+    }
+
+    function bindLegislationMenuToggle() {
+        const menu = document.getElementById('legislacion-menu');
+        const dropdown = menu?.closest('.dropdown');
+        const trigger = dropdown?.querySelector('.dropbtn');
+        if (!dropdown || !trigger || trigger.dataset.lneLegislationBound) return;
+
+        trigger.dataset.lneLegislationBound = 'true';
+        trigger.setAttribute('aria-haspopup', 'true');
+        trigger.setAttribute('aria-expanded', 'false');
+
+        trigger.addEventListener('click', event => {
+            event.stopPropagation();
+            const isOpen = dropdown.classList.toggle('legislation-dropdown-open');
+            trigger.setAttribute('aria-expanded', String(isOpen));
+        });
+
+        document.addEventListener('click', event => {
+            if (!dropdown.contains(event.target)) {
+                dropdown.classList.remove('legislation-dropdown-open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                dropdown.classList.remove('legislation-dropdown-open');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
+        });
     }
 
     function renderFormationMenu() {
@@ -207,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.LNERouter = Object.freeze({ navigate, getCourseUrl });
 
     renderLegislationMenu();
+    bindLegislationMenuToggle();
     renderFormationMenu();
     bindLinks();
     loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);

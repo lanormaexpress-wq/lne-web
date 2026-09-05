@@ -1,16 +1,17 @@
-const CACHE_NAME = 'lne-cache-v6';
+const CACHE_NAME = 'lne-cache-v8';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=2.7',
-    '/asistente.js?v=2.2',
-    '/normas.js?v=1',
+    '/style.css?v=2.9',
+    '/asistente.js?v=2.3',
+    '/normas.js?v=3',
     '/formacion.js?v=2',
-    '/legislacion.js?v=1',
+    '/legislacion.js?v=2',
+    '/legislacion-explorer.js?v=1',
     '/formacion-ui.js?v=2',
-    '/router.js?v=7',
+    '/router.js?v=9',
     '/manifest.json',
     '/pages/home.html',
     '/pages/codigo.html',

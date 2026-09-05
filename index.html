@@ -7,7 +7,7 @@
     <base href="/">
     <title>La Norma Express - Legislación y Formación Jurídica del Perú</title>
     <link rel="icon" href="assets/imagenes/logo4.png" type="image/png">
-    <link rel="stylesheet" href="style.css?v=2.7">
+    <link rel="stylesheet" href="style.css?v=2.9">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="manifest" href="manifest.json">
@@ -103,16 +103,17 @@
     </div>
 
     <!-- Scripts globales y persistentes -->
-    <script src="normas.js?v=1"></script>
+    <script src="normas.js?v=3"></script>
     <script src="formacion.js?v=2"></script>
-    <script src="asistente.js?v=2.2"></script>
-    <script src="legislacion.js?v=1"></script>
+    <script src="asistente.js?v=2.3"></script>
+    <script src="legislacion.js?v=2"></script>
+    <script src="legislacion-explorer.js?v=1"></script>
     <script src="formacion-ui.js?v=2"></script>
-    <script src="router.js?v=7"></script>
+    <script src="router.js?v=9"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js?v=6')
+                navigator.serviceWorker.register('/sw.js?v=8')
                     .then(registration => {
                         console.log('Service Worker registrado con éxito:', registration.scope);
                     })
