@@ -200,9 +200,17 @@
             menuLabel: 'D. Leg. N.º 728',
             icon: 'fa-briefcase',
             featured: false,
-            status: 'preparing',
+            status: 'ready',
             category: 'Laboral',
-            aliases: ['Decreto Legislativo 728', 'Productividad y Competitividad Laboral', 'LPCL']
+            aliases: ['Decreto Legislativo 728', 'Productividad y Competitividad Laboral', 'LPCL'],
+            contentScript: '/decreto-legislativo-728.js?v=1',
+            dataVariables: ['DecretoLegislativoN728LeyProductividad'],
+            introduction: 'El Decreto Legislativo N.° 728, conocido inicialmente como Ley de Fomento del Empleo, fue aprobado en 1991, durante un periodo de reformas económicas orientadas a la inversión privada y flexibilización del mercado laboral peruano. Su creación respondió a la necesidad de establecer un marco más formal para las relaciones laborales del sector privado, promoviendo la generación de empleo, la productividad y la capacitación de los trabajadores. La norma reguló aspectos esenciales del vínculo laboral, como la contratación, el período de prueba, la suspensión y extinción del contrato de trabajo, las causas de despido y determinados mecanismos de formación laboral. Con el paso del tiempo, su contenido fue modificado y reorganizado, siendo una de sus principales expresiones actuales el Texto Único Ordenado de la Ley de Productividad y Competitividad Laboral.',
+            image: {
+                src: 'assets/imagenes/Dec. Leg. 728.png',
+                alt: 'Portada del Decreto Legislativo N.º 728',
+                className: 'intro-portada-n728'
+            }
         },
         {
             id: 'ley-29571',

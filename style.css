@@ -1235,7 +1235,8 @@ mark.resaltado-activo {
 
 .intro-portada,
 .intro-portada-consti,
-.intro-portada-civil {
+.intro-portada-civil,
+.intro-portada-n728 {
     height: 370px;
     width: auto;
     max-width: 100%;
@@ -1245,7 +1246,8 @@ mark.resaltado-activo {
 }
 
 .intro-portada,
-.intro-portada-civil {
+.intro-portada-civil,
+.intro-portada-n728 {
     border-radius: 8px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
@@ -1255,9 +1257,14 @@ mark.resaltado-activo {
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+.intro-portada-n728 {
+    margin-top: 0;
+}
+
 .intro-portada:hover,
 .intro-portada-consti:hover,
-.intro-portada-civil:hover {
+.intro-portada-civil:hover,
+.intro-portada-n728:hover {
     transform: translateY(-5px) scale(1.03); /* Crecimiento y elevación sutil */
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 }
@@ -1283,7 +1290,8 @@ mark.resaltado-activo {
 
     .intro-portada,
     .intro-portada-consti,
-    .intro-portada-civil {
+    .intro-portada-civil,
+    .intro-portada-n728 {
         height: 300px;
         width: auto;
         margin-top: 15px;
@@ -1659,6 +1667,12 @@ mark.resaltado-activo {
 @media (max-width: 768px) {
     #contenedor-leyes > div {
         padding: 20px 15px !important;
+    }
+
+    /* Evita que títulos jurídicos extensos ensanchen la lectura en móvil. */
+    #contenedor-leyes > div > div:first-child > h1 {
+        max-width: 100%;
+        overflow-wrap: anywhere;
     }
 }
 
