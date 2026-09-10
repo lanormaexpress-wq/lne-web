@@ -1,12 +1,12 @@
-const CACHE_NAME = 'lne-cache-v14';
+const CACHE_NAME = 'lne-cache-v15';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=3.7',
+    '/style.css?v=3.8',
     '/asistente.js?v=2.3',
-    '/normas.js?v=5',
+    '/normas.js?v=6',
     '/formacion.js?v=2',
     '/legislacion.js?v=2',
     '/legislacion-explorer.js?v=1',
