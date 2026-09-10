@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lne-cache-v16';
+const CACHE_NAME = 'lne-cache-v17';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
