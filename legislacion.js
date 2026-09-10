@@ -117,15 +117,32 @@
         container.replaceChildren(state);
     }
 
-    function renderArticles(container, norma, sections) {
-        const documentHeading = norma.documentHeading === false
+    function getDocumentTitle(norma) {
+        if (Object.prototype.hasOwnProperty.call(norma, 'documentTitle')) {
+            return norma.documentTitle;
+        }
+
+        return norma.documentHeading === false
             ? ''
             : (norma.documentHeading || norma.title);
-        const headingMarkup = documentHeading
+    }
+
+    function getSectionTitle(norma, title) {
+        if (!title || !norma.hideEmbeddedDocumentHeader) return title || '';
+
+        const template = document.createElement('template');
+        template.innerHTML = title;
+        template.content.querySelectorAll('[data-lne-document-header]').forEach(header => header.remove());
+        return template.innerHTML.trim();
+    }
+
+    function renderArticles(container, norma, sections) {
+        const documentTitle = getDocumentTitle(norma);
+        const headingMarkup = documentTitle
             ? `
                 <div style="text-align: center; margin-bottom: 50px;">
                     <h1 style="font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b263b; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 15px; display: inline-block; width: 80%;">
-                        ${documentHeading}
+                        ${documentTitle}
                     </h1>
                 </div>`
             : '';
@@ -141,7 +158,7 @@
             }
 
             htmlFinal += `
-                <h2 style="text-align: center; font-weight: bold; text-transform: uppercase; margin-top: 40px; margin-bottom: 15px; color: #1b263b;">${section.titulo || ''}</h2>
+                <h2 style="text-align: center; font-weight: bold; text-transform: uppercase; margin-top: 40px; margin-bottom: 15px; color: #1b263b;">${getSectionTitle(norma, section.titulo)}</h2>
                 <h3 style="text-align: center; font-weight: bold; margin-top: 0; margin-bottom: 40px; color: #1b263b;">${section.capitulo || ''}</h3>
             `;
 
@@ -192,15 +209,64 @@
         }, 400);
     }
 
+    function createLocalMarker(container) {
+        return {
+            unmark() {
+                container.querySelectorAll('mark').forEach(mark => {
+                    mark.replaceWith(document.createTextNode(mark.textContent));
+                });
+                container.normalize();
+            },
+            mark(searchText, { done }) {
+                const escapedSearchText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const matcher = new RegExp(escapedSearchText, 'gi');
+                const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+                    acceptNode(node) {
+                        matcher.lastIndex = 0;
+                        return node.parentElement?.closest('mark, script, style') || !matcher.test(node.nodeValue)
+                            ? NodeFilter.FILTER_REJECT
+                            : NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+                const textNodes = [];
+                let node;
+
+                while ((node = walker.nextNode())) textNodes.push(node);
+
+                textNodes.forEach(textNode => {
+                    const fragment = document.createDocumentFragment();
+                    const text = textNode.nodeValue;
+                    let cursor = 0;
+                    let match;
+
+                    matcher.lastIndex = 0;
+                    while ((match = matcher.exec(text))) {
+                        fragment.append(document.createTextNode(text.slice(cursor, match.index)));
+                        const mark = document.createElement('mark');
+                        mark.textContent = match[0];
+                        fragment.append(mark);
+                        cursor = match.index + match[0].length;
+                    }
+                    fragment.append(document.createTextNode(text.slice(cursor)));
+                    textNode.replaceWith(fragment);
+                });
+
+                done();
+            }
+        };
+    }
+
     function initializeSearch(container) {
         const input = document.getElementById('inputBuscadorFlotante');
         const counter = document.getElementById('contadorMatches');
         const previousButton = document.getElementById('btnNavegarArriba');
         const nextButton = document.getElementById('btnNavegarAbajo');
 
-        if (!input || !counter || !previousButton || !nextButton || typeof window.Mark !== 'function') return;
+        if (!input || !counter || !previousButton || !nextButton) return;
 
-        const markInstance = new window.Mark(container);
+        const markInstance = typeof window.Mark === 'function'
+            ? new window.Mark(container)
+            : createLocalMarker(container);
         let results = [];
         let currentIndex = -1;
         let searchTimeout = null;
@@ -303,10 +369,7 @@
         }
 
         try {
-            await Promise.all([
-                loadNormData(norma),
-                loadScript('https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js', () => typeof window.Mark === 'function')
-            ]);
+            await loadNormData(norma);
 
             if (!articlesMount.isConnected || window.LNEActiveNorm !== norma) return;
 
