@@ -220,9 +220,17 @@
             menuLabel: 'Ley N.º 29571',
             icon: 'fa-cart-shopping',
             featured: false,
-            status: 'preparing',
+            status: 'ready',
             category: 'Civil y comercial',
-            aliases: ['Ley 29571', 'Código del Consumidor', 'Protección al Consumidor']
+            aliases: ['Ley 29571', 'Código del Consumidor', 'Protección al Consumidor'],
+            contentScript: '/ley-29571.js?v=1',
+            dataVariables: ['Ley29571'],
+            introduction: 'La Ley N.° 29571, Código de Protección y Defensa del Consumidor, fue promulgada en 2010 en un contexto de expansión del mercado peruano, crecimiento del consumo y mayor diversidad de bienes y servicios ofrecidos a la población. Su creación respondió a la necesidad de contar con una regulación integral que fortaleciera la protección de los consumidores frente a la desigualdad de información y de poder existente respecto de los proveedores. La norma establece los principales derechos de los consumidores y las obligaciones que deben cumplir quienes ofrecen productos o servicios en el mercado. Regula materias como el deber de información, la idoneidad de los productos y servicios, la publicidad, los métodos comerciales, los servicios financieros, la protección frente a cláusulas abusivas y los mecanismos de solución de controversias.',
+            image: {
+                src: 'assets/imagenes/Ley 29571.png',
+                alt: 'Portada de la Ley N.º 29571',
+                className: 'intro-portada-ley29571'
+            }
         },
         {
             id: 'decreto-legislativo-1034',

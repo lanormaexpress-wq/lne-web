@@ -1236,7 +1236,8 @@ mark.resaltado-activo {
 .intro-portada,
 .intro-portada-consti,
 .intro-portada-civil,
-.intro-portada-n728 {
+.intro-portada-n728,
+.intro-portada-ley29571 {
     height: 370px;
     width: auto;
     max-width: 100%;
@@ -1247,7 +1248,8 @@ mark.resaltado-activo {
 
 .intro-portada,
 .intro-portada-civil,
-.intro-portada-n728 {
+.intro-portada-n728,
+.intro-portada-ley29571 {
     border-radius: 8px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
@@ -1257,7 +1259,8 @@ mark.resaltado-activo {
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
 }
 
-.intro-portada-n728 {
+.intro-portada-n728,
+.intro-portada-ley29571 {
     height: 340px;
     margin-top: 60px;
 }
@@ -1265,7 +1268,8 @@ mark.resaltado-activo {
 .intro-portada:hover,
 .intro-portada-consti:hover,
 .intro-portada-civil:hover,
-.intro-portada-n728:hover {
+.intro-portada-n728:hover,
+.intro-portada-ley29571:hover {
     transform: translateY(-5px) scale(1.03); /* Crecimiento y elevación sutil */
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 }
@@ -1292,7 +1296,8 @@ mark.resaltado-activo {
     .intro-portada,
     .intro-portada-consti,
     .intro-portada-civil,
-    .intro-portada-n728 {
+    .intro-portada-n728,
+    .intro-portada-ley29571 {
         height: 300px;
         width: auto;
         margin-top: 15px;
