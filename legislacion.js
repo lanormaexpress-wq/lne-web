@@ -65,7 +65,29 @@
 
             const paragraph = document.createElement('p');
             paragraph.className = 'intro-parrafo';
-            paragraph.textContent = norma.introduction;
+            const emphasis = Array.isArray(norma.introductionEmphasis)
+                ? norma.introductionEmphasis.filter(Boolean)
+                : [];
+
+            if (emphasis.length === 0) {
+                paragraph.textContent = norma.introduction;
+            } else {
+                const escapedTerms = emphasis
+                    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                    .join('|');
+                const matcher = new RegExp(escapedTerms, 'g');
+                let cursor = 0;
+
+                for (const match of norma.introduction.matchAll(matcher)) {
+                    paragraph.append(document.createTextNode(norma.introduction.slice(cursor, match.index)));
+                    const strong = document.createElement('strong');
+                    strong.textContent = match[0];
+                    paragraph.append(strong);
+                    cursor = match.index + match[0].length;
+                }
+
+                paragraph.append(document.createTextNode(norma.introduction.slice(cursor)));
+            }
 
             introText.append(title, paragraph);
             introContainer.appendChild(introText);

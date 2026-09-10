@@ -172,13 +172,22 @@
             id: 'tributario',
             slug: 'codigo-tributario',
             url: '/legislacion/codigo-tributario',
-            title: 'Código Tributario',
+            title: 'Texto Único Ordenado del Código Tributario aprobado por Decreto Supremo N.º 133-2013-EF',
             menuLabel: 'Código Tributario',
             icon: 'fa-receipt',
             featured: false,
-            status: 'preparing',
+            status: 'ready',
             category: 'Tributario y administrativo',
-            aliases: ['Tributario']
+            aliases: ['Tributario', 'Código Tributario', 'Decreto Supremo 133-2013-EF'],
+            contentScript: '/codigo-tributario.js?v=1',
+            dataVariables: ['CodigoTributario'],
+            introduction: 'El Código Tributario peruano, cuyo Texto Único Ordenado fue aprobado mediante el Decreto Supremo N.° 133-2013-EF en 2013, reúne y sistematiza las principales reglas que regulan la relación entre la Administración Tributaria y los contribuyentes. Su finalidad es establecer un marco general para la aplicación de los tributos en el país, determinando tanto las facultades de las entidades encargadas de su administración como los derechos y obligaciones de las personas sujetas al cumplimiento tributario. La norma desarrolla aspectos esenciales como la obligación tributaria, la deuda y sus formas de extinción, los plazos de prescripción, las facultades de fiscalización y recaudación de la Administración, así como los procedimientos que pueden iniciar los contribuyentes frente a una decisión administrativa. También regula las infracciones y sanciones tributarias, los procedimientos de reclamación y apelación y otras reglas fundamentales para el funcionamiento del sistema tributario peruano.',
+            introductionEmphasis: ['Código Tributario peruano', 'Decreto Supremo N.° 133-2013-EF en 2013'],
+            image: {
+                src: 'assets/imagenes/Codigo Tributario.png',
+                alt: 'Portada del Código Tributario',
+                className: 'intro-portada-codigo-tributario'
+            }
         },
         {
             id: 'ley-27444',
