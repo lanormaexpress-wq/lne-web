@@ -61,7 +61,7 @@
 
             const title = document.createElement('h1');
             title.className = 'intro-titulo';
-            title.textContent = norma.title;
+            title.textContent = norma.displayTitle || norma.title;
 
             const paragraph = document.createElement('p');
             paragraph.className = 'intro-parrafo';
@@ -118,13 +118,20 @@
     }
 
     function renderArticles(container, norma, sections) {
-        let htmlFinal = `
-            <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px;">
+        const documentHeading = norma.documentHeading === false
+            ? ''
+            : (norma.documentHeading || norma.title);
+        const headingMarkup = documentHeading
+            ? `
                 <div style="text-align: center; margin-bottom: 50px;">
                     <h1 style="font-family: 'Playfair Display', serif; font-size: 3rem; color: #1b263b; text-transform: uppercase; border-bottom: 2px solid #000; padding-bottom: 15px; display: inline-block; width: 80%;">
-                        ${norma.documentHeading || norma.title}
+                        ${documentHeading}
                     </h1>
-                </div>
+                </div>`
+            : '';
+        let htmlFinal = `
+            <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 30px;">
+                ${headingMarkup}
         `;
 
         sections.forEach(section => {
