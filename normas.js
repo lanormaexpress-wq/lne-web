@@ -138,9 +138,17 @@
             icon: 'fa-gavel',
             featured: true,
             featuredOrder: 4,
-            status: 'preparing',
+            status: 'ready',
             category: 'Procesal',
-            aliases: ['Procesal Civil', 'CPC']
+            aliases: ['Procesal Civil', 'CPC', 'Decreto Legislativo 768'],
+            contentScript: '/codigo-procesal-civil.js?v=1',
+            dataVariables: ['CodigoLegal'],
+            introduction: 'El Código Procesal Civil peruano, aprobado mediante Decreto Legislativo N.° 768 en 1992 y vigente desde el 28 de julio de 1993, constituye la principal norma que regula el desarrollo de los procesos judiciales en materia civil en el Perú. Este cuerpo normativo establece las reglas que deben seguir los jueces, las partes y los demás sujetos procesales para resolver conflictos de intereses o eliminar incertidumbres con relevancia jurídica. Regula aspectos esenciales como la competencia, la representación procesal, los actos procesales, la demanda, la contestación, los medios probatorios, las medidas cautelares, los recursos impugnatorios y la ejecución de las decisiones judiciales. Asimismo, incorpora principios fundamentales como el derecho a la tutela jurisdiccional efectiva, el debido proceso, la igualdad de las partes, la inmediación, la concentración y la economía procesal. Su importancia radica en garantizar que las controversias civiles sean resueltas mediante procedimientos ordenados y respetuosos de los derechos de las partes, proporcionando los mecanismos necesarios para hacer efectiva la protección de los derechos reconocidos por el ordenamiento jurídico peruano.',
+            image: {
+                src: 'assets/imagenes/Procesal Civil.png',
+                alt: 'Portada del Código Procesal Civil',
+                className: 'intro-portada'
+            }
         },
         {
             id: 'procesal-penal',
