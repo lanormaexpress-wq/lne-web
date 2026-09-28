@@ -151,9 +151,17 @@
             icon: 'fa-gavel',
             featured: true,
             featuredOrder: 5,
-            status: 'preparing',
+            status: 'ready',
             category: 'Procesal',
-            aliases: ['Procesal Penal', 'CPP']
+            aliases: ['Procesal Penal', 'CPP', 'Decreto Legislativo 957'],
+            contentScript: '/codigo-procesal-penal.js?v=1',
+            dataVariables: ['CodigoProcesalPenal'],
+            introduction: 'El Código Procesal Penal peruano, aprobado mediante Decreto Legislativo N.° 957 en el año 2004, constituye la principal norma que regula el desarrollo del proceso penal en el Perú. Su aplicación fue implementándose progresivamente en el territorio nacional con la finalidad de establecer un sistema procesal de carácter acusatorio, oral y garantista. Este cuerpo normativo regula las actuaciones que deben seguir el Ministerio Público, el Poder Judicial, la Policía Nacional, la defensa y los demás sujetos que intervienen en un proceso penal, desde las primeras diligencias de investigación hasta la etapa de juzgamiento y ejecución. Asimismo, establece los derechos y garantías del imputado, de la víctima y de las demás partes procesales, incorporando principios como la presunción de inocencia, el derecho de defensa, la contradicción, la oralidad, la inmediación y el debido proceso. Su importancia radica en establecer un procedimiento destinado a investigar los hechos delictivos, determinar responsabilidades y garantizar que la actuación del Estado se desarrolle respetando los derechos fundamentales y las reglas propias de un proceso penal justo.',
+            image: {
+                src: 'assets/imagenes/Procesal Penal.png',
+                alt: 'Portada del Código Procesal Penal',
+                className: 'intro-portada'
+            }
         },
         {
             id: 'procesal-constitucional',
