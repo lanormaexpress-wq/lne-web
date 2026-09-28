@@ -176,13 +176,22 @@
             slug: 'codigo-procesal-constitucional',
             url: '/legislacion/codigo-procesal-constitucional',
             title: 'Código Procesal Constitucional',
+            displayTitle: 'Nuevo Código Procesal Constitucional',
             menuLabel: 'Código Procesal Constitucional',
             icon: 'fa-building-columns',
             featured: true,
             featuredOrder: 6,
-            status: 'preparing',
+            status: 'ready',
             category: 'Procesal',
-            aliases: ['Procesal Constitucional', 'CPConst']
+            aliases: ['Procesal Constitucional', 'CPConst', 'Ley 31307'],
+            contentScript: '/codigo-procesal-constitucional.js?v=1',
+            dataVariables: ['CodigoProcesalConstitucional'],
+            introduction: 'El Nuevo Código Procesal Constitucional peruano, aprobado mediante Ley N.° 31307, fue publicado en 2021 y entró en vigencia el 24 de julio de ese mismo año, reemplazando al Código Procesal Constitucional regulado por la Ley N.° 28237. Este cuerpo normativo regula los procesos constitucionales destinados a proteger los derechos fundamentales y asegurar la supremacía de la Constitución, comprendiendo el hábeas corpus, amparo, hábeas data, cumplimiento, inconstitucionalidad, acción popular y los conflictos de competencia. Su importancia radica en establecer las reglas que deben seguir los jueces, el Tribunal Constitucional y las partes para obtener una tutela rápida y efectiva frente a amenazas o vulneraciones de derechos constitucionales. Asimismo, incorpora principios como la dirección judicial del proceso, la economía, la inmediación, la socialización y la gratuidad en determinados supuestos. De esta manera, constituye una herramienta esencial para garantizar la vigencia efectiva de los derechos reconocidos por la Constitución y los tratados de derechos humanos, así como la fuerza normativa y supremacía del orden constitucional peruano.',
+            image: {
+                src: 'assets/imagenes/Procesal Constitucional.png',
+                alt: 'Portada del Nuevo Código Procesal Constitucional',
+                className: 'intro-portada'
+            }
         },
         {
             id: 'tributario',
