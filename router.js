@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await window.LNEDynamicLegislation?.ready;
     let activeNavigation = 0;
 
     function resolvePage(pathName) {

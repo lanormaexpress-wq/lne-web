@@ -1198,124 +1198,6 @@ mark.resaltado-activo {
     }
 }
 
-/* ==============================================================
-   SECCIÓN DE INTRODUCCIÓN CON PORTADA ELEGANTE (Código Penal)
-   ============================================================== */
-
-.intro-container {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 50px;
-    gap: 35px;
-    background: transparent;
-}
-
-.intro-text {
-    flex: 1;
-}
-
-.intro-titulo {
-    border-bottom: 3px solid #1b263b;
-    padding-bottom: 15px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #1b263b;
-    line-height: 1.2;
-    font-size: 2.2rem;
-    font-weight: 700;
-}
-
-.intro-parrafo {
-    text-align: justify !important;
-    line-height: 1.55 !important;
-    color: #444;
-    font-size: 0.95rem !important;
-    margin: 0;
-}
-
-.intro-portada,
-.intro-portada-consti,
-.intro-portada-civil,
-.intro-portada-n728,
-.intro-portada-ley29571,
-.intro-portada-ley27444,
-.intro-portada-codigo-tributario {
-    height: 370px;
-    width: auto;
-    max-width: 100%;
-    margin-top: 60px; /* Alineación perfecta con el borde inferior del título */
-    transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.3s ease;
-    object-fit: contain;
-}
-
-.intro-portada,
-.intro-portada-civil,
-.intro-portada-n728,
-.intro-portada-ley29571,
-.intro-portada-ley27444,
-.intro-portada-codigo-tributario {
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.intro-portada-consti {
-    border-radius: 4px;
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.intro-portada-n728,
-.intro-portada-ley29571,
-.intro-portada-ley27444,
-.intro-portada-codigo-tributario {
-    height: 340px;
-    margin-top: 60px;
-}
-
-.intro-portada:hover,
-.intro-portada-consti:hover,
-.intro-portada-civil:hover,
-.intro-portada-n728:hover,
-.intro-portada-ley29571:hover,
-.intro-portada-ley27444:hover,
-.intro-portada-codigo-tributario:hover {
-    transform: translateY(-5px) scale(1.03); /* Crecimiento y elevación sutil */
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-/* Adaptabilidad Responsiva para Pantallas Medianas y Pequeñas */
-@media (max-width: 768px) {
-    .intro-container {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 25px;
-        margin-bottom: 35px;
-    }
-
-    .intro-titulo {
-        text-align: center;
-        font-size: 1.8rem;
-    }
-
-    .intro-parrafo {
-        text-align: justify !important;
-    }
-
-    .intro-portada,
-    .intro-portada-consti,
-    .intro-portada-civil,
-    .intro-portada-n728,
-    .intro-portada-ley29571,
-    .intro-portada-ley27444,
-    .intro-portada-codigo-tributario {
-        height: 300px;
-        width: auto;
-        margin-top: 15px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-}
-
 /* =========================================
    CARRUSEL DE PRESENTACIÓN (LA RENTA)
    ========================================= */
@@ -1618,9 +1500,6 @@ mark.resaltado-activo {
 
 /* Evitar colisiones del buscador flotante en pantallas medianas y grandes (computadoras, laptops y tabletas) */
 @media (min-width: 769px) {
-    .container-ley {
-        padding-right: 20px !important; /* Mantiene centrado el texto sin desplazamiento forzado a la izquierda */
-    }
     .contenedor-buscador-flotante {
         right: clamp(20px, calc(50% - 670px), 50%) !important; /* Posicionado a la derecha de la hoja con 20px de separación */
         left: auto !important;
@@ -1661,19 +1540,6 @@ mark.resaltado-activo {
 /* =========================================
    MEJORAS GENERALES DE LECTURA (LEGISLACIÓN)
    ========================================= */
-
-/* Centrar y limitar el ancho de la hoja de lectura del código (900px) */
-.container-ley {
-    max-width: 900px !important;
-    margin: 40px auto !important;
-}
-
-@media (max-width: 992px) {
-    .container-ley {
-        margin: 20px auto !important; /* Margen superior moderado en móviles */
-        padding: 20px 10px 140px 10px !important; /* Relleno superior para despejar cabecera y espacio inferior para chatbot */
-    }
-}
 
 /* Ensanchar las tarjetas de fondo blanco reduciendo padding */
 #contenedor-leyes > div {

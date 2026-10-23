@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración | La Norma Express</title>
+    <link rel="icon" href="/assets/imagenes/logo4.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/admin.css?v=1">
+    <link rel="stylesheet" href="/admin-v2.css?v=4.2.2">
+    <link rel="stylesheet" href="/admin-summary-integration.css?v=6">
+    <link rel="stylesheet" href="/admin-users.css?v=2">
+</head>
+<body>
+    <div id="admin-loading" class="admin-loading" role="status">
+        <img src="/assets/imagenes/logo4.png" alt="La Norma Express">
+        <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+        <span>Verificando acceso…</span>
+    </div>
+
+    <main id="login-view" class="login-view" hidden>
+        <section class="login-card" aria-labelledby="login-title">
+            <a href="/" class="login-brand"><img src="/assets/imagenes/logo.png" alt="La Norma Express"></a>
+            <div class="login-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <p class="eyebrow">Acceso privado</p>
+            <h1 id="login-title">Administración jurídica</h1>
+            <p class="login-copy">Ingresa con tu cuenta autorizada para consultar y editar la base legal.</p>
+            <form id="login-form" novalidate>
+                <label for="login-email">Correo electrónico</label>
+                <input id="login-email" name="email" type="email" autocomplete="username" required>
+                <label for="login-password">Contraseña</label>
+                <div class="password-field">
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+                    <button id="toggle-password" type="button" aria-label="Mostrar contraseña"><i class="fa-regular fa-eye"></i></button>
+                </div>
+                <p id="login-error" class="form-message error-message" role="alert"></p>
+                <button id="login-submit" class="primary-button full-button" type="submit">
+                    <span>Ingresar</span><i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+            <a class="back-link" href="/"><i class="fa-solid fa-arrow-left"></i> Volver al sitio</a>
+        </section>
+    </main>
+
+    <div id="admin-view" class="admin-shell" hidden>
+        <header class="admin-header">
+            <a href="/" class="admin-brand"><img src="/assets/imagenes/logo.png" alt="La Norma Express"></a>
+            <div class="admin-title">
+                <span>Panel privado</span>
+                <strong id="session-role-label">Gestión jurídica</strong>
+            </div>
+            <nav class="admin-tabs" aria-label="Secciones del administrador">
+                <button class="admin-tab active" type="button" data-admin-section="legislation"><i class="fa-solid fa-scale-balanced"></i> Legislación</button>
+                <button class="admin-tab" type="button" data-admin-section="converter"><i class="fa-solid fa-file-import"></i> Conversor jurídico</button>
+                <a class="admin-tab" href="/admin/resumenes/editor" data-admin-section="summaries">Editor de resúmenes</a>
+                <button id="users-tab" class="admin-tab owner-only" type="button" data-admin-section="users"><i class="fa-solid fa-users-gear"></i> Usuarios</button>
+            </nav>
+            <div class="account-area">
+                <div><span>Sesión activa</span><strong id="user-email"></strong></div>
+                <button id="my-account-button" class="secondary-button" type="button">MI CUENTA</button>
+                <button id="logout-button" class="secondary-button" type="button"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+            </div>
+        </header>
+
+        <div class="admin-layout">
+            <aside id="norms-panel" class="norms-panel">
+                <button id="toggle-norms-panel" class="toggle-norms-panel" type="button" aria-expanded="true" title="Contraer Base Legal"><i class="fa-solid fa-chevron-left"></i><span class="sr-only">Contraer Base Legal</span></button>
+                <div class="norms-panel-content">
+                <div class="panel-heading">
+                    <div><span class="eyebrow">Base legal</span><h2>Normas</h2></div>
+                    <span id="global-count" class="count-pill">—</span>
+                </div>
+                <button id="new-legislation-button" class="primary-button new-legislation owner-only" type="button"><i class="fa-solid fa-plus"></i> Nueva legislación</button>
+                <button class="norm-item active" type="button" data-code="">
+                    <span><i class="fa-solid fa-layer-group"></i> Todas las normas</span>
+                    <strong id="all-norms-count">—</strong>
+                </button>
+                <div id="norms-list" class="norms-list" aria-label="Listado de normas"></div>
+                </div>
+            </aside>
+
+            <section id="legislation-section" class="workspace admin-section">
+                <div class="search-toolbar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input id="article-search" type="search" placeholder="Buscar por número, título o contenido…" autocomplete="off">
+                    </div>
+                    <select id="code-filter" aria-label="Filtrar por norma"><option value="">Todas las normas</option></select>
+                    <button id="import-document-button" class="secondary-button" type="button"><i class="fa-solid fa-file-import"></i> Importar</button>
+                    <button id="publish-norm-button" class="secondary-button owner-only" type="button" hidden><i class="fa-solid fa-eye"></i> Publicar norma</button>
+                    <button id="delete-norm-button" class="danger-button owner-only" type="button" hidden><i class="fa-regular fa-trash-can"></i></button>
+                    <button id="refresh-button" class="icon-button" type="button" title="Actualizar"><i class="fa-solid fa-rotate"></i></button>
+                </div>
+
+                <div id="status-banner" class="status-banner" hidden role="status"></div>
+
+                <div id="legislation-content-grid" class="content-grid">
+                    <section class="results-panel">
+                        <div class="results-heading">
+                            <div><span class="eyebrow">Resultados</span><h2 id="results-title">Todos los artículos</h2></div>
+                            <span id="result-count">—</span>
+                        </div>
+                        <div id="articles-loading" class="inline-loading" hidden><i class="fa-solid fa-circle-notch fa-spin"></i> Consultando…</div>
+                        <div id="articles-list" class="articles-list"></div>
+                        <div class="pagination">
+                            <button id="previous-page" type="button"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                            <label class="page-jump"><span id="page-total">1 página</span><input id="page-number" type="number" min="1" value="1" aria-label="Ir a la página"></label>
+                            <button id="next-page" type="button">Siguiente <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </section>
+
+                    <div id="column-resizer" class="column-resizer" role="separator" aria-label="Cambiar ancho de resultados y editor" tabindex="0"></div>
+
+                    <section class="editor-panel">
+                        <div id="editor-empty" class="editor-empty">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                            <h2>Selecciona un artículo</h2>
+                            <p>El contenido y su jerarquía aparecerán aquí para su edición.</p>
+                        </div>
+                        <section id="document-editor-shell" class="document-editor-shell" hidden>
+                            <div class="document-editor-loading" id="document-editor-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Cargando documento…</div>
+                            <iframe id="legislation-editor-frame" title="Editor jurídico de legislación" src="about:blank"></iframe>
+                        </section>
+                        <form id="article-editor" class="legacy-article-editor" hidden novalidate>
+                            <div class="editor-heading">
+                                <div><span class="eyebrow">Edición</span><h2 id="editor-title">Artículo</h2></div>
+                                <span id="dirty-indicator" class="dirty-indicator" hidden>Sin guardar</span>
+                            </div>
+                            <input id="article-id" type="hidden">
+                            <div class="field-row">
+                                <div class="form-field"><label for="article-code">Norma</label><input id="article-code" readonly></div>
+                                <div class="form-field"><label for="article-number">Número de artículo</label><input id="article-number" required></div>
+                                <div class="form-field small-field"><label for="article-order">Orden</label><input id="article-order" type="number" min="1" required></div>
+                            </div>
+                            <div class="form-field"><label for="article-title">Título</label><input id="article-title"></div>
+                            <div class="visual-editor-section">
+                                <div class="visual-editor-header">
+                                    <div><label>Contenido jurídico</label><span>Edita como se verá en La Norma Express</span></div>
+                                    <div class="editor-view-switch" role="group" aria-label="Modo de edición">
+                                        <button id="visual-mode-button" class="active" type="button"><i class="fa-regular fa-eye"></i> Vista visual</button>
+                                        <button id="blocks-mode-button" type="button"><i class="fa-solid fa-diagram-project"></i> Bloques avanzados</button>
+                                    </div>
+                                </div>
+                                <div id="visual-editor-pane" class="visual-editor-pane">
+                                    <div id="visual-format-toolbar" class="visual-format-toolbar" aria-label="Formato visual">
+                                        <button type="button" data-visual-format="bold" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                                        <button type="button" data-visual-format="italic" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                                        <button type="button" data-visual-format="strikeThrough" title="Derogado"><i class="fa-solid fa-strikethrough"></i></button>
+                                        <button type="button" data-remove-boxes title="Eliminar cuadros"><i class="fa-regular fa-square-minus"></i></button>
+                                    </div>
+                                    <div id="visual-render-host" class="public-render-host"></div>
+                                    <p class="editor-hint"><i class="fa-solid fa-pen"></i> Edición visual amplia. Usa la vista avanzada para cambiar tipos, marcadores y orden estructural.</p>
+                                </div>
+                                <div id="blocks-editor-pane" class="blocks-editor-pane" hidden>
+                                  <div class="visual-editor-header advanced-toolbar-heading">
+                                    <div><label>Estructura avanzada</label><span>Tipos, marcadores, duplicación y reordenamiento</span></div>
+                                    <div id="block-toolbar" class="block-toolbar">
+                                        <button type="button" data-add-block="titulo" title="Título"><i class="fa-solid fa-heading"></i></button>
+                                        <button type="button" data-add-block="subtitulo" title="Subtítulo"><i class="fa-solid fa-text-height"></i></button>
+                                        <button type="button" data-add-block="capitulo" title="Capítulo"><strong>CAP.</strong></button>
+                                        <button type="button" data-add-block="subcapitulo" title="Subcapítulo"><strong>SUB.</strong></button>
+                                        <button type="button" data-add-block="parrafo" title="Párrafo"><i class="fa-solid fa-paragraph"></i></button>
+                                        <button type="button" data-add-block="inciso" title="Inciso"><strong>1.</strong></button>
+                                        <button type="button" data-add-block="subinciso" title="Subinciso"><strong>a)</strong></button>
+                                        <button type="button" data-add-block="lista" title="Lista"><i class="fa-solid fa-list"></i></button>
+                                        <button type="button" data-format="bold" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                                        <button type="button" data-format="italic" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                                        <button type="button" data-format="strikeThrough" title="Derogado"><i class="fa-solid fa-strikethrough"></i></button>
+                                        <button type="button" data-add-block="separacion" title="Separación"><i class="fa-solid fa-minus"></i></button>
+                                    </div>
+                                  </div>
+                                  <div id="blocks-editor" class="blocks-editor" aria-label="Bloques del artículo"></div>
+                                  <p class="editor-hint"><i class="fa-solid fa-grip-vertical"></i> Arrastra para reordenar. Pulsa Enter para crear un bloque nuevo.</p>
+                                </div>
+                            </div>
+                            <div class="form-field"><label for="article-summary">Resumen</label><textarea id="article-summary" rows="3"></textarea></div>
+                            <div class="publication-row">
+                                <div class="form-field"><label for="article-status">Estado</label><select id="article-status"><option value="borrador">Borrador</option><option value="publicado">Publicado</option></select></div>
+                                <span id="publication-help">Los cambios publicados serán visibles cuando la web pública se conecte a Supabase.</span>
+                            </div>
+                            <details class="advanced-fields">
+                                <summary>Campos técnicos generados automáticamente</summary>
+                                <div class="form-field"><label for="article-content">HTML generado</label><textarea id="article-content" class="code-field html-field" readonly></textarea></div>
+                                <div class="field-row json-row">
+                                    <div class="form-field"><label for="article-lne">Contenido LNE <span>JSON</span></label><textarea id="article-lne" class="code-field" readonly></textarea></div>
+                                    <div class="form-field"><label for="article-structure">Estructura <span>JSON</span></label><textarea id="article-structure" class="code-field" readonly></textarea></div>
+                                </div>
+                            </details>
+                            <p id="editor-error" class="form-message error-message" role="alert"></p>
+                            <div class="editor-actions">
+                                <button id="preview-button" class="secondary-button" type="button"><i class="fa-regular fa-eye"></i> Vista previa</button>
+                                <button id="save-button" class="primary-button" type="submit"><i class="fa-regular fa-floppy-disk"></i> Guardar cambios</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </section>
+            <section id="converter-section" class="workspace admin-section converter-section" hidden>
+                <div class="converter-phase-banner">
+                    <div><span class="eyebrow">FASE 1 · ENTORNO AISLADO</span><h1>Conversor jurídico original</h1></div>
+                    <p>Procesa, corrige y exporta documentos. En esta fase no guarda ni publica contenido en Supabase.</p>
+                </div>
+                <iframe id="converter-frame" class="converter-frame" title="Conversor jurídico La Norma Express" src="about:blank"></iframe>
+            </section>
+            <section id="summaries-section" class="workspace admin-section" hidden>
+                <p id="summary-editor-status" role="status" hidden></p>
+                <iframe id="summary-editor-frame" title="Editor de resúmenes jurídicos" src="about:blank" loading="eager"></iframe>
+            </section>
+            <section id="users-section" class="workspace admin-section" hidden>
+                <div class="users-header"><div><span class="eyebrow">Seguridad</span><h1>Usuarios y permisos</h1></div><button id="new-user-button" class="primary-button" type="button"><i class="fa-solid fa-user-plus"></i> Nuevo usuario</button></div>
+                <div id="users-config-warning" class="status-banner" hidden></div>
+                <div id="users-list" class="users-list"></div>
+            </section>
+        </div>
+    </div>
+
+    <dialog id="preview-dialog" class="preview-dialog">
+        <div class="preview-header"><div><span class="eyebrow">Vista previa</span><h2 id="preview-title">Artículo</h2></div><button id="close-preview" type="button" aria-label="Cerrar"><i class="fa-solid fa-xmark"></i></button></div>
+        <iframe id="preview-frame" title="Vista previa del artículo" sandbox></iframe>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <dialog id="new-legislation-dialog" class="form-dialog">
+        <form id="new-legislation-form" method="dialog">
+            <div class="dialog-heading"><div><span class="eyebrow">Nueva legislación</span><h2>Importar norma jurídica</h2></div><button type="button" data-close-dialog="new-legislation-dialog"><i class="fa-solid fa-xmark"></i></button></div>
+            <div class="form-field"><label for="new-norm-name">Nombre</label><input id="new-norm-name" required placeholder="Decreto Legislativo 1234"></div>
+            <div class="field-row import-meta"><div class="form-field"><label for="new-norm-code">Código interno</label><input id="new-norm-code" required placeholder="decreto-legislativo-1234"></div><div class="form-field"><label for="new-norm-slug">Slug público futuro</label><input id="new-norm-slug" required placeholder="decreto-legislativo-1234"></div></div>
+            <div class="form-field"><label for="new-norm-intro">Introducción</label><textarea id="new-norm-intro" rows="3"></textarea></div>
+            <div id="import-dropzone" class="import-dropzone" tabindex="0"><i class="fa-solid fa-cloud-arrow-up"></i><strong>Sube un archivo Word o PDF</strong><span>DOCX o PDF · El procesamiento ocurre localmente en tu navegador</span><input id="import-file" type="file" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"></div>
+            <div id="import-progress" class="import-progress" hidden><i class="fa-solid fa-circle-notch fa-spin"></i><span>Procesando documento…</span></div>
+            <div id="import-summary" class="import-summary" hidden></div>
+            <p id="import-error" class="form-message error-message"></p>
+            <div class="editor-actions"><button class="secondary-button" type="button" data-close-dialog="new-legislation-dialog">Cancelar</button><button id="process-import-button" class="primary-button" type="button"><i class="fa-solid fa-wand-magic-sparkles"></i> Procesar documento</button><button id="save-import-button" class="primary-button" type="submit" hidden><i class="fa-regular fa-floppy-disk"></i> Crear como borrador</button></div>
+        </form>
+    </dialog>
+    <dialog id="user-dialog" class="form-dialog">
+        <form id="user-form" method="dialog">
+            <div class="dialog-heading"><div><span class="eyebrow">Acceso</span><h2 id="user-dialog-title">Nuevo usuario</h2></div><button type="button" data-close-dialog="user-dialog"><i class="fa-solid fa-xmark"></i></button></div>
+            <input id="managed-user-id" type="hidden">
+            <div class="form-field"><label for="managed-user-name">Nombre</label><input id="managed-user-name" required maxlength="200"></div>
+            <div class="form-field"><label for="managed-user-email">Correo</label><input id="managed-user-email" type="email" required></div>
+            <div id="password-wrapper" class="form-field"><label for="managed-user-password">Contraseña inicial</label><div class="user-password-controls"><input id="managed-user-password" type="password" minlength="8" maxlength="256" autocomplete="new-password"><button type="button" class="secondary-button" data-password-toggle="managed-user-password" aria-label="Mostrar contraseña" aria-pressed="false"><i class="fa-regular fa-eye" aria-hidden="true"></i></button><button id="copy-initial-password" type="button" class="secondary-button">COPIAR</button></div><small id="initial-password-status" role="status"></small></div>
+            <div class="form-field"><label for="managed-user-role">Preset / perfil</label><select id="managed-user-role"><option value="writer">REDACTOR</option><option value="reviewer">REVISOR / PUBLISHER</option><option value="owner">OWNER</option><option value="custom">Personalizado</option></select></div>
+            <div id="permissions-editor" class="permissions-editor"></div>
+            <p id="user-error" class="form-message error-message"></p>
+            <div class="editor-actions"><button id="reset-managed-user-password" class="secondary-button" type="button" hidden>RESTABLECER CONTRASEÑA</button><button class="secondary-button" type="button" data-close-dialog="user-dialog">Cancelar</button><button class="primary-button" type="submit">Guardar usuario y permisos</button></div>
+        </form>
+    </dialog>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+    <script src="/legal-visual-renderer.js?v=1"></script>
+    <script src="/admin-block-editor.js?v=2"></script>
+    <script src="/admin-importer.js?v=1"></script>
+    <script src="/admin-summary-storage-scope.js?v=central-identity-2"></script>
+    <script src="/admin-session.js?v=document-isolation-1"></script>
+    <script src="/admin-permission-catalog.js?v=2"></script>
+    <script src="/admin-users.js?v=3-self-name"></script>
+    <script src="/admin.js?v=central-identity-2"></script>
+    <script src="/admin-summary-integration.js?v=security-1"></script>
+    <script src="/admin-summary-tools.js?v=security-1"></script>
+    <script src="/formacion.js"></script>
+    <script src="/admin-summary-workflow.js?v=central-identity-2"></script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conversor editable - La Norma Express</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/admin-converter-assets/styles.css?v=4.2.9" />
+  <link rel="stylesheet" href="/admin-converter-assets/universal.css" />
+  <link rel="stylesheet" href="/admin-converter-assets/unified.css" />
+  <link rel="stylesheet" href="/legal-introduction.css?v=5" />
+  <link rel="stylesheet" href="/admin-converter-assets/linked-publication.css?v=1" />
+</head>
+<body>
+  <main class="container unified-layout">
+    <header class="hero">
+      <div class="brand-row">
+        <img class="brand-logo" src="/assets/imagenes/logo.png" alt="La Norma Express" />
+        <div class="brand-copy">
+          <p class="eyebrow">LA NORMA EXPRESS · EDITOR ÚNICO</p>
+          <h1>Conversor jurídico editable</h1>
+          <p class="lead">
+            Sube un PDF, Word o texto. Revisa y edita el resultado en una sola vista,
+            con los controles de estructura y JavaScript que ya utilizas.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <section class="card upload-card">
+      <h2>Selecciona tu documento</h2>
+      <div class="upload-row">
+        <input id="fileInput" type="file" accept=".pdf,.docx,.txt,.js" />
+        <label class="column-choice" for="pdfColumns">Columnas del PDF
+          <select id="pdfColumns"><option value="auto">Automático (1–2)</option><option value="1">Una</option><option value="2">Dos</option><option value="3">Tres</option></select>
+        </label>
+        <button id="extractBtn" class="primary">Leer y visualizar</button>
+      </div>
+      <p id="fileStatus" class="status"></p>
+    </section>
+
+    <details id="pdfPrevious" class="card pdf-previous" hidden>
+      <summary>Contenido previo separado del PDF — se puede recuperar</summary>
+      <p class="hint">Portada, índice y otros bloques anteriores al inicio detectado. No se borran del proyecto. Si falta contenido legal, elige el bloque desde el cual debe comenzar.</p>
+      <div id="pdfPreviousList"></div>
+    </details>
+
+    <section class="card source-card">
+      <h2>Texto fuente · revisión avanzada</h2>
+      <p class="hint">Esta copia conserva el texto extraído. La edición normal se hace arriba, en la vista jurídica. Si corriges aquí, pulsa actualizar análisis: antes se guardará un respaldo de la vista editada.</p>
+      <textarea id="sourceText" placeholder="Aquí aparecerá el texto del documento..."></textarea>
+      <button id="sourceConvertBtn" type="button">Actualizar análisis desde este texto</button>
+    </section>
+
+    <section class="card grid three-fields config-card">
+      <div>
+        <label for="variableName">Nombre de la variable JavaScript</label>
+        <input id="variableName" value="CodigoLegal" />
+      </div>
+      <div>
+        <label for="outputName">Nombre del archivo</label>
+        <input id="outputName" value="datos_codigo.js" />
+      </div>
+      <div>
+        <label for="previewTitle">Título visible en la vista previa</label>
+        <input id="previewTitle" value="NORMA LEGAL" />
+      </div>
+    </section>
+
+    <section class="card convert-card">
+      <button id="convertBtn" class="primary">Actualizar análisis desde el texto fuente</button>
+      <div id="stats" class="stats"></div>
+      <div id="detectionDetail" class="detection-detail"></div>
+      <div id="warnings" class="warnings"></div>
+      <div id="notes" class="notes"></div>
+      <div id="auditTrail" class="audit-trail"></div>
+    </section>
+
+    <section class="card project-card">
+      <div class="project-head">
+        <div>
+          <h2>Proyecto temporal</h2>
+          <p class="hint">Tus avances se guardan localmente en este navegador. No se envían a Supabase.</p>
+        </div>
+        <span id="projectStatus" class="project-status" role="status" aria-live="polite">Sin cambios guardados</span>
+      </div>
+      <div class="project-summary">
+        <label for="projectName">Nombre del proyecto</label>
+        <input id="projectName" value="Nuevo proyecto" autocomplete="off" />
+        <div><span>Último guardado</span><strong id="projectLastSaved">Todavía no guardado</strong></div>
+      </div>
+      <div class="project-actions">
+        <button id="saveProjectBtn" type="button" class="primary">Guardar proyecto</button>
+        <button id="openProjectsBtn" type="button">Abrir proyecto</button>
+        <button id="newProjectBtn" type="button">Nuevo proyecto</button>
+        <button id="downloadProjectBtn" type="button">Descargar copia</button>
+        <button id="openProjectFileBtn" type="button">Importar copia</button>
+        <input id="projectFileInput" type="file" accept=".json,.lne.json" hidden />
+        <select id="savedProjectsSelect" aria-label="Proyectos guardados" hidden>
+          <option value="">Proyectos guardados en este conversor</option>
+        </select>
+        <button id="loadSavedProjectBtn" type="button" disabled hidden>Abrir guardado</button>
+        <button id="exportDocxBtn" type="button" disabled>Descargar Word revisado</button>
+      </div>
+    </section>
+
+    <dialog id="projectsDialog" class="projects-dialog">
+      <div class="projects-dialog-head"><div><p class="eyebrow">HISTORIAL TEMPORAL</p><h2>Mis proyectos temporales</h2><p id="projectsCount" class="projects-count">0 de 5 proyectos</p></div><button id="closeProjectsBtn" type="button" aria-label="Cerrar">×</button></div>
+      <div id="projectsList" class="projects-list"></div>
+    </dialog>
+
+    <dialog id="publicationDialog" class="publication-dialog">
+      <form id="publicationForm">
+        <div class="publication-head">
+          <div><p class="eyebrow">PUBLICACIÓN DEFINITIVA</p><h2>Publicar documento jurídico</h2></div>
+          <button id="closePublicationBtn" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div class="publication-body">
+          <input id="publicationType" type="hidden" value="legislacion" />
+          <div class="publication-settings">
+            <fieldset class="publication-destination">
+              <legend>¿Qué deseas publicar?</legend>
+              <label><input type="radio" name="publicationDestination" value="legislacion" checked /> Nueva legislación</label>
+              <label class="future-option"><input type="radio" name="publicationDestination" value="formacion" disabled /> Formación jurídica <small>Próximamente</small></label>
+            </fieldset>
+
+            <section id="newPublicationPanel" class="publication-panel">
+              <h3>Información general</h3>
+              <label for="publicationNormName">Nombre de la norma</label>
+              <input id="publicationNormName" placeholder="Código Procesal Constitucional" />
+              <input id="publicationNormCode" type="hidden" />
+              <label for="publicationNormIntro">Introducción</label>
+              <textarea id="publicationNormIntro" rows="6"></textarea>
+              <div class="publication-image-upload"><span>Imagen</span><button id="selectPublicationImageBtn" type="button">Subir imagen</button><small>PNG, JPG o WebP · máximo 5 MB</small></div>
+              <input id="publicationNormImage" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+              <div id="publicationImagePreview" class="publication-image-placeholder"><span>Sin imagen seleccionada</span><strong id="publicationImageTitle">Nueva legislación</strong></div>
+            </section>
+
+            <section id="publicationSummary" class="publication-summary" hidden></section>
+            <p id="publicationError" class="publication-error" role="alert"></p>
+          </div>
+
+          <div id="publicationResizeHandle" class="publication-resize-handle" role="separator" aria-label="Redimensionar información general y vista previa" aria-orientation="vertical" tabindex="0">
+            <button id="publicationPanelToggle" type="button" aria-label="Ocultar información general" aria-expanded="true">←</button>
+          </div>
+
+          <section class="publication-preview-section">
+            <h3>Vista previa</h3>
+            <div id="publicationPreview" class="publication-preview"></div>
+          </section>
+        </div>
+        <div class="publication-actions">
+          <button id="cancelPublicationBtn" type="button">Cancelar</button>
+          <button id="editPublicationBtn" type="button" hidden>Editar información general</button>
+          <button id="preparePublicationBtn" type="button" class="primary">Revisar publicación</button>
+          <button id="confirmPublicationBtn" type="button" class="primary" hidden>PUBLICAR AHORA</button>
+        </div>
+      </form>
+    </dialog>
+
+    <section class="card result-card">
+      <div class="result-head">
+        <h2>Resultado</h2>
+        <div class="result-actions">
+          <button id="editCodeBtn" type="button" disabled>Editar código</button>
+          <button id="syncCodeBtn" type="button" disabled>Actualizar vista desde código</button>
+          <button id="previewBtn" disabled>Visualizar como en mi página</button>
+          <button id="downloadBtn" disabled>Descargar .js</button>
+        </div>
+      </div>
+      <p class="hint">Puedes editar el código y pulsar «Actualizar vista desde código» para reflejar los cambios en el editor visual.</p>
+      <textarea id="resultText" class="code" readonly placeholder="Aquí aparecerá el JavaScript generado..."></textarea>
+    </section>
+
+    <section id="previewSection" class="preview-section" hidden>
+      <div class="preview-toolbar">
+        <div>
+          <p class="eyebrow preview-eyebrow">EDITOR JURÍDICO</p>
+          <h2>Edita como se verá en La Norma Express</h2>
+        </div>
+        <button id="closePreviewBtn">Cerrar vista previa</button>
+      </div>
+      <div class="preview-edit-toolbar compact-tools" role="toolbar" aria-label="Herramientas de edición de la vista previa">
+        <div class="tool-row tool-row-main">
+          <button id="editPreviewBtn" class="tool-btn tool-strong" type="button" aria-pressed="false">Editar</button>
+          <button id="undoPreviewBtn" class="tool-btn" type="button" disabled>Deshacer</button>
+          <button id="redoPreviewBtn" class="tool-btn" type="button" disabled>Rehacer</button>
+          <button id="paragraphBtn" class="tool-btn" type="button" disabled title="Convertir el bloque seleccionado en párrafo normal">Párrafo</button>
+          <button id="markIncisoBtn" class="tool-btn" type="button" disabled title="Convierte en inciso y lo alinea automáticamente con los incisos vecinos">Inciso</button>
+          <button id="sublevelMoreBtn" class="tool-btn" type="button" disabled title="Usa solo cuando el inciso depende de otro inciso">Subinciso</button>
+          <button id="sublevelLessBtn" class="tool-btn" type="button" disabled title="Subir un nivel jurídico">Nivel −</button>
+          <button id="articleTitleBtn" class="tool-btn" type="button" disabled title="Usar el bloque seleccionado como título o sumilla del artículo">Sumilla</button>
+          <button id="newArticleBtn" class="tool-btn" type="button" disabled title="Crear o separar un artículo nuevo en el punto seleccionado">Nuevo art.</button>
+          <button id="newDispositionBtn" class="tool-btn" type="button" disabled title="Crear una disposición nueva después del punto seleccionado">N. disp.</button>
+          <button id="opacityBtn" class="tool-btn mini-tool" type="button" disabled title="Volver el texto seleccionado más tenue, pero legible">Op.</button>
+          <button id="underlineBtn" class="tool-btn mini-tool" type="button" disabled title="Subrayar o quitar subrayado al texto seleccionado"><u>S</u></button>
+          <button id="italicBtn" class="tool-btn mini-tool" type="button" disabled title="Aplicar o quitar cursiva al texto seleccionado"><em>C</em></button>
+          <select id="structureTypeSelect" class="tool-select structure-tool" disabled title="Convertir una línea excepcional en jerarquía jurídica; se aplica al elegir">
+            <option value="">Estructura…</option>
+            <option value="book">Libro</option>
+            <option value="title">Título</option>
+            <option value="subtitle">Subtítulo</option>
+            <option value="chapter">Capítulo</option>
+            <option value="subchapter">Subcapítulo</option>
+            <option value="section">Sección</option>
+            <option value="subsection">Subsección</option>
+          </select>
+          <button id="fontSmallerBtn" class="tool-btn mini-tool" type="button" disabled title="Reducir tamaño del bloque seleccionado">A−</button>
+          <button id="fontLargerBtn" class="tool-btn mini-tool" type="button" disabled title="Aumentar tamaño del bloque seleccionado">A+</button>
+          <button id="applyPreviewBtn" type="button" class="tool-btn primary" disabled>Aplicar al .js</button>
+        </div>
+
+        <div class="tool-row tool-row-secondary">
+          <button id="indentLessBtn" class="tool-btn" type="button" disabled>Sangría −</button>
+          <button id="indentMoreBtn" class="tool-btn" type="button" disabled>Sangría +</button>
+          <button id="alignPrevBtn" class="tool-btn" type="button" disabled>Alinear</button>
+          <button id="leadCurrentBtn" class="tool-btn" type="button" disabled>Enc. actual</button>
+          <button id="leadNextBtn" class="tool-btn" type="button" disabled>Enc. sig.</button>
+          <button id="formatDerogationBtn" class="tool-btn" type="button" disabled>Derogado</button>
+          <button id="deleteBlockBtn" class="tool-btn" type="button" disabled title="Elimina el cuadro vacío o la tabla seleccionada; puedes recuperarlo con Deshacer">Eliminar cuadro</button>
+          <button id="mergePrevBtn" class="tool-btn" type="button" disabled>Unir ant.</button>
+          <button id="mergeNextBtn" class="tool-btn" type="button" disabled>Unir sig.</button>
+          <button id="restorePreviewBtn" class="tool-btn" type="button" disabled>Restaurar</button>
+          <span id="previewEditStatus" class="preview-edit-status" role="status" aria-live="polite">Vista de lectura</span>
+        </div>
+      </div>
+      <p class="hint preview-help">Selecciona un bloque y pulsa directamente la acción que quieras. <strong>Inciso</strong> lo alinea con sus vecinos; usa <strong>Subinciso</strong> solo si depende de otro inciso. <strong>Nivel −</strong> lo devuelve al nivel anterior. <strong>Párrafo, Sumilla y Nuevo art.</strong> son acciones de un clic; <strong>A− / A+</strong> ajustan el tamaño. Usa el botón principal para continuar con el resultado final.</p>
+      <div id="legalPreview" class="legal-preview"></div>
+    </section>
+  </main>
+
+  <script>
+    window.__LNE_CONVERTER_PHASE_ONE__ = true;
+    window.__LNE_LEGISLATION_MODE__ = new URLSearchParams(location.search).get('mode') === 'legislation';
+    if (window.__LNE_LEGISLATION_MODE__) document.body.classList.add('legislation-mode');
+    window.__LNE_ADMIN_TOKEN__ = '';
+    window.addEventListener('message', event => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'lne-admin-auth') return;
+      window.__LNE_ADMIN_TOKEN__ = String(event.data.token || '');
+      window.dispatchEvent(new CustomEvent('lne-admin-auth-ready'));
+    });
+  </script>
+  <script src="/legal-visual-renderer.js?v=3.1"></script>
+  <script src="/admin-converter-assets/project-store.js?v=4.2"></script>
+  <script src="/legal-introduction-renderer.js?v=2"></script>
+  <script src="/admin-converter-assets/app.js?v=4.2.14"></script>
+  <script src="/admin-converter-assets/linked-publication.js?v=5"></script>
+</body>
+</html>

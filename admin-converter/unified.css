@@ -1,0 +1,45 @@
+.unified-layout{display:flex;flex-direction:column}
+.unified-layout>.hero{order:0}
+.unified-layout>.upload-card{order:1}
+.unified-layout>.convert-card{order:2}
+.unified-layout>.pdf-previous{order:3}
+.unified-layout>#previewSection{order:4}
+.unified-layout>.project-card{order:5}
+.unified-layout>.result-card{order:6}
+.unified-layout>.source-card{order:7}
+.unified-layout>.config-card{order:8}
+.unified-layout>[hidden]{display:none!important}
+.column-choice{min-width:150px;font-size:.78rem;white-space:nowrap}
+.column-choice select{display:block;width:100%;margin-top:4px;padding:7px;border:1px solid var(--brand-border);border-radius:8px;background:white}
+.pdf-previous summary{cursor:pointer;color:var(--brand-blue);font-weight:700}
+.pdf-previous-row{display:flex;gap:12px;align-items:center;padding:7px 0;border-bottom:1px solid #e5edf5}
+.pdf-previous-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdf-previous-row button{flex:none}
+.coverage-warning{background:#fff4db;border-left:4px solid #d28b16;padding:12px;margin-top:12px;white-space:pre-wrap}
+@media(max-width:700px){.unified-layout .upload-row{flex-wrap:wrap}.column-choice{width:100%}}
+.legislation-mode { margin:0; background:#eef1f5; }
+.legislation-mode .hero,.legislation-mode .upload-card,.legislation-mode .pdf-previous,
+.legislation-mode .source-card,.legislation-mode .config-card,.legislation-mode .convert-card,
+.legislation-mode .project-card,.legislation-mode .result-card { display:none !important; }
+.legislation-mode .container { width:100%; max-width:none; margin:0; padding:0; }
+.legislation-mode .preview-section { margin:0; border:0; border-radius:0; box-shadow:none; }
+.legislation-mode .preview-toolbar { position:sticky; top:0; z-index:20; background:#fff; padding:12px 18px 8px; }
+.legislation-mode .preview-toolbar h2 { margin:0; font-size:1rem; }
+.legislation-mode #closePreviewBtn,.legislation-mode #editPreviewBtn { display:none; }
+.legislation-mode .preview-edit-toolbar { position:sticky; top:61px; z-index:19; background:#fff; padding:8px 14px; border-bottom:1px solid #dfe4ea; }
+.legislation-mode .preview-help { display:none; }
+.legislation-mode .legal-preview { padding:22px; }
+.legislation-mode .legal-sheet { width:min(100%,1080px); min-height:0; margin:30px auto 0; padding:35px; border-radius:8px; box-shadow:0 4px 15px rgba(0,0,0,.05); color:#1b263b; }
+.legislation-mode .legal-document-title { width:80%; max-width:none; padding-bottom:15px; border-bottom:2px solid #000; font-family:'Playfair Display',serif; font-size:3rem; color:#1b263b; }
+.legislation-mode .legal-title-rule { display:none; }
+.legislation-mode .legal-group { margin-top:0; }
+.legislation-mode .legal-major-heading { margin:40px 0 15px; color:#1b263b; }
+.legislation-mode .legal-subheading { margin:0 0 40px; color:#1b263b; }
+.legislation-mode .legal-article { margin:0 0 30px; padding:12px; border-bottom:1px solid #eee; border-radius:6px; }
+.legislation-mode .legal-article-title { margin:0 0 10px; font-family:Roboto,Arial,sans-serif; font-size:1.1rem; line-height:normal; color:#1b263b; }
+.legislation-mode .legal-article-body,.legislation-mode .legal-article-body div,.legislation-mode .legal-article-body p { font-family:Roboto,Arial,sans-serif; font-size:.88rem !important; line-height:1.6 !important; text-align:justify !important; color:inherit; }
+.legislation-mode .admin-document-meta { margin-bottom:18px; }
+.legislation-mode .admin-document-name { margin:0 0 18px; text-align:center; font-family:'Playfair Display',serif; font-size:2.2rem; text-transform:uppercase; color:#1b263b; }
+.legislation-mode .admin-document-intro { min-height:74px; padding:14px; border-left:4px solid #c9a227; line-height:1.6; color:#34445a; }
+.legislation-mode .admin-image-placeholder { display:grid; place-items:center; min-height:120px; margin-top:18px; border:2px dashed #cbd2da; border-radius:8px; color:#6b7280; font-weight:700; text-transform:uppercase; }
+.legislation-mode [contenteditable="true"]:focus { outline:2px solid rgba(201,162,39,.45); outline-offset:3px; }

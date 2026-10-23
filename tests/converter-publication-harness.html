@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Prueba aislada de publicación del conversor</title>
+<style>html,body,iframe{width:100%;height:100%;margin:0;border:0}#status{position:fixed;z-index:5;right:10px;top:10px;padding:8px;background:#fff}</style>
+<output id="status">Preparando prueba…</output>
+<iframe id="editor" src="/admin/converter-workspace?publicationTest=1" title="Conversor jurídico de prueba"></iframe>
+<script src="/admin-converter-assets/project-store.js?v=4.2"></script>
+<script>
+const scenario=new URLSearchParams(location.search).get('scenario')||'new';
+const frame=document.getElementById('editor'),status=document.getElementById('status');
+const projectId=`publication-test-${scenario}`;
+const preview=[{titulo:'TÍTULO I',capitulo:'CAPÍTULO DE PRUEBA',articulos:[
+ {tipo:'Artículo',numero:'1',titulo:'Primer artículo',textoHtml:'<div>Contenido jurídico uno.</div>'},
+ {tipo:'Artículo',numero:'2',titulo:'Segundo artículo',textoHtml:'<div><strong>Contenido jurídico dos.</strong></div>'}
+]}];
+const project={format:'la-norma-express-project',version:3,projectId,projectName:'Código de prueba',sourceText:'Artículo 1\nArtículo 2',variableName:'CodigoPrueba',outputName:'codigo-prueba.js',previewTitle:'Código de prueba',resultText:'const CodigoPrueba=[];',preview,originalPreview:preview,visualState:{previewEditing:true,previewVisible:true},savedAt:new Date().toISOString()};
+async function prepare(){await LNEProjectStore.remove(projectId);await LNEProjectStore.put({id:projectId,name:project.projectName,updatedAt:project.savedAt,project});frame.contentWindow.postMessage({type:'lne-publication-test-document',project},location.origin);status.textContent=`Documento listo · escenario ${scenario}`}
+frame.addEventListener('load',prepare);
+window.addEventListener('message',async event=>{
+ if(event.origin!==location.origin)return;
+ if(event.data?.type==='lne-publication-request-context')frame.contentWindow.postMessage({type:'lne-publication-context',role:'owner',norms:[{codigo:'codigo-civil',nombre:'Código Civil',slug:'codigo-civil',introduccion:'Introducción existente.',estado:'publicado'}]},location.origin);
+ if(event.data?.type==='lne-publication-submit'){
+   window.__lastPublication=event.data;
+   const failed=scenario==='failure';
+   frame.contentWindow.postMessage({type:'lne-publication-result',requestId:event.data.requestId,ok:!failed,articleCount:event.data.articles.length,error:failed?'Fallo simulado sin escritura.':''},location.origin);
+   setTimeout(async()=>{const retained=!!(await LNEProjectStore.get(projectId));window.__testResult={scenario,payload:event.data,retained};status.textContent=failed?`Fallo simulado · temporal conservado: ${retained}`:`Éxito simulado · temporal eliminado: ${!retained}`},200);
+ }
+});
+</script>

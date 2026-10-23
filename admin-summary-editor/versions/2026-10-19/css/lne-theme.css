@@ -1,0 +1,52 @@
+/* ==========================================================================
+   LNE THEME - Sistema de Diseño y Tipografía Jurídica Editorial
+   La Norma Express
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
+
+:root {
+    /* Paleta Institucional LNE - Sobria y Editorial */
+    --lne-navy: #1b263b;
+    --lne-navy-dark: #0d1b2a;
+    --lne-navy-light: #334155;
+    --lne-gold: #b45309;           /* Dorado / Ámbar sobrio de imprenta */
+    --lne-gold-light: #fefce8;
+    --lne-gold-dark: #92400e;
+    --lne-red: #b91c1c;            /* Carmesí editorial discreto */
+    --lne-red-light: #fef2f2;
+    --lne-amber: #d97706;          /* Cautela preventiva */
+    --lne-amber-light: #fffbeb;
+    --lne-blue-soft: #f8fafc;
+    --lne-teal: #0f766e;
+    --lne-teal-light: #f0fdfa;
+
+    /* Superficies y Neutros */
+    --lne-bg-workspace: #eef2f6;
+    --lne-bg-sheet: #ffffff;
+    --lne-border: #e2e8f0;
+    --lne-border-dark: #cbd5e1;
+    --lne-border-light: #f1f5f9;
+    --lne-text-main: #1e293b;
+    --lne-text-secondary: #475569;
+    --lne-text-muted: #64748b;
+
+    /* Familias Tipográficas Curadas */
+    --font-titulos: 'Playfair Display', Georgia, serif;
+    --font-subtitulos: 'Merriweather', serif;
+    --font-cuerpo: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-lectura: 'Lora', Georgia, serif;
+    --font-formal: 'Cinzel', serif;
+    --font-moderna: 'Inter', sans-serif;
+    --font-academica: 'Source Serif 4', Georgia, serif;
+
+    /* Sombras y Elevaciones Editoriales */
+    --shadow-sheet: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-dropdown: 0 10px 25px rgba(0, 0, 0, 0.08);
+
+    /* Radios Discretos */
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lne-cache-v20';
+const CACHE_NAME = 'lne-cache-v22';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
@@ -8,10 +8,14 @@ const PRECACHE_ASSETS = [
     '/asistente.js?v=2.3',
   '/normas.js?v=10',
     '/formacion.js?v=2',
-    '/legislacion.js?v=3',
+    '/legal-visual-renderer.js?v=1',
+    '/legal-introduction-renderer.js?v=2',
+    '/legal-introduction.css?v=5',
+    '/legislacion.js?v=5',
     '/legislacion-explorer.js?v=1',
     '/formacion-ui.js?v=2',
-    '/router.js?v=11',
+    '/dynamic-legislation.js?v=1',
+    '/router.js?v=12',
     '/home-search.js?v=1',
     '/manifest.json',
     '/pages/home.html?v=3',
@@ -57,6 +61,8 @@ self.addEventListener('fetch', event => {
     }
 
     const requestUrl = new URL(event.request.url);
+    // El editor privado siempre verifica la sesión en el servidor.
+    if (requestUrl.pathname.startsWith('/admin/resumenes/')) return;
     const isCriticalRequest = event.request.mode === 'navigate'
         || requestUrl.pathname.startsWith('/pages/')
         || requestUrl.pathname.startsWith('/data/')

@@ -1,0 +1,13 @@
+#user-dialog .user-password-controls,
+#account-password-dialog .user-password-controls { display:flex; align-items:center; gap:6px; }
+#user-dialog .user-password-controls input,
+#account-password-dialog .user-password-controls input { min-width:0; flex:1; }
+#user-dialog .user-password-controls button,
+#account-password-dialog .user-password-controls button { flex:none; }
+#users-list .user-account-actions { display:flex; flex-wrap:wrap; gap:8px; }
+body:has(#users-section:not([hidden])) .admin-layout { grid-template-columns:minmax(0,1fr); }
+#users-list .user-card { gap:18px; flex-wrap:wrap; }
+#users-list .user-card > div:first-child { min-width:0; flex:1 1 250px; overflow-wrap:anywhere; }
+#users-list .user-account-actions { flex:0 1 auto; }
+#user-dialog .owner-protection-note { font-size:.8rem; color:#536172; }
+#account-password-dialog, #user-created-dialog { width:min(540px,94vw); }

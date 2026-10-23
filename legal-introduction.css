@@ -1,0 +1,156 @@
+.container.container-ley {
+    width: 100%;
+    max-width: 900px !important;
+    margin: 40px auto !important;
+    padding: 0 20px;
+}
+
+.intro-container {
+    display: block;
+    margin-bottom: 50px;
+    gap: 35px;
+    background: transparent;
+    font-family: 'Roboto', sans-serif;
+}
+
+.intro-text {
+    display: grid;
+    grid-template-columns: minmax(0, 539.525px) minmax(0, 285.475px);
+    grid-template-rows: auto auto;
+    column-gap: 35px;
+    width: 100%;
+}
+
+.intro-content {
+    display: contents;
+}
+
+.intro-titulo {
+    grid-column: 1;
+    grid-row: 1;
+    border-bottom: 3px solid #1b263b;
+    padding-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #1b263b;
+    line-height: 1.2;
+    font-size: 2.2rem;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+}
+
+@media (min-width: 769px) {
+    .container.container-ley {
+        padding-right: 20px !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .container.container-ley {
+        margin: 20px auto !important;
+        padding: 20px 10px 140px 10px !important;
+    }
+}
+
+.intro-parrafo {
+    grid-column: 1;
+    grid-row: 2;
+    flex: 1;
+    min-width: 0;
+    text-align: justify !important;
+    line-height: 1.55 !important;
+    color: #444;
+    font-size: 0.95rem !important;
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+}
+
+.intro-portada,
+.intro-portada-consti,
+.intro-portada-civil,
+.intro-portada-n728,
+.intro-portada-ley29571,
+.intro-portada-ley27444,
+.intro-portada-codigo-tributario {
+    width: auto;
+    max-width: 100%;
+    margin-top: 0;
+    transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.3s ease;
+    object-fit: contain;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: center;
+}
+
+.intro-portada,
+.intro-portada-civil,
+.intro-portada-n728,
+.intro-portada-ley29571,
+.intro-portada-ley27444,
+.intro-portada-codigo-tributario {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.intro-portada-consti {
+    border-radius: 4px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.intro-portada-n728,
+.intro-portada-ley29571,
+.intro-portada-ley27444,
+.intro-portada-codigo-tributario {
+    margin-top: 0;
+}
+
+.intro-portada:hover,
+.intro-portada-consti:hover,
+.intro-portada-civil:hover,
+.intro-portada-n728:hover,
+.intro-portada-ley29571:hover,
+.intro-portada-ley27444:hover,
+.intro-portada-codigo-tributario:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 768px) {
+    .intro-container {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .intro-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+    }
+
+    .intro-text {
+        display: block;
+    }
+
+    .intro-titulo {
+        text-align: center;
+        font-size: 1.8rem;
+    }
+
+    .intro-parrafo {
+        text-align: justify !important;
+    }
+
+    .intro-portada,
+    .intro-portada-consti,
+    .intro-portada-civil,
+    .intro-portada-n728,
+    .intro-portada-ley29571,
+    .intro-portada-ley27444,
+    .intro-portada-codigo-tributario {
+        width: auto;
+        margin-top: 0;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

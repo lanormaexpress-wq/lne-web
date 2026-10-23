@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Visual de Materiales Jurídicos LNE</title>
+
+    <!-- Hojas de Estilo del Sistema LNE Editorial -->
+    <link rel="stylesheet" href="css/lne-theme.css">
+    <link rel="stylesheet" href="css/lne-components.css">
+    <link rel="stylesheet" href="css/editor.css">
+
+    <!-- Iconografía Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- 1. Barra Superior Fija (Marca, Título y Acciones Principales) -->
+    <header class="editor-top-nav">
+        <div class="brand-section">
+            <div class="brand-logo-badge">
+                <i class="fa-solid fa-scale-balanced"></i> LNE
+            </div>
+            <span class="brand-title">Editor Jurídico Editorial</span>
+        </div>
+
+        <div class="doc-meta-section">
+            <input type="text" id="doc-title-input" class="doc-title-input" placeholder="Título del material..." value="Documento en Blanco" title="Clic para renombrar el material">
+        </div>
+
+        <div class="top-actions-section">
+            <button id="btn-nuevo" class="btn-top" title="Iniciar un nuevo documento">
+                <i class="fa-solid fa-file-circle-plus"></i> Nuevo
+            </button>
+            <button id="btn-importar-word" class="btn-top btn-top-word" title="Importar y convertir documento Word (.docx)">
+                <i class="fa-solid fa-file-word"></i> Importar Word
+            </button>
+            <button id="btn-vista-web" class="btn-top" title="Previsualizar como se verá en La Norma Express">
+                <i class="fa-solid fa-globe"></i> Vista Web
+            </button>
+            <button id="btn-exportar" class="btn-top btn-top-primary" title="Exportar paquete completo (.ZIP) con JSON, HTML e Imágenes">
+                <i class="fa-solid fa-file-zipper"></i> Exportar Material
+            </button>
+            <div class="document-menu"><button id="btn-document-menu" class="btn-top" aria-expanded="false">Documento <i class="fa-solid fa-chevron-down"></i></button><div id="document-menu-actions" class="document-menu-dropdown" hidden><button id="btn-review-structure">Revisar estructura</button><button id="btn-editorial-split">Separar contenido</button><button id="btn-local-documents">Documentos locales</button></div></div>
+        </div>
+        <button id="mobile-top-menu" class="btn-top mobile-top-menu" aria-label="Acciones del documento" aria-expanded="false">⋯</button>
+    </header>
+
+    <!-- 2. Barra Principal Fija de Herramientas (Sticky Toolbar) -->
+    <nav class="editor-toolbar">
+        <!-- Historial -->
+        <div class="toolbar-group">
+            <button id="tool-undo" class="tool-btn" title="Deshacer (Ctrl + Z)"><i class="fa-solid fa-rotate-left"></i></button>
+            <button id="tool-redo" class="tool-btn" title="Rehacer (Ctrl + Y)"><i class="fa-solid fa-rotate-right"></i></button>
+            <button id="tool-group" class="tool-btn" style="width:auto;padding:0 7px" hidden>Agrupar</button><button id="tool-ungroup" class="tool-btn" style="width:auto;padding:0 7px" hidden>Desagrupar</button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="toolbar-group">
+            <div class="list-control"><button id="tool-list-bullets" class="tool-btn list-main" title="Activar o quitar viñetas">Viñetas</button><button class="tool-btn list-arrow" data-list-gallery="vinetas" aria-label="Estilos de viñetas" aria-haspopup="dialog" aria-expanded="false">▾</button></div>
+            <div class="list-control"><button id="tool-list-numbers" class="tool-btn list-main" title="Activar o quitar numeración">Numeración</button><button class="tool-btn list-arrow" data-list-gallery="numerada" aria-label="Estilos de numeración" aria-haspopup="dialog" aria-expanded="false">▾</button></div>
+            <div class="list-control"><button id="tool-list-multilevel" class="tool-btn list-main" title="Activar o quitar lista multinivel">Lista multinivel</button><button class="tool-btn list-arrow" data-list-gallery="multinivel" aria-label="Estilos multinivel" aria-haspopup="dialog" aria-expanded="false">▾</button></div>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <!-- Tipografías Curadas LNE -->
+        <div class="toolbar-group">
+            <select id="tool-font-family" class="tool-select" title="Tipografía Editorial">
+                <optgroup label="Títulos">
+                    <option value="'Playfair Display', Georgia, serif">Playfair Display</option>
+                <option value="'Merriweather', Georgia, serif">Merriweather (Clásica)</option>
+                </optgroup>
+                <optgroup label="Texto de Lectura">
+                    <option value="'Roboto', sans-serif" selected>Roboto (Estándar Web)</option>
+                <option value="'Inter', sans-serif">Inter (Moderno / Neutro)</option>
+                </optgroup>
+            </select>
+
+            <!-- Selector Completo de Tamaños (6px a 48px + Personalizado) -->
+            <select id="tool-font-size" class="tool-select" title="Tamaño de Fuente">
+                <option value="6px">6 px (Micro)</option>
+                <option value="8px">8 px (Notas legales)</option>
+                <option value="10px">10 px (Pies y fuentes)</option>
+                <option value="12px">12 px (Secundario)</option>
+                <option value="14px">14 px (Citas)</option>
+                <option value="16px" selected>16 px (Texto base)</option>
+                <option value="18px">18 px (Destacado)</option>
+                <option value="20px">20 px (Sub-subtítulo H3)</option>
+                <option value="24px">24 px (Subtítulo H2)</option>
+                <option value="28px">28 px (Título de sección)</option>
+                <option value="32px">32 px (Título principal H1)</option>
+                <option value="36px">36 px (Gran título)</option>
+                <option value="40px">40 px (Portada)</option>
+                <option value="48px">48 px (Display)</option>
+            </select>
+
+            <input type="number" id="tool-custom-size" class="tool-size-input" min="6" max="120" value="16" title="Tamaño exacto en px">
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <!-- Formato Enriquecido -->
+        <div class="toolbar-group">
+            <button id="tool-bold" class="tool-btn" title="Negrita (Ctrl + B)"><i class="fa-solid fa-bold"></i></button>
+            <button id="tool-italic" class="tool-btn" title="Cursiva (Ctrl + I)"><i class="fa-solid fa-italic"></i></button>
+            <button id="tool-underline" class="tool-btn" title="Subrayado (Ctrl + U)"><i class="fa-solid fa-underline"></i></button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <!-- Alineación -->
+        <div class="toolbar-group">
+            <button id="tool-align-left" class="tool-btn" title="Alinear a la izquierda"><i class="fa-solid fa-align-left"></i></button>
+            <button id="tool-align-center" class="tool-btn" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
+            <button id="tool-align-right" class="tool-btn" title="Alinear a la derecha"><i class="fa-solid fa-align-right"></i></button>
+            <button id="tool-align-justify" class="tool-btn" title="Justificar texto"><i class="fa-solid fa-align-justify"></i></button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <!-- Inserción de Elementos Estructurales -->
+        <div id="legacy-insert-toolbar" class="toolbar-group">
+            <button id="tool-insert-image" class="tool-btn" title="Insertar Imagen desde mi equipo"><i class="fa-regular fa-image"></i></button>
+            <button id="tool-insert-box" class="tool-btn" title="Insertar Cuadro configurable"><i class="fa-regular fa-square"></i></button>
+            <button id="tool-insert-table" class="tool-btn" title="Insertar Tabla configurable"><i class="fa-solid fa-table"></i></button>
+            <button id="tool-insert-columns" class="tool-btn" title="Insertar Columnas paralelas"><i class="fa-solid fa-table-columns"></i></button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <!-- Herramienta Maestra: Diseño Jurídico (Desplegable) -->
+        <div id="legacy-legal-toolbar" class="toolbar-group">
+            <button id="btn-diseno-juridico" class="btn-diseno-juridico" title="Desplegar componentes jurídicos especializados">
+                <i class="fa-solid fa-scale-balanced" style="color: var(--lne-gold);"></i>
+                <span>Diseño Jurídico</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.72rem; margin-left: 2px;"></i>
+            </button>
+        </div>
+
+        <!-- Inputs invisibles para subida de archivos directos -->
+        <input type="file" id="hidden-image-input" accept="image/*" style="display: none;">
+        <input type="file" id="hidden-word-input" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;">
+    </nav>
+
+    <!-- 3. Barra Secundaria Desplegable: Componentes Jurídicos LNE -->
+    <div id="secondary-toolbar" class="secondary-toolbar">
+        <!-- Las 10 píldoras se inyectan dinámicamente desde toolbar.js -->
+    </div>
+
+    <!-- 4. Espacio de Trabajo con paneles contextuales y hoja vertical -->
+    <div id="selection-banner" class="selection-banner" hidden><span>Modo selección: marca los bloques que deseas copiar.</span><button id="selection-create-copy" class="btn-top">Crear documento con selección</button><button id="selection-cancel" class="btn-top">Salir</button></div>
+    <div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+    <div class="sheet-zoom-controls"><button id="sheet-zoom-out" aria-label="Reducir zoom">−</button><button id="sheet-zoom-fit">Ajustar</button><button id="sheet-zoom-in" aria-label="Aumentar zoom">+</button><button id="sheet-zoom-actual">100%</button></div>
+    <main class="editor-workspace">
+        <aside id="insert-panel" class="editor-side-panel insert-panel" aria-label="Panel Agregar">
+            <div class="side-panel-heading"><i class="fa-solid fa-plus"></i><span>Agregar</span><button id="btn-toggle-insert" class="side-panel-toggle" title="Contraer panel"><i class="fa-solid fa-chevron-left"></i></button></div>
+            <section><h4>Texto</h4><button data-insert-type="titulo"><i class="fa-solid fa-heading"></i><span>Título</span></button><button data-insert-type="subtitulo"><i class="fa-solid fa-heading"></i><span>Subtítulo</span></button><button data-insert-type="parrafo"><i class="fa-solid fa-paragraph"></i><span>Párrafo</span></button><button data-insert-type="lista"><i class="fa-solid fa-list-ul"></i><span>Lista</span></button></section>
+            <section><h4>Contenido</h4><button data-insert-type="imagen"><i class="fa-regular fa-image"></i><span>Imagen</span></button><button data-insert-type="tabla"><i class="fa-solid fa-table"></i><span>Tabla</span></button><button data-insert-type="columnas"><i class="fa-solid fa-table-columns"></i><span>Columnas</span></button><button data-insert-type="cuadro"><i class="fa-regular fa-square"></i><span>Cuadro</span></button><button data-insert-type="separador"><i class="fa-solid fa-minus"></i><span>Separador</span></button></section>
+            <section><h4>Jurídico</h4><div id="legal-insert-actions" class="legal-insert-actions"></div></section>
+            <section><h4>Recursos</h4><button id="insert-inline-icon"><i class="fa-solid fa-scale-balanced"></i><span>Icono en el texto</span></button></section>
+        </aside>
+        <div id="document-viewport" class="document-viewport"><article id="document-sheet" class="document-sheet lne-document-body">
+            <!-- Los bloques se renderizan aquí dinámicamente -->
+        </article></div>
+        <aside id="context-inspector" class="editor-side-panel context-inspector" aria-label="Inspector contextual">
+            <div class="side-panel-heading"><i class="fa-solid fa-sliders"></i><span>Inspector</span><button class="drawer-close" data-close-panel aria-label="Cerrar inspector">×</button></div>
+            <div id="inspector-content" class="inspector-content"><p>Selecciona un bloque para ver sus opciones.</p></div>
+        </aside>
+    </main>
+    <nav id="mobile-editor-bar" class="mobile-editor-bar" aria-label="Herramientas móviles"><button data-open-panel="add">+ Agregar</button><button data-open-panel="format">Formato</button><button data-open-panel="inspector">Inspector</button><button data-close-panel class="drawer-close" aria-label="Cerrar panel">×</button></nav>
+
+    <div id="web-preview-modal" class="web-preview-modal" aria-hidden="true">
+        <div class="web-preview-card"><button id="btn-close-web-preview" class="web-preview-close" title="Cerrar vista web"><i class="fa-solid fa-xmark"></i></button><div id="web-preview-content" class="web-preview-content"></div></div>
+    </div>
+
+    <!-- 5. Modal: Nuevo Documento -->
+    <div id="editor-statistics" class="editor-statistics" aria-live="polite"></div>
+    <div id="editorial-modal" class="modal-overlay"><div class="modal-card editorial-modal-card"><div class="modal-header"><h3 id="editorial-modal-title" class="modal-title"></h3><button id="editorial-modal-close" class="modal-close" aria-label="Cerrar herramientas editoriales">×</button></div><div id="editorial-modal-body"></div></div></div>
+    <div id="modal-nuevo" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Crear Nuevo Material</h3>
+                <button id="btn-modal-close-nuevo" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">
+                Elige cómo deseas iniciar tu material jurídico:
+            </p>
+
+            <button id="opt-nuevo-blanco" class="modal-option-btn">
+                <div class="modal-option-icon"><i class="fa-solid fa-file"></i></div>
+                <div class="modal-option-text">
+                    <h4>Documento en Blanco</h4>
+                    <p>Inicia con una hoja limpia sin contenido predeterminado ni imágenes de prueba.</p>
+                </div>
+            </button>
+
+            <button id="opt-nuevo-lne" class="modal-option-btn"><div class="modal-option-icon"><i class="fa-solid fa-scale-balanced"></i></div><div class="modal-option-text"><h4>Resumen jurídico LNE</h4><p>Estructura opcional editable, sin contenido jurídico ni imágenes predeterminadas.</p></div></button>
+            <button id="opt-nuevo-word" class="modal-option-btn">
+                <div class="modal-option-icon" style="color: #2563eb;"><i class="fa-solid fa-file-word"></i></div>
+                <div class="modal-option-text">
+                    <h4>Importar Documento Word (.docx)</h4>
+                    <p>Carga un archivo .docx para analizar su estructura, títulos, párrafos, tablas e imágenes.</p>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 6. Modal: Configuración de Tabla -->
+    <div id="modal-config-tabla" class="modal-overlay">
+        <div class="modal-card" style="width: 420px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Insertar Tabla</h3>
+                <button id="btn-modal-close-tabla" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 16px;">
+                Define las dimensiones iniciales de la tabla:
+            </p>
+            <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: var(--lne-navy); display: block; margin-bottom: 6px;">Número de Filas:</label>
+                    <input type="number" id="table-input-rows" min="1" max="50" value="3" style="width: 100%; padding: 8px; border: 1px solid var(--lne-border); border-radius: 4px; font-size: 1rem;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: var(--lne-navy); display: block; margin-bottom: 6px;">Número de Columnas:</label>
+                    <input type="number" id="table-input-cols" min="1" max="20" value="3" style="width: 100%; padding: 8px; border: 1px solid var(--lne-border); border-radius: 4px; font-size: 1rem;">
+                </div>
+            </div>
+            <button id="btn-confirmar-tabla" class="btn-top btn-top-primary" style="width: 100%; justify-content: center; padding: 10px;">
+                Insertar Tabla en el Documento
+            </button>
+        </div>
+    </div>
+
+    <!-- 7. Modal: Configuración de Cuadro Contenedor -->
+    <div id="modal-config-cuadro" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Insertar Cuadro</h3>
+                <button id="btn-modal-close-cuadro" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 16px;">
+                Elige la estructura del cuadro contenedor:
+            </p>
+            <button class="modal-option-btn" data-cuadro-preset="simple">
+                <div class="modal-option-icon"><i class="fa-regular fa-square"></i></div>
+                <div class="modal-option-text">
+                    <h4>Cuadro Simple (Sin encabezado)</h4>
+                    <p>Caja contenedora limpia para destacar una sección o cita textual.</p>
+                </div>
+            </button>
+            <button class="modal-option-btn" data-cuadro-preset="header-simple">
+                <div class="modal-option-icon"><i class="fa-solid fa-table-list"></i></div>
+                <div class="modal-option-text">
+                    <h4>Cuadro con Encabezado</h4>
+                    <p>Incluye un título formal superior y cuerpo editable.</p>
+                </div>
+            </button>
+            <button class="modal-option-btn" data-cuadro-preset="cols-2">
+                <div class="modal-option-icon"><i class="fa-solid fa-table-columns"></i></div>
+                <div class="modal-option-text">
+                    <h4>Cuadro Dividido en 2 Columnas</h4>
+                    <p>Estructura bilateral para contrastar dos conceptos o etapas.</p>
+                </div>
+            </button>
+            <button class="modal-option-btn" data-cuadro-preset="cols-3">
+                <div class="modal-option-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                <div class="modal-option-text">
+                    <h4>Cuadro Tripartito (3 Columnas)</h4>
+                    <p>Ideal para clasificaciones jurídicas en tres fases o categorías.</p>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 8. Modal: Exportación Integral -->
+    <div id="modal-exportar" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Exportar Material Jurídico</h3>
+                <button id="btn-modal-close-export" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="font-size: 0.88rem; color: #64748b; margin-bottom: 20px;">
+                Selecciona el formato de salida:
+            </p>
+
+            <div id="opt-export-json" class="modal-option-btn">
+                <div class="modal-option-icon" style="color: var(--lne-navy);"><i class="fa-solid fa-file-code"></i></div>
+                <div class="modal-option-text">
+                    <h4>.material.lne.json (Fuente editable principal)</h4>
+                    <p>Archivo de datos semánticos estructurado. Permite reabrir y modificar el material posteriormente.</p>
+                </div>
+                <i class="fa-solid fa-download" style="color: var(--lne-navy); margin-left: auto;"></i>
+            </div>
+
+            <div id="opt-export-html" class="modal-option-btn">
+                <div class="modal-option-icon" style="color: #b91c1c;"><i class="fa-brands fa-html5"></i></div>
+                <div class="modal-option-text">
+                    <h4>.html Compilado (Salida para la web)</h4>
+                    <p>Código HTML limpio listo para incrustar en los cursos y modales de La Norma Express.</p>
+                </div>
+                <i class="fa-solid fa-download" style="color: var(--lne-navy); margin-left: auto;"></i>
+            </div>
+
+            <div id="opt-export-zip" class="modal-option-btn">
+                <div class="modal-option-icon" style="color: #d97706;"><i class="fa-solid fa-file-zipper"></i></div>
+                <div class="modal-option-text">
+                    <h4>Descargar Paquete Completo (.ZIP)</h4>
+                    <p>Incluye el JSON fuente, el HTML compilado y una carpeta con todas las imágenes incrustadas.</p>
+                </div>
+                <i class="fa-solid fa-download" style="color: var(--lne-navy); margin-left: auto;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Librerías de Apoyo Offline (Vendor) -->
+    <script src="vendor/mammoth.browser.min.js"></script>
+    <script src="vendor/jszip.min.js"></script>
+
+    <!-- Scripts de la Aplicación -->
+    <script src="js/state.js"></script>
+    <script src="js/lists.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/docx-parser.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/toolbar.js"></script>
+    <script src="js/canvas.js"></script>
+    <script src="js/editorial.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/typography.js"></script>
+    <script src="js/groups.js"></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>{window.LNETypography.init();window.LNEGroups.init();});</script>
+</body>
+
+</html>

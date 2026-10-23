@@ -1,0 +1,90 @@
+// Isolated provider; no real Auth users, passwords or secrets written to disk.
+const assert=require('node:assert/strict'),express=require('express'),crypto=require('crypto'),path=require('path');
+const {chromium}=require('C:/Users/Usuario/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const catalog=require('../admin-permission-catalog'),createAdminAuth=require('../lib/supabase-admin-auth');
+const root=path.resolve(__dirname,'..'),ownerId=crypto.randomUUID(),writerId=crypto.randomUUID(),users=new Map(),permissions=new Map(),calls=[];
+const initial=crypto.randomBytes(18).toString('base64url'),replacement=crypto.randomBytes(18).toString('base64url');
+users.set(ownerId,{id:ownerId,email:'owner@example.invalid',user_metadata:{name:'Owner fixture',untouched:'keep',email_verified:true},app_metadata:{role:'owner',untouched:'keep'}});
+users.set(writerId,{id:writerId,email:'writer@example.invalid',user_metadata:{name:'Writer fixture'},app_metadata:{role:'editor'}});
+permissions.set(writerId,{profile:'writer',permissions:catalog.preset('writer')});
+let associatedId=null,providerError=false,serviceEnabled=true,selfNameUpdates=0;
+const secret='sb_secret_'+crypto.randomBytes(24).toString('base64url');
+const client=createAdminAuth({url:'https://provider.invalid',env:{SUPABASE_SECRET_KEY:secret},request:async(url,opt)=>{
+ assert.equal(opt.headers.apikey,secret);assert.equal(opt.headers.Authorization,undefined,'Opaque secret must not be sent as a JWT');
+ const id=new URL(url).pathname.split('/')[5],body=opt.body?JSON.parse(opt.body):{};calls.push({method:opt.method||'GET',id,body});
+ if(providerError)throw new Error('Simulated failure containing '+secret+' '+replacement);
+ if(opt.method==='POST'){const user={id:crypto.randomUUID(),email:body.email,user_metadata:body.user_metadata,app_metadata:body.app_metadata};users.set(user.id,user);return Response.json(user);}
+ if(opt.method==='PUT'){const user=users.get(id);if(body.user_metadata)user.user_metadata=body.user_metadata;if(body.app_metadata)user.app_metadata=body.app_metadata;return Response.json(user);}
+ if(opt.method==='DELETE'){users.delete(id);return Response.json({});}
+ return Response.json(users.get(id));
+}});
+const roster=()=>[...users.values()].map(user=>({id:user.id,email:user.email,name:user.user_metadata.name,role:user.app_metadata.role,profile:user.app_metadata.role==='owner'?'owner':permissions.get(user.id)?.profile||'custom',permissions:permissions.get(user.id)?.permissions||{},status:'Activo',last_sign_in_at:null}));
+const rest=async(route,opt={})=>{
+ if(route==='rpc/admin_list_users')return {data:roster()};
+ if(route.startsWith('summary_'))return {data:associatedId&&route.includes(associatedId)?[{id:crypto.randomUUID()}]:[]};
+ if(opt.method==='POST'){permissions.set(opt.body.user_id,opt.body);return {data:null};}
+ return {data:[]};
+};
+const app=express();app.use(express.json());
+app.use('/api/admin',require('../lib/admin-users')({requireAdmin:(req,res,next)=>{const role=req.get('authorization');if(!role)return res.status(401).json({error:'Sesión requerida'});req.adminUser=role==='Bearer fixture-owner'?users.get(ownerId):{...users.get(writerId),admin_permissions:catalog.preset('writer')};next();},rest,auth:client.request,serviceAvailable:()=>serviceEnabled&&client.available()}));
+app.get('/mock-self-user',(_req,res)=>res.json({user:users.get(ownerId)}));
+app.post('/mock-self-name',(req,res)=>{assert.deepEqual(Object.keys(req.body),['name']);Object.assign(users.get(ownerId).user_metadata,req.body);selfNameUpdates++;res.json({user:users.get(ownerId)});});
+app.get('/admin',(_req,res)=>res.sendFile(path.join(root,'admin.html')));app.use(express.static(root));
+const server=app.listen(0,'127.0.0.1',async()=>{let browser;try{
+ const base=`http://127.0.0.1:${server.address().port}`;
+ const request=(route,method='GET',body,owner=true)=>fetch(base+'/api/admin'+route,{method,headers:{'Content-Type':'application/json',Authorization:owner?'Bearer fixture-owner':'Bearer fixture-writer'},body:body?JSON.stringify(body):undefined});
+ const legacy='eyJhbGciOiJIUzI1NiJ9.'+Buffer.from(JSON.stringify({role:'service_role'})).toString('base64url')+'.fixture';
+ let checkedLegacy=false;await createAdminAuth({url:'https://provider.invalid',env:{SUPABASE_SERVICE_ROLE_KEY:legacy},request:async(_url,opt)=>{assert.equal(opt.headers.Authorization,'Bearer '+legacy);checkedLegacy=true;return Response.json({});}}).request('/users');assert.ok(checkedLegacy);
+ assert.equal(createAdminAuth({url:'https://provider.invalid',env:{SUPABASE_SERVICE_ROLE_KEY:'placeholder'}}).available(),false);
+ const before=calls.length;assert.equal((await request('/users','POST',{name:'Bad',email:'invalid',password:initial,profile:'writer'})).status,400);assert.equal(calls.length,before);
+ assert.equal((await request('/users/'+writerId+'/password','POST',{password:replacement,confirmPassword:replacement},false)).status,403);
+ assert.equal((await request('/users/'+writerId+'/password','POST',{password:replacement,confirmPassword:'different'})).status,400);
+ assert.equal((await request('/users/'+writerId+'/password','POST',{password:replacement,confirmPassword:replacement})).status,200);
+ assert.deepEqual(Object.keys(calls.at(-1).body),['password']);
+ providerError=true;const failed=await request('/users/'+writerId+'/password','POST',{password:replacement,confirmPassword:replacement});assert.equal(failed.status,502);const failedText=await failed.text();assert.ok(!failedText.includes(secret)&&!failedText.includes(replacement));providerError=false;
+ assert.equal((await request('/users/'+ownerId,'PATCH',{profile:'writer',permissions:{}})).status,409);
+ associatedId=writerId;assert.equal((await request('/users/'+writerId,'DELETE')).status,409);assert.ok(users.has(writerId));associatedId=null;
+ browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+ const context=await browser.newContext({permissions:['clipboard-read','clipboard-write']}),page=await context.newPage();page.setDefaultTimeout(15000);
+ await page.route('**/admin.js?*',route=>route.fulfill({contentType:'text/javascript',body:`window.LNEAdminAccess={owner:true,permissions:{}};window.LNEAdminSession.client={auth:{async getUser(){const response=await fetch('/mock-self-user');return {data:await response.json(),error:null}},async updateUser(value){window.__selfPasswordKeys=Object.keys(value);if(value.data){const response=await fetch('/mock-self-name',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value.data)});return {data:await response.json(),error:null}}return {data:{},error:null}}}};LNEAdminUsers.init({api:async(path,options={})=>{const response=await fetch('/api/admin'+path,{...options,headers:{'Content-Type':'application/json',Authorization:'Bearer fixture-owner'}});if(response.status===204)return null;const result=await response.json();if(!response.ok)throw Error(result.error);return result},toast(text){document.getElementById('toast').textContent=text}});document.getElementById('new-user-button').onclick=()=>LNEAdminUsers.dialog();document.getElementById('user-form').onsubmit=LNEAdminUsers.save;document.querySelectorAll('[data-close-dialog]').forEach(button=>button.onclick=()=>document.getElementById(button.dataset.closeDialog).close());document.getElementById('admin-loading').hidden=true;document.getElementById('admin-view').hidden=false;document.getElementById('legislation-section').hidden=true;document.getElementById('norms-panel').hidden=true;document.getElementById('users-section').hidden=false;LNEAdminUsers.load();` }));
+ await page.goto(base+'/admin',{waitUntil:'domcontentloaded'});await page.getByText('Owner fixture',{exact:true}).waitFor();
+ assert.equal(await page.locator('.user-card').filter({hasText:'owner@example.invalid'}).getByRole('button',{name:'Eliminar usuario',exact:true}).count(),0);
+ await page.locator('#new-user-button').click();await page.locator('#managed-user-name').fill('New writer');await page.locator('#managed-user-email').fill('controlled-fixture@example.invalid');await page.locator('#managed-user-password').fill(initial);
+ assert.equal(await page.locator('#managed-user-password').getAttribute('type'),'password');
+ await page.locator('[data-password-toggle="managed-user-password"]').click();assert.equal(await page.locator('#managed-user-password').getAttribute('type'),'text');
+ await page.locator('[data-password-toggle="managed-user-password"]').click();assert.equal(await page.locator('#managed-user-password').getAttribute('type'),'password');
+ await page.locator('#copy-initial-password').click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),initial);
+ assert.equal(await page.locator('[data-granular-permission="summary_cards_manage"]').isChecked(),true);
+ await page.locator('#user-form button[type="submit"]').click();await page.locator('#user-created-dialog').waitFor({state:'visible'});
+ assert.match(await page.locator('#user-created-dialog').textContent(),/New writer/);assert.equal(await page.locator('#managed-user-password').inputValue(),'');
+ await page.locator('[data-copy-created]').click();assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),initial);
+ await page.locator('[data-close-created]').click();
+ const newUser=[...users.values()].find(user=>user.email==='controlled-fixture@example.invalid');assert.ok(newUser);assert.equal(permissions.get(newUser.id).profile,'writer');
+ serviceEnabled=false;const adminCallsBeforeSelfName=calls.length,permissionsBeforeSelfName=JSON.stringify([...permissions]);
+ const ownerCard=page.locator('.user-card').filter({hasText:'owner@example.invalid'});await ownerCard.getByRole('button',{name:'EDITAR PERMISOS'}).click();
+ await page.getByText('Los permisos esenciales de OWNER están protegidos.',{exact:true}).waitFor();
+ await page.locator('#managed-user-name').fill('Persisted owner name');await page.locator('#user-form button[type="submit"]').click();await page.getByText('Persisted owner name',{exact:true}).waitFor();
+ assert.equal(users.get(ownerId).user_metadata.untouched,'keep');assert.equal(users.get(ownerId).app_metadata.untouched,'keep');
+ assert.equal(users.get(ownerId).user_metadata.email_verified,true);assert.equal(selfNameUpdates,1);assert.equal(calls.length,adminCallsBeforeSelfName);assert.equal(JSON.stringify([...permissions]),permissionsBeforeSelfName,'Name-only edit must not rewrite grants');
+ await page.reload({waitUntil:'domcontentloaded'});await page.getByText('Persisted owner name',{exact:true}).waitFor();
+ const selfEdit=page.locator('.user-card').filter({hasText:'owner@example.invalid'});await selfEdit.getByRole('button',{name:'EDITAR PERMISOS'}).click();
+ await page.locator('#managed-user-name').fill('Name saved despite rejected role');await page.locator('#managed-user-role').selectOption('writer');
+ await page.locator('#user-form button[type="submit"]').click();await page.locator('#user-error').filter({hasText:'Tu nombre se guardó correctamente. Los otros cambios no se guardaron:'}).waitFor();
+ assert.equal(users.get(ownerId).user_metadata.name,'Name saved despite rejected role');assert.equal(users.get(ownerId).app_metadata.role,'owner');assert.equal(JSON.stringify([...permissions]),permissionsBeforeSelfName);
+ await page.locator('#user-dialog [data-close-dialog]').first().click();
+ await page.locator('#new-user-button').click();await page.locator('#managed-user-name').fill('Blocked fixture');await page.locator('#managed-user-email').fill('blocked@example.invalid');await page.locator('#managed-user-password').fill(initial);
+ const countBeforeBlockedCreate=users.size;await page.locator('#user-form button[type="submit"]').click();
+ await page.getByText('Para crear cuentas reales debes configurar la clave privada de Supabase en el servidor.',{exact:true}).waitFor();
+ assert.equal(await page.locator('#managed-user-name').inputValue(),'Blocked fixture');assert.equal(await page.locator('#managed-user-email').inputValue(),'blocked@example.invalid');assert.equal(await page.locator('#managed-user-password').inputValue(),initial);assert.equal(await page.locator('#managed-user-role').inputValue(),'writer');assert.equal(users.size,countBeforeBlockedCreate);assert.equal(calls.length,adminCallsBeforeSelfName);
+ await page.locator('#user-dialog [data-close-dialog]').first().click();
+ serviceEnabled=true;
+ const writerCard=page.locator('.user-card').filter({hasText:'writer@example.invalid'});await writerCard.getByRole('button',{name:'RESTABLECER CONTRASEÑA'}).click();
+ await page.locator('#account-password-new').fill(replacement);await page.locator('#account-password-confirm').fill(replacement);await page.locator('#account-password-submit').click();await page.locator('#account-password-dialog').waitFor({state:'hidden'});
+ assert.equal(await page.locator('#account-password-new').inputValue(),'');assert.deepEqual(Object.keys(calls.at(-1).body),['password']);
+ await page.locator('#my-account-button').click();await page.locator('#account-password-new').fill(replacement);await page.locator('#account-password-confirm').fill(replacement);await page.locator('#account-password-submit').click();await page.locator('#account-password-dialog').waitFor({state:'hidden'});
+ assert.deepEqual(await page.evaluate(()=>window.__selfPasswordKeys),['password']);
+ const storage=await page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));assert.ok(!storage.includes(initial)&&!storage.includes(replacement));
+ assert.ok(!(await page.content()).includes(initial)&&!(await page.content()).includes(replacement));
+ await page.screenshot({path:path.join(__dirname,'admin-users-auth.png')});
+ console.log(JSON.stringify({provider:'SIMULATED; real server routers and Chromium UI',creation:true,metadataNamePersists:true,selfNameWithoutSecret:true,otherMetadataPreserved:true,nameOnlyDoesNotRewritePermissions:true,partialSuccessReported:true,blockedCreationPreservesFields:true,noPartialUsersWithoutSecret:true,visibilityToggle:true,clipboardBeforeAndAfter:true,passwordOnlyReset:true,selfPasswordUsesAuthenticatedSdk:true,ownerProtected:true,referencedUserDeletionBlocked:true,modernAndLegacyHeaders:true,noSecretsInResponses:true,noRealUsersCreated:true}));
+}catch(error){console.error('Users/Auth test failed:',error.message);process.exitCode=1;}finally{await browser?.close();server.close();server.closeAllConnections();}});

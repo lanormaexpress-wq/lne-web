@@ -52,10 +52,13 @@
     }
 
     function loadCourseTopics(course) {
-        if (!course || !course.contentFile) return Promise.resolve([]);
-        if (dataPromises.has(course.id)) return dataPromises.get(course.id);
+        if (!course) return Promise.resolve([]);
+        if (dataPromises.has(course.id)) return dataPromises.get(course.id).then(async historical => {
+            const dynamic = await loadPublishedTopics(course);
+            return [...historical, ...dynamic];
+        });
 
-        const promise = fetchWithRetry(course.contentFile, 'json')
+        const promise = (course.contentFile ? fetchWithRetry(course.contentFile, 'json') : Promise.resolve([]))
             .then(data => Array.isArray(data) ? data : [])
             .catch(error => {
                 dataPromises.delete(course.id);
@@ -63,7 +66,19 @@
             });
 
         dataPromises.set(course.id, promise);
-        return promise;
+        return promise.then(async historical => [...historical, ...await loadPublishedTopics(course)]);
+    }
+
+    async function loadPublishedTopics(course) {
+        try {
+            const response = await fetch(`/api/formation/summaries?course_id=${encodeURIComponent(course.id)}`, { cache: 'no-store' });
+            if (!response.ok) throw new Error('Resúmenes no disponibles.');
+            const result = await response.json();
+            return Array.isArray(result.topics) ? result.topics : [];
+        } catch (error) {
+            console.warn('No se pudieron consultar los nuevos resúmenes; se conserva el catálogo histórico.', error);
+            return [];
+        }
     }
 
     function createCourseCard(course) {
@@ -199,7 +214,7 @@
     }
 
     function hasTopicContent(topic) {
-        return Boolean(topic.contenido || topic.htmlFile || topic.pdf || (Array.isArray(topic.imagenes) && topic.imagenes.length));
+        return Boolean(topic.publicationId || topic.contenido || topic.htmlFile || topic.pdf || (Array.isArray(topic.imagenes) && topic.imagenes.length));
     }
 
     function createTopicCard(topic, course, index) {
@@ -363,6 +378,21 @@
         modal.classList.add('active');
         modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+
+        if (topic.publicationId) {
+            setModalLoading(modalBody);
+            try {
+                const response = await fetch(`/api/formation/summaries/${encodeURIComponent(topic.publicationId)}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('Resumen no disponible.');
+                const result = await response.json();
+                const frame = document.createElement('iframe');
+                frame.title = topic.titulo; frame.setAttribute('sandbox', '');
+                frame.style.cssText = 'display:block;width:100%;height:80vh;border:0';
+                frame.srcdoc = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">` + result.preview_html;
+                modalBody.replaceChildren(frame);
+            } catch (error) { setInteractiveLoadError(modalBody, topic); }
+            return;
+        }
 
         if (topic.htmlFile) {
             setModalLoading(modalBody);

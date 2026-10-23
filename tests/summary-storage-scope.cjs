@@ -1,0 +1,63 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { randomUUID } = require('node:crypto');
+const source = fs.readFileSync(path.join(__dirname, '../admin-summary-storage-scope.js'), 'utf8');
+function storage() {
+    const values = new Map();
+    return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key), clear: () => values.clear() };
+}
+const localStorage = storage(), sessionStorage = storage();
+function realm(scope, parent) {
+    const win = { localStorage };
+    win.parent = parent || win;
+    const location = { href: 'http://localhost/admin/resumenes/editor?resumen=old-document' };
+    vm.runInNewContext(source, { window: win, localStorage, sessionStorage, location, URL, crypto: { randomUUID }, history: { replaceState: (_a, _b, url) => location.href = String(url) } });
+    if (scope) win.LNESummaryStorage.install(scope);
+    return { win, location };
+}
+const parent = realm(), writer = { userId: 'mock-writer', sessionId: 'mock-auth-session-1' }, reviewer = { userId: 'mock-reviewer', sessionId: 'mock-auth-session-2' };
+const draft = 'LNE_EDITOR_AUTOSAVE_DRAFT', library = 'LNE_EDITOR_DOCUMENTS_V1';
+localStorage.setItem(draft, 'UNATTRIBUTED LEGACY');
+const first = parent.win.LNESummaryStorage.prepare(writer);
+parent.win.LNESummaryStorage.documentLink('editor-1',{summaryId:'mock-central-id',pending:true});
+assert.equal(parent.win.LNESummaryStorage.documentLink('editor-1').pending,true);
+assert.equal(new URL(parent.location.href).searchParams.has('resumen'), false);
+const writerFrame = realm(writer, parent.win).win;
+assert.equal(writerFrame.localStorage.getItem(draft), null);
+writerFrame.localStorage.setItem(draft, 'writer active draft');
+writerFrame.localStorage.setItem(library, 'writer saved documents');
+parent.location.href += '?resumen=writer-document';
+const refresh = parent.win.LNESummaryStorage.prepare(writer);
+assert.equal(refresh.context.epoch, first.context.epoch);
+assert.equal(parent.win.LNESummaryStorage.documentLink('editor-1').summaryId,'mock-central-id');
+assert.equal(parent.win.LNESummaryStorage.documentLink('other-editor'),null);
+assert.equal(new URL(parent.location.href).searchParams.get('resumen'), 'writer-document');
+assert.equal(realm(writer, parent.win).win.localStorage.getItem(draft), 'writer active draft');
+// Direct user change also invalidates old frames, even without an explicit logout.
+assert.equal(parent.win.LNESummaryStorage.prepare(reviewer).changed, true);
+assert.equal(parent.win.LNESummaryStorage.documentLink('editor-1'),null);
+const reviewerFrame = realm(reviewer, parent.win).win;
+assert.equal(reviewerFrame.localStorage.getItem(draft), null);
+assert.equal(reviewerFrame.localStorage.getItem(library), null);
+const reviewerContext = JSON.stringify(parent.win.LNESummaryStorage.current());
+writerFrame.localStorage.setItem(draft, 'late stale writer save');
+const lateWriterFrame = realm(writer, parent.win).win;
+lateWriterFrame.localStorage.setItem(draft, 'late stale HTML response');
+assert.equal(JSON.stringify(parent.win.LNESummaryStorage.current()), reviewerContext);
+assert.equal(reviewerFrame.localStorage.getItem(draft), null);
+reviewerFrame.localStorage.setItem(draft, 'reviewer draft');
+parent.win.LNESummaryStorage.end();
+assert.equal(reviewerFrame.localStorage.getItem(draft), null);
+const newWriterSession = parent.win.LNESummaryStorage.prepare(writer);
+assert.notEqual(newWriterSession.context.epoch, first.context.epoch);
+assert.equal(parent.win.LNESummaryStorage.documentLink('editor-1'),null);
+const returningWriter = realm(writer, parent.win).win;
+assert.equal(returningWriter.localStorage.getItem(draft), null);
+assert.equal(returningWriter.localStorage.getItem(library), 'writer saved documents');
+assert.equal(localStorage.getItem(parent.win.LNESummaryStorage.draftKey(first.context)), 'writer active draft');
+assert.equal(localStorage.getItem(draft), 'UNATTRIBUTED LEGACY');
+const nextAuth = parent.win.LNESummaryStorage.prepare({ ...writer, sessionId: 'different-auth-session' });
+assert.notEqual(nextAuth.context.epoch, newWriterSession.context.epoch);
+console.log('Storage isolation: same-session F5, fresh login, direct account switch, stale frame writes, separate libraries, legacy data preserved: PASS (simulation).');

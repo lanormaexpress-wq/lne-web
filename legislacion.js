@@ -46,64 +46,6 @@
         return promise;
     }
 
-    function renderIntroduction(container, norma) {
-        if (!norma.introduction && !norma.image) {
-            container.replaceChildren();
-            return;
-        }
-
-        const introContainer = document.createElement('div');
-        introContainer.className = 'intro-container';
-
-        if (norma.introduction) {
-            const introText = document.createElement('div');
-            introText.className = 'intro-text';
-
-            const title = document.createElement('h1');
-            title.className = 'intro-titulo';
-            title.textContent = norma.displayTitle || norma.title;
-
-            const paragraph = document.createElement('p');
-            paragraph.className = 'intro-parrafo';
-            const emphasis = Array.isArray(norma.introductionEmphasis)
-                ? norma.introductionEmphasis.filter(Boolean)
-                : [];
-
-            if (emphasis.length === 0) {
-                paragraph.textContent = norma.introduction;
-            } else {
-                const escapedTerms = emphasis
-                    .map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-                    .join('|');
-                const matcher = new RegExp(escapedTerms, 'g');
-                let cursor = 0;
-
-                for (const match of norma.introduction.matchAll(matcher)) {
-                    paragraph.append(document.createTextNode(norma.introduction.slice(cursor, match.index)));
-                    const strong = document.createElement('strong');
-                    strong.textContent = match[0];
-                    paragraph.append(strong);
-                    cursor = match.index + match[0].length;
-                }
-
-                paragraph.append(document.createTextNode(norma.introduction.slice(cursor)));
-            }
-
-            introText.append(title, paragraph);
-            introContainer.appendChild(introText);
-        }
-
-        if (norma.image) {
-            const image = document.createElement('img');
-            image.src = norma.image.src;
-            image.alt = norma.image.alt || norma.title;
-            image.className = norma.image.className || '';
-            introContainer.appendChild(image);
-        }
-
-        container.replaceChildren(introContainer);
-    }
-
     function renderPreparingState(container, norma) {
         const state = document.createElement('section');
         const title = document.createElement('h1');
@@ -137,6 +79,10 @@
     }
 
     function renderArticles(container, norma, sections) {
+        if (window.LNEVisualRenderer) {
+            window.LNEVisualRenderer.renderNorm(container, norma, sections);
+            return;
+        }
         const documentTitle = getDocumentTitle(norma);
         const headingMarkup = documentTitle
             ? `
@@ -345,6 +291,9 @@
     }
 
     async function loadNormData(norma) {
+        if (norma?.dynamic && window.LNEDynamicLegislation) {
+            return window.LNEDynamicLegislation.load(norma);
+        }
         if (!norma?.contentScript) return undefined;
 
         const existingData = window.LNENormas.captureData(norma);
@@ -361,19 +310,19 @@
 
         if (!norma || !introMount || !articlesMount) return;
 
-        renderIntroduction(introMount, norma);
+        window.LNEIntroductionRenderer.render(introMount, norma);
 
-        if (norma.status === 'preparing' || !norma.contentScript || !Array.isArray(norma.dataVariables)) {
+        if (norma.status === 'preparing' || (!norma.dynamic && (!norma.contentScript || !Array.isArray(norma.dataVariables)))) {
             renderPreparingState(articlesMount, norma);
             return;
         }
 
         try {
-            await loadNormData(norma);
+            const loadedSections = await loadNormData(norma);
 
             if (!articlesMount.isConnected || window.LNEActiveNorm !== norma) return;
 
-            const sections = window.LNENormas.captureData(norma);
+            const sections = norma.dynamic ? loadedSections : window.LNENormas.captureData(norma);
             if (!Array.isArray(sections)) throw new Error(`No se encontraron datos para ${norma.id}.`);
 
             renderArticles(articlesMount, norma, sections);
