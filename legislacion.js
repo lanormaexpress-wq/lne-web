@@ -291,8 +291,13 @@
     }
 
     async function loadNormData(norma) {
-        if (norma?.dynamic && window.LNEDynamicLegislation) {
-            return window.LNEDynamicLegislation.load(norma);
+        if (window.LNEDynamicLegislation && (norma?.dynamic || norma?.contentScript)) {
+            try {
+                return await window.LNEDynamicLegislation.load(norma);
+            } catch (error) {
+                if (!norma.contentScript) throw error;
+                console.warn('API jurídica no disponible; se utiliza la fuente estática de respaldo.', error);
+            }
         }
         if (!norma?.contentScript) return undefined;
 
@@ -322,7 +327,7 @@
 
             if (!articlesMount.isConnected || window.LNEActiveNorm !== norma) return;
 
-            const sections = norma.dynamic ? loadedSections : window.LNENormas.captureData(norma);
+            const sections = loadedSections;
             if (!Array.isArray(sections)) throw new Error(`No se encontraron datos para ${norma.id}.`);
 
             renderArticles(articlesMount, norma, sections);

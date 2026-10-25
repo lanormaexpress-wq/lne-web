@@ -22,6 +22,13 @@ app.post('/mock/rest/v1/rpc/withdraw_summary_publication',(req,res)=>{
  const p=actor(req);if(p?.role!=='owner')return res.status(403).json({error:'Denied'});
  const row=docs.get(req.body.document_id);publications.delete(row.id);version(Object.assign(row,{status:'BORRADOR',published_at:null,published_by:null}));res.json(null);
 });
+app.post('/mock/rest/v1/rpc/update_summary_publication',(req,res)=>{
+ const p=actor(req),row=docs.get(req.body.document_id);
+ if(!allowed(p,'summary_publish'))return res.status(403).json({error:'Denied'});
+ if(!row||row.updated_at!==req.body.expected_updated_at)return res.status(409).json({code:'40001'});
+ if(!publications.has(row.id))return res.status(409).json({error:'Missing original'});
+ const card=cards.get(row.template_id);publications.set(row.id,{...row,template_name:card.name,image_path:card.image_path});res.json(row);
+});
 app.all('/mock/rest/v1/:table',(req,res)=>{
  const p=actor(req),table=req.params.table;
  if(table==='summary_templates'){
@@ -39,8 +46,8 @@ app.all('/mock/rest/v1/:table',(req,res)=>{
  if(req.method==='POST'){const row=version({...req.body});docs.set(row.id,row);return res.json([row]);}
  if(req.method==='PATCH'){
   rows.forEach(row=>{
-   version(Object.assign(row,req.body));
-   if(row.status==='PUBLICADO'){row.published_at=row.updated_at;row.published_by=p.id;const card=cards.get(row.template_id);publications.set(row.id,{...row,template_name:card.name,image_path:card.image_path});}
+   const oldStatus=row.status;version(Object.assign(row,req.body));
+   if(row.status==='PUBLICADO'&&oldStatus!=='PUBLICADO'){row.published_at=row.updated_at;row.published_by=p.id;const card=cards.get(row.template_id);publications.set(row.id,{...row,template_name:card.name,image_path:card.image_path});}
   });return res.json(rows);
  }
  return res.status(405).end();
@@ -122,7 +129,7 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser, shared, isolationSt
  assert.equal(await reviewFrame.locator('#lne-summary-publish').isVisible(),true);await reviewFrame.locator('#lne-summary-publish').click();await reviewPage.locator('[data-confirm]').click();
  await reviewPage.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='PUBLICADO');assert.equal(publications.size,1);assert.equal(docs.get(id).published_by,people.reviewer.id);
  await reviewPage.getByRole('dialog').getByRole('button',{name:'Cerrar',exact:true}).click();
- await reviewFrame.locator('#lne-summary-list').click();await reviewPage.locator('[data-filter="PUBLICADO"]').click();await reviewPage.getByRole('button',{name:'VER PUBLICADO',exact:true}).waitFor();
+ await reviewFrame.locator('#lne-summary-list').click();await reviewPage.locator('[data-filter="PUBLICADO"]').click();await reviewPage.getByRole('button',{name:'ABRIR / EDITAR',exact:true}).waitFor();
  assert.equal(await reviewPage.getByRole('button',{name:'ELIMINAR PUBLICACIÓN',exact:true}).count(),0);
  assert.equal((await api(reviewPage,'/documents/'+id+'/publication','DELETE')).status,403);
  const owner=await open('owner'),ownerPage=owner.page;await ownerPage.frameLocator('#summary-editor-frame').locator('#lne-summary-list').click();await ownerPage.locator('[data-filter="PUBLICADO"]').click();

@@ -1,6 +1,18 @@
 (function () {
     'use strict';
-    const sectionCache = new Map();
+    const REQUEST_TIMEOUT_MS = 8000;
+
+    async function readPublicJson(url) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        try {
+            const response = await fetch(url, { cache: 'no-store', signal: controller.signal });
+            if (!response.ok) throw new Error(`Legislación no disponible (${response.status}).`);
+            return await response.json();
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 
     function cardImage(norma) {
         return norma.imagen_url || '/assets/imagenes/logo4.png';
@@ -14,7 +26,12 @@
 
     function applyPublicNorm(row) {
         const existing = window.LNENormas.all.find(norma => norma.id === row.codigo || norma.slug === row.slug);
-        if (existing?.status === 'ready' && existing.contentScript) return;
+        // Existing presentation remains unchanged; only its article source changes.
+        if (existing?.status === 'ready' && existing.contentScript) {
+            existing.dynamic = true;
+            existing.totalArticles = row.total_articulos;
+            return;
+        }
         const descriptor = existing || {
             id: row.codigo,
             slug: row.slug,
@@ -53,12 +70,15 @@
         const groupMap = new Map();
         rows.forEach((row, index) => {
             const section = row.estructura?.seccion || {};
-            const key = Number.isInteger(section.grupo)
+            const key = Number.isInteger(row.estructura?.seccion_indice)
+                ? `source:${row.estructura.seccion_indice}`
+                : Number.isInteger(section.grupo)
                 ? `group:${section.grupo}`
                 : JSON.stringify([section.titulo || '', section.capitulo || '', Boolean(section.nuevaHoja)]);
             let group = groupMap.get(key);
             if (!group) {
                 group = {
+                    ...section,
                     titulo: section.titulo || '',
                     capitulo: section.capitulo || '',
                     nuevaHoja: Boolean(section.nuevaHoja),
@@ -69,10 +89,13 @@
             }
             const structured = row.contenido_lne || {};
             group.articulos.push({
-                tipo: structured.tipo || 'Artículo',
-                numero: String(row.numero_articulo || ''),
-                titulo: row.titulo || structured.titulo || '',
-                texto: row.contenido || structured.texto || '',
+                ...structured,
+                tipo: structured.tipo ?? 'Artículo',
+                numero: row.estructura?.total_ocurrencias_numero > 1
+                    && row.numero_articulo === `${row.estructura.numero_original}#${row.estructura.ocurrencia_numero}`
+                    ? row.estructura.numero_original : String(row.numero_articulo || ''),
+                titulo: row.titulo ?? '',
+                texto: row.contenido,
                 orden: row.orden ?? index + 1
             });
         });
@@ -80,19 +103,18 @@
     }
 
     async function load(norma) {
-        if (sectionCache.has(norma.id)) return sectionCache.get(norma.id);
-        const response = await fetch(`/api/public/legislation/${encodeURIComponent(norma.slug)}/articles`);
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || 'No se pudo cargar la legislación publicada.');
-        const sections = groupArticles(body.articulos || []);
-        sectionCache.set(norma.id, sections);
-        return sections;
+        // Revalidate on every visit: an admin UPDATE must not be hidden by a Map.
+        const body = await readPublicJson(`/api/public/legislation/${encodeURIComponent(norma.slug)}/articles`);
+        if (!Array.isArray(body.articulos) || !body.articulos.length
+            || body.articulos.some(row => typeof row.contenido !== 'string' || !row.numero_articulo)) {
+            throw new Error('La API no devolvió artículos válidos.');
+        }
+        return groupArticles(body.articulos);
     }
 
-    const ready = fetch('/api/public/legislation')
-        .then(async response => {
-            const body = await response.json();
-            if (!response.ok) throw new Error(body.error || 'No se pudo actualizar el catálogo jurídico.');
+    const ready = readPublicJson('/api/public/legislation')
+        .then(body => {
+            if (!Array.isArray(body.normas)) throw new Error('Catálogo jurídico inválido.');
             (body.normas || []).forEach(applyPublicNorm);
         })
         .catch(error => console.warn('Catálogo dinámico no disponible; se conserva el catálogo local.', error));

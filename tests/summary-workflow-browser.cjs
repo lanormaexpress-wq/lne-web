@@ -8,6 +8,12 @@ const template={course_id:'contratos',name:'El Estado'},templates=new Map();
 app.use('/mock',express.json({limit:'30mb'}));
 app.post('/mock/rest/v1/rpc/withdraw_summary_publication',(req,res)=>{const row=docs.get(req.body.document_id);publications.delete(row.id);Object.assign(row,{status:'BORRADOR',published_at:null,published_by:null,submitted_at:null});res.json(null);});
 const queryMatch=(row,q)=>Object.entries(q).every(([key,value])=>key==='content_lne->>documentoId'?row.content_lne?.documentoId===value.slice(3):!['id','author_id','status','course_id','updated_at','image_path','template_id','is_active'].includes(key)||String(row[key])===value.slice(3));
+app.post('/mock/rest/v1/rpc/update_summary_publication',(req,res)=>{
+ const row=docs.get(req.body.document_id);
+ if(!row||row.updated_at!==req.body.expected_updated_at)return res.status(409).json({code:'40001'});
+ if(!publications.has(row.id))return res.status(409).json({error:'Missing original'});
+ publications.set(row.id,{...row,template_name:template.name,image_path:template.image_path});res.json(row);
+});
 app.all('/mock/rest/v1/:table',(req,res)=>{
  const collection=req.params.table==='summary_documents'?docs:publications;
  if(req.params.table==='summary_templates'){
@@ -18,9 +24,9 @@ app.all('/mock/rest/v1/:table',(req,res)=>{
  if(req.method==='GET')return res.json(rows.map(row=>({...row,summary_templates:{name:template.name}})));
  if(req.method==='POST'){const row={...req.body,updated_at:`2026-10-21T00:00:${String(++revision).padStart(2,'0')}.000Z`};docs.set(row.id,row);return res.json([row]);}
  if(req.method==='PATCH'){
-  for(const row of rows){Object.assign(row,req.body,{updated_at:`2026-10-21T00:00:${String(++revision).padStart(2,'0')}.000Z`});
+  for(const row of rows){const oldStatus=row.status;Object.assign(row,req.body,{updated_at:`2026-10-21T00:00:${String(++revision).padStart(2,'0')}.000Z`});
    if(row.status==='EN_REVISION')row.submitted_at ||= row.updated_at;
-   if(row.status==='PUBLICADO'){row.published_at=row.updated_at;row.published_by=uid;publications.set(row.id,{...row,template_name:template.name,image_path:template.image_path});}
+   if(row.status==='PUBLICADO'&&oldStatus!=='PUBLICADO'){row.published_at=row.updated_at;row.published_by=uid;publications.set(row.id,{...row,template_name:template.name,image_path:template.image_path});}
   }return res.json(rows);
  }res.status(405).end();
 });
@@ -96,7 +102,7 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser,page;try{
  await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='PUBLICADO');assert.equal(docs.get(id).status,'PUBLICADO');assert.equal(publications.size,1);
  await page.getByRole('dialog').getByRole('button',{name:'Cerrar',exact:true}).click();
  await page.frameLocator('#summary-editor-frame').locator('#lne-summary-list').click();await page.locator('[data-filter="PUBLICADO"]').click();
- await page.getByRole('button',{name:'VER PUBLICADO',exact:true}).waitFor();assert.match(await page.locator('[data-documents]').textContent(),/Publicado por: owner@example.test/);
+ await page.getByRole('button',{name:'ABRIR / EDITAR',exact:true}).waitFor();assert.match(await page.locator('[data-documents]').textContent(),/Publicado por: owner@example.test/);
  const publicPage=await browser.newPage({viewport:{width:1600,height:1000}});await publicPage.goto(base+'/pages/curso.html');
  await publicPage.addStyleTag({path:path.join(root,'style.css')});await publicPage.addScriptTag({path:path.join(root,'formacion.js')});await publicPage.addScriptTag({path:path.join(root,'formacion-ui.js')});
  await publicPage.evaluate(()=>{const base=document.createElement('base');base.href=location.origin+'/';document.head.append(base);window.LNEActiveCourse=LNEFormacion.getCourseById('contratos');window.LNERouter={navigate(url){history.pushState(null,'',url);LNEFormacionUI.mountCourse();}};return LNEFormacionUI.mountCourse();});
@@ -108,9 +114,32 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser,page;try{
  await publishedFrame.evaluate(()=>document.fonts.ready);
  console.log('Published render:',await publishedFrame.evaluate(()=>({ready:document.readyState,background:getComputedStyle(document.body).backgroundColor,blocks:document.querySelectorAll('.lne-editor-block').length,title:document.querySelector('h1')?.textContent})));
  await publicPage.screenshot({path:path.join(__dirname,'summary-workflow-public.png')});
+ // Reopen the SAME published document; autosave must not replace its public snapshot.
+ await page.getByRole('button',{name:'ABRIR / EDITAR',exact:true}).click();
+ await page.waitForFunction(target=>LNESummaryWorkflow.getDocument()?.id===target,id);
+ const updatedText='Contenido actualizado de la misma publicación';
+ const editFrame=page.frameLocator('#summary-editor-frame');
+ await editFrame.locator('#document-sheet p[data-field="texto"][contenteditable="true"]').first().fill(updatedText);
+ await page.waitForFunction(text=>LNESummaryWorkflow.getDocument()?.preview_html.includes(text),updatedText,{timeout:15000});
+ assert.ok(!publications.get(id).preview_html.includes(updatedText),'Autosave must preserve the old public HTML');
+ const originalCard=docs.get(id).template_id,originalImage=publications.get(id).image_path;
+ await page.reload({waitUntil:'domcontentloaded'});
+ await page.waitForFunction(target=>LNESummaryWorkflow.getDocument()?.id===target,id);
+ assert.ok((await page.evaluate(()=>LNESummaryWorkflow.getDocument())).preview_html.includes(updatedText));
+ await page.frameLocator('#summary-editor-frame').getByRole('button',{name:'ACTUALIZAR PUBLICACIÓN',exact:true}).click();
+ await page.locator('[data-confirm]').click();
+ await page.getByRole('dialog').getByRole('button',{name:'Cerrar',exact:true}).waitFor();
+ assert.equal(docs.size,1);assert.equal(publications.size,1);assert.equal(publications.get(id).id,id);
+ assert.equal(docs.get(id).template_id,originalCard);assert.equal(publications.get(id).image_path,originalImage);
+ assert.ok(publications.get(id).preview_html.includes(updatedText));assert.equal(templates.size,1);
+ const updatedPublic=await fetch(base+'/api/formation/summaries/'+id).then(r=>r.json());
+ assert.equal(updatedPublic.id,id);assert.ok(updatedPublic.preview_html.includes(updatedText));
+ await page.getByRole('dialog').getByRole('button',{name:'Cerrar',exact:true}).click();
+ await page.frameLocator('#summary-editor-frame').locator('#lne-summary-list').click();
+ await page.locator('[data-filter="PUBLICADO"]').click();
  await page.getByRole('button',{name:'ELIMINAR PUBLICACIÓN',exact:true}).click();
  await page.getByRole('button',{name:'Eliminar',exact:true}).click();
  await page.getByText('Publicación retirada. El documento permanece como BORRADOR; cartilla e imagen conservadas.',{exact:true}).waitFor();
- assert.equal(publications.size,0);assert.equal(docs.get(id).status,'BORRADOR');assert.equal(templates.size,1);assert.equal(docs.get(id).content_lne.bloques[0].texto,'Frase corregida durante revisión');
+ assert.equal(publications.size,0);assert.equal(docs.get(id).status,'BORRADOR');assert.equal(templates.size,1);assert.equal(docs.get(id).content_lne.bloques[0].texto,updatedText);
  console.log(JSON.stringify({provider:'SIMULATED Supabase; real Chromium/Node/editor/public renderer',draft:true,browserClosedAndReopened:true,fullJsonRecovered:true,inlineTypingAutosaved:true,protectedAsyncReopen:true,reviewNotPublic:true,editReviewSameId:true,debouncedAutosave:true,finalPublication:true,oldAndNewCards:true,publishedContentOpens:true,ownerWithdrawalRetainsDraftAndCard:true,startupEditorialRequests:0}));
  }catch(e){console.error(e);if(page)console.error('Workflow diagnostics:',await page.frameLocator('#summary-editor-frame').locator('#lne-summary-save-status').textContent().catch(()=>''),JSON.stringify([...docs.values()].map(d=>({id:d.id,status:d.status,updated_at:d.updated_at,text:d.content_lne?.bloques[0]?.texto}))));process.exitCode=1;}finally{await browser?.close();server.close();server.closeAllConnections();}});

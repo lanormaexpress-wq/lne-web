@@ -127,12 +127,18 @@
 
     function loadIndex() {
         if (!indexPromise) {
-            indexPromise = fetch('/data/search-index.json?v=1', { signal })
+            indexPromise = fetch('/api/public/legislation/search-index', { signal, cache: 'no-store' })
                 .then(response => {
                     if (!response.ok) throw new Error('No se pudo cargar el índice de búsqueda.');
                     return response.json();
                 })
-                .catch(error => {
+                .catch(async error => {
+                    if (signal.aborted) return null;
+                    // Keep the generated local index strictly as an outage fallback.
+                    try {
+                        const response = await fetch('/data/search-index.json?v=1', { signal });
+                        if (response.ok) return await response.json();
+                    } catch (_) { /* Retry on the next search after a transient failure. */ }
                     indexPromise = undefined;
                     if (error.name === 'AbortError') return null;
                     return null;

@@ -25,7 +25,8 @@
     }
     function updateActions() {
         if (publishButton) {
-            publishButton.hidden = !current || current.status !== 'EN_REVISION' || !canPublish;
+            publishButton.hidden = !current || !['EN_REVISION', 'PUBLICADO'].includes(current.status) || !canPublish;
+            publishButton.textContent = current?.status === 'PUBLICADO' ? 'ACTUALIZAR PUBLICACIÓN' : 'PUBLICACIÓN FINAL';
             publishButton.style.display = publishButton.hidden ? 'none' : '';
         }
         document.dispatchEvent(new CustomEvent('lne-summary-workflow-change'));
@@ -54,7 +55,7 @@
         if (bindingError) throw bindingError;
         if (loading) throw new Error('Espera a que termine de abrirse el resumen central.');
         if (saving) { await saving; return save(action); }
-        if (current?.status === 'PUBLICADO') throw new Error('El publicado es de solo lectura en esta fase.');
+        if (current?.status === 'PUBLICADO' && !canPublish) throw new Error('No tienes permiso para editar un publicado.');
         const epoch = sequence, payload = capture();
         const editorId = model().state.documentoId;
         dirty = false; setNotice('Guardando…');
@@ -82,7 +83,7 @@
     function schedule() {
         clearTimeout(timer);
         if (window.LNEAdminAccess && !window.LNEPermissionCatalog.allowed(window.LNEAdminAccess, 'summary_save')) return;
-        if (current?.status === 'PUBLICADO' || !hasContent() || loading || bindingError) return;
+        if ((current?.status === 'PUBLICADO' && !canPublish) || !hasContent() || loading || bindingError) return;
         timer = setTimeout(() => { if (dirty) save().catch(error => setNotice('Error al guardar', error.message)); }, 5000);
     }
     function attach() {
@@ -128,7 +129,7 @@
         // Inline typing deliberately does not notify state subscribers (avoids rebuilding the canvas).
         // Observe native events AFTER the editor's own handlers; do not wrap or change its methods.
         const inlineChanged = () => {
-            if (loading || current?.status === 'PUBLICADO') return;
+            if (loading || (current?.status === 'PUBLICADO' && !canPublish)) return;
             dirty = true; schedule();
         };
         doc.addEventListener('input', inlineChanged);
@@ -175,7 +176,7 @@
                 const detail = document.createElement('p');
                 detail.textContent = `${nameOf('areas', item.area_id)} · ${nameOf('courses', item.course_id)} · ${item.summary_templates?.name || 'Sin cartilla'} · Autor: ${item.author_label} · ${item.status} · ${new Date(item.updated_at).toLocaleString('es-PE')}`;
                 if (item.status === 'PUBLICADO') detail.textContent += ` · Publicado por: ${item.published_by_label || (item.published_by === item.author_id ? item.author_label : item.published_by)} · Publicación: ${new Date(item.published_at).toLocaleString('es-PE')}`;
-                const open = document.createElement('button'); open.type = 'button'; open.textContent = item.status === 'PUBLICADO' ? 'VER PUBLICADO' : 'ABRIR / EDITAR';
+                const open = document.createElement('button'); open.type = 'button'; open.textContent = item.status === 'PUBLICADO' && !data.canPublish ? 'VER PUBLICADO' : 'ABRIR / EDITAR';
                 open.onclick = () => openDocument(item.id).then(() => list.close()).catch(error => { message.textContent = error.message; });
                 article.append(heading, detail, open);
                 if (item.status === 'PUBLICADO' && data.canDeletePublication) {
@@ -198,7 +199,7 @@
     async function openList() {
         try {
             if (saving) await saving;
-            if (dirty && hasContent() && current?.status !== 'PUBLICADO') await save();
+            if (dirty && hasContent() && (current?.status !== 'PUBLICADO' || canPublish)) await save();
             list.showModal(); loadList('BORRADOR');
         } catch (error) { setNotice('Error al guardar', error.message); }
     }
@@ -209,7 +210,7 @@
         try {
             const data = await api('/' + id), row = data.document;
             if (row.status !== 'PUBLICADO' && data.canEdit !== true) throw new Error('No tienes permiso para editar este resumen.');
-            if (row.status === 'PUBLICADO') {
+            if (row.status === 'PUBLICADO' && data.canEdit !== true) {
                 current = row; dirty = false; canPublish = data.canPublish; clearTimeout(timer);
                 rememberDocument(row.id); updateActions(); setNotice('PUBLICADO · Solo lectura');
                 return showPublished(row);
@@ -234,7 +235,10 @@
     async function confirmPublication() {
         try {
             if (dirty) await save();
-            if (!current || current.status !== 'EN_REVISION' || !canPublish) throw new Error('Publicación final no disponible.');
+            if (!current || !['EN_REVISION', 'PUBLICADO'].includes(current.status) || !canPublish) throw new Error('Publicación final no disponible.');
+            const updating = current.status === 'PUBLICADO';
+            confirmation.querySelector('h2').textContent = updating ? 'ACTUALIZAR PUBLICACIÓN' : 'PUBLICAR RESUMEN';
+            confirmation.querySelector('[data-confirm]').textContent = updating ? 'ACTUALIZAR PUBLICACIÓN' : 'PUBLICAR';
             confirmation.querySelector('[data-destination]').textContent = `Título: ${current.title}\nÁrea: ${nameOf('areas', current.area_id)}\nCurso: ${nameOf('courses', current.course_id)}\nCartilla: ${destination?.templateName || current.template_id}\nAutor: ${current.author_label}`;
             confirmation.querySelector('[data-result]').textContent = ''; confirmation.showModal();
         } catch (error) { setNotice(error.message); }
@@ -245,9 +249,10 @@
         try {
             if (saving) await saving;
             await save();
-            const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: 'publish', updated_at: current.updated_at }) });
+            const updating = current.status === 'PUBLICADO';
+            const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: updating ? 'update-publication' : 'publish', updated_at: current.updated_at }) });
             current = result.document; clearTimeout(timer); dirty = false; updateActions();
-            confirmation.close(); setNotice('Publicado ✓', 'Resumen publicado correctamente. La edición del publicado no está habilitada.');
+            confirmation.close(); setNotice(updating ? 'Publicación actualizada ✓' : 'Publicado ✓', 'El contenido público se guardó correctamente.');
             showPublished(current);
         } catch (error) { confirmation.querySelector('[data-result]').textContent = error.message; }
         finally { event.target.disabled = false; frame.inert = false; }
@@ -264,7 +269,7 @@
         return `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">` + html;
     }
     document.addEventListener('lne-admin-session-ready', event => { if (!event.detail.authenticated) { clearBinding(); list.close(); confirmation.close(); withdrawal.close(); withdrawalId = null; } });
-    window.addEventListener('beforeunload', event => { if (saving || (dirty && hasContent() && current?.status !== 'PUBLICADO')) { event.preventDefault(); event.returnValue = ''; } });
+    window.addEventListener('beforeunload', event => { if (saving || (dirty && hasContent() && (current?.status !== 'PUBLICADO' || canPublish))) { event.preventDefault(); event.returnValue = ''; } });
     window.LNESummaryWorkflow = Object.freeze({ save, hasContent, getDestination: () => destination,
         selectDestination(value) { destination = value; dirty = true; schedule(); }, getDocument: () => current });
 })();

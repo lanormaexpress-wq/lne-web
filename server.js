@@ -269,6 +269,7 @@ app.post('/api/admin/publish-linked-legislation', requireAdmin, async (req, res)
 });
 
 app.get('/api/public/legislation', async (_req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const [databaseNorms, articleRows] = await Promise.all([
             supabaseRestAll('normas_legales?select=codigo,nombre,slug,introduccion,estado&estado=eq.publicado'),
@@ -287,7 +288,22 @@ app.get('/api/public/legislation', async (_req, res) => {
     }
 });
 
+app.get('/api/public/legislation/search-index', async (_req, res) => {
+    res.set('Cache-Control', 'no-store');
+    try {
+        const [publishedNorms, articles] = await Promise.all([
+            supabaseRestAll('normas_legales?select=codigo,nombre,slug&estado=eq.publicado'),
+            supabaseRestAll('articulos_legales?select=codigo,numero_articulo,titulo,contenido,contenido_lne,estructura&estado=eq.publicado&order=orden.asc,id.asc')
+        ]);
+        const base = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/search-index.json'), 'utf8'));
+        res.json(require('./lib/legal-search-index')(base, publishedNorms, articles));
+    } catch (error) {
+        res.status(502).json({ error: 'Índice jurídico no disponible temporalmente.' });
+    }
+});
+
 app.get('/api/public/legislation/:slug/articles', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
     try {
         const slug = encodeURIComponent(req.params.slug);
         const { data: normRows } = await supabaseRest(`normas_legales?select=codigo,nombre,slug,introduccion,estado&slug=eq.${slug}&estado=eq.publicado&limit=1`);
