@@ -7,6 +7,34 @@
 window.LNECanvas = (function () {
     let sheetContainer = null;
     let draggedBlockId = null;
+    let textSizeObserver = null;
+    let fitFrame = null;
+
+    // Derived presentation only: opening an old document must never rewrite it.
+    const autoTextTypes = new Set(['titulo','parrafo','lista','idea-clave','importante',
+        'advertencia','ten-cuidado','jurisprudencia','normativa','ejemplo','doctrina',
+        'recuerda','concepto','caso-practico','mnemotecnia','sintesis']);
+    function isAutoHeightText(block) {
+        if (!autoTextTypes.has(block.tipo)) return false;
+        // Rich paragraphs can also contain manually sized visual objects.
+        return !/<(?:img|table|iframe|video|canvas)\b/i.test(JSON.stringify({texto:block.texto,contenido:block.propiedades?.texto,items:block.propiedades?.items}));
+    }
+
+    function observeTextSizes(target) {
+        textSizeObserver?.disconnect();
+        if (fitFrame !== null) cancelAnimationFrame(fitFrame);
+        fitFrame = null;
+        if (!window.ResizeObserver) return;
+        textSizeObserver = new ResizeObserver(() => {
+            if (fitFrame !== null) return;
+            fitFrame = requestAnimationFrame(() => {
+                fitFrame = null;
+                if (target.isConnected) fitFreeObjects(target);
+            });
+        });
+        target.querySelectorAll('.lne-auto-height,.lne-meta-object').forEach(el=>textSizeObserver.observe(el));
+    }
+
 
     function init() {
         sheetContainer = document.getElementById('document-sheet');
@@ -106,6 +134,8 @@ window.LNECanvas = (function () {
                 const blockEl = document.createElement('div');
                 let blockClasses = `lne-editor-block ${state.selectedBlockId === block.id ? 'selected' : ''}`;
                 blockClasses += ` block-type-${block.tipo}`;
+                const autoHeightText = isAutoHeightText(block);
+                if (autoHeightText) blockClasses += ' lne-auto-height';
                 if (block.tipo==='icono') blockClasses+=' block-inline-icon';
                 const locked = window.LNEState.isBlockLocked(block.id);
                 if (locked) blockClasses += ' block-locked';
@@ -139,7 +169,7 @@ window.LNECanvas = (function () {
                     blockEl.style.top = `${Number(textLayout.y) || 0}px`;
                     blockEl.style.width = `${Math.max(160, Number(textLayout.width) || 340)}px`;
                     blockEl.style.zIndex = String(textLayout.layer==='behind'?0:Number(textLayout.zIndex) || 15);
-                    if(textLayout.heightMode==='minimum')blockEl.style.minHeight=`${Math.max(36,Number(textLayout.height)||36)}px`;
+                    if(!autoHeightText&&textLayout.heightMode==='minimum')blockEl.style.minHeight=`${Math.max(36,Number(textLayout.height)||36)}px`;
                 }
 
                 blockEl.className = blockClasses;
@@ -185,7 +215,7 @@ window.LNECanvas = (function () {
                             const handle = document.createElement('div');
                             handle.className = `object-resize-handle ${block.tipo==='imagen'?'':'text-resize-handle'} img-resize-handle handle-${corner}`;
                             handle.dataset.handle = corner;
-                            const autoHeight=block.tipo!=='imagen'&&textLayout?.heightMode!=='minimum';
+                            const autoHeight=autoHeightText||(block.tipo!=='imagen'&&textLayout?.heightMode!=='minimum');
                             handle.title = ['n','s'].includes(corner)&&autoHeight?'Altura automática; ajusta el ancho':'Redimensionar objeto';
                             if(['n','s'].includes(corner)&&autoHeight){handle.setAttribute('aria-disabled','true');handle.classList.add('auto-height-handle');}
                             else handle.addEventListener('pointerdown', event => {
@@ -306,6 +336,7 @@ window.LNECanvas = (function () {
             parent.style.setProperty('--lne-marker-width',`${(parseFloat(icon.style.fontSize)||16)+10}px`);
         });
         renderedSheet.querySelectorAll('img').forEach(image=>image.addEventListener('load',()=>fitFreeObjects(renderedSheet),{once:true}));
+        if (renderedSheet.id === 'document-sheet') observeTextSizes(renderedSheet);
 
         // 4. Sincronización de Campos de Metadatos
         if (!isPreview) {
@@ -640,7 +671,7 @@ window.LNECanvas = (function () {
         const startLeft = parseFloat(blockEl.style.left) || bounds.left;
         const west = corner.includes('w');
         const startY=event.clientY,startHeight=blockEl.offsetHeight,startTop=parseFloat(blockEl.style.top)||bounds.top;
-        const minimum=layout.heightMode==='minimum';let changed=false;
+        const minimum=!isAutoHeightText(block)&&layout.heightMode==='minimum';let changed=false;
         function move(moveEvent) {
             if(Math.abs(moveEvent.clientX-event.clientX)+Math.abs(moveEvent.clientY-event.clientY)<2)return;
             changed=true;
@@ -1528,6 +1559,7 @@ window.LNECanvas = (function () {
         init,
         render,
         renderDocument,
+        isAutoHeightText,
         getImageWrapMode,
         changeImageWrap,
         changeSquareOffset,

@@ -758,12 +758,11 @@ body.web-preview-mode .document-sheet {
     border-radius: var(--radius-sm);
     border: 1px solid var(--lne-border);
     margin-top: 15px;
-    padding: 55px 75px;
+    padding: 70px 85px;
 }
 body.web-preview-mode .lne-editor-block {
-    border: none !important;
+    border-color: transparent !important;
     background: transparent !important;
-    padding: 0;
 }
 body.web-preview-mode .block-controls,
 body.web-preview-mode .image-context-bar,
@@ -782,7 +781,7 @@ body.web-preview-mode [contenteditable="true"]:focus {
 .web-preview-modal.open { display:flex; }
 .web-preview-card { position:relative; width:min(900px,100%); max-height:calc(100vh - 72px); overflow:auto; background:#fff; border-radius:var(--radius-md); box-shadow:0 24px 64px rgba(0,0,0,.26); }
 .web-preview-content { padding:0; }
-.lne-block-parrafo[contenteditable] { min-height:1.62em; }
+.lne-block-parrafo { min-height:1lh; }
 .web-preview-close { position:sticky; float:right; top:12px; right:12px; width:30px; height:30px; border:1px solid var(--lne-border); border-radius:50%; background:#fff; color:var(--lne-navy); cursor:pointer; z-index:2; }
 
 @media (max-width: 1120px) { .editor-workspace { grid-template-columns: 48px minmax(0,860px); } .context-inspector { display:none; } .insert-panel { width:48px; overflow:hidden; } .insert-panel section, .insert-panel .side-panel-heading span { display:none; } }

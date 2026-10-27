@@ -626,7 +626,8 @@ window.LNEToolbar = (function () {
                 const variant=tools.querySelector('[data-component-variant]');variant.value=block.propiedades?.visualVariant||'standard';variant.addEventListener('change',()=>window.LNEState.updateBlockProperties(block.id,{visualVariant:variant.value}));container.append(tools);
             }
             if(absolute&&type!=='separador') {
-                const label=document.createElement('label');label.textContent='Altura';const select=document.createElement('select');select.dataset.heightPolicy='';select.disabled=locked;select.innerHTML='<option value="auto">Automática por contenido</option><option value="minimum">Altura mínima manual</option>';select.value=layout.heightMode||'auto';
+                const autoText=window.LNECanvas.isAutoHeightText(block);
+                const label=document.createElement('label');label.textContent='Altura';const select=document.createElement('select');select.dataset.heightPolicy='';select.disabled=locked||autoText;select.innerHTML='<option value="auto">Automática por contenido</option><option value="minimum">Altura mínima manual</option>';select.value=autoText?'auto':layout.heightMode||'auto';
                 select.addEventListener('change',()=>window.LNEState.updateBlockLayout(block.id,{heightMode:select.value,height:document.getElementById('block-'+block.id)?.offsetHeight||100}));label.append(select);container.append(label);
             }
             container.querySelectorAll('[data-spacing]').forEach(input => input.addEventListener('input', () => {

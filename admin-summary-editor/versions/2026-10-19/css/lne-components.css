@@ -794,3 +794,13 @@ span.lne-meta-object { display:inline-block; }
 .lne-document-content > .block-float-left,.lne-document-content > .block-float-right { shape-margin:16px; }
 .lne-document-content > .lne-editor-block { overflow-wrap:anywhere; }
 .lne-document-content > .lne-editor-block.block-line-wrap { display:block; }
+
+/* Text is intrinsically sized in ALL render targets. Stored legacy rectangle
+   heights are not content, and are never rewritten merely by opening a file.
+   Keep semantic margins/explicit flow spacing separate from this height. */
+.lne-rendered-sheet .lne-auto-height { height:auto; min-height:0; max-height:none; }
+.lne-rendered-sheet .lne-block-parrafo { min-height:1lh; }
+/* Word/inline formatting may leave an inline wrapper around block paragraphs.
+   Chromium creates editable-only anonymous lines around those wrappers. Keep
+   inherited typography, but no extra inline box, in both editing and output. */
+.lne-rendered-sheet .lne-auto-height :is(span,strong,b,em,i,font):has(:is(div,p,h1,h2,h3,h4,h5,h6,ul,ol)) { display:contents; }

@@ -38,15 +38,11 @@
     function hasContent() { return Boolean(model()?.state.bloques?.length); }
     function capture() {
         if (!hasContent()) throw new Error('Añade contenido al resumen antes de guardarlo.');
-        const state = clone(model().state), doc = frame.contentDocument;
+        const state = clone(model().state);
         const title = String(state.metadata?.titulo || '').trim();
         if (!title) throw new Error('Escribe el título del resumen en el editor.');
         // Reuse the real read-only canvas renderer and its original CSS, never a second renderer.
-        const html = frame.contentWindow.LNERenderer.compileToHTML(state);
-        const styles = [...doc.styleSheets].flatMap(sheet => {
-            try { return [...sheet.cssRules].map(rule => rule.cssText); } catch (_) { return []; }
-        }).join('\n');
-        const preview = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${styles}</style></head><body>${html}</body></html>`;
+        const preview = frame.contentWindow.LNERenderer.compileToDocument(state);
         return { title, content_lne: state, preview_html: preview, area_id: destination?.areaId || null,
             course_id: destination?.courseId || null, template_id: destination?.templateId || null };
     }
@@ -319,7 +315,7 @@
         dialog.append(close, iframe); document.body.appendChild(dialog); dialog.showModal();
     }
     function safePreview(html) {
-        return `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">` + html;
+        return `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'self' 'unsafe-inline' https:; font-src https: data:;">` + html;
     }
     document.addEventListener('lne-admin-session-ready', event => { if (!event.detail.authenticated) { clearBinding(); list.close(); confirmation.close(); withdrawal.close(); permanent.close(); withdrawalId = null; deleting = null; } });
     window.addEventListener('beforeunload', event => { if (saving || (dirty && hasContent() && (current?.status !== 'PUBLICADO' || canPublish))) { event.preventDefault(); event.returnValue = ''; } });

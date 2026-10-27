@@ -388,7 +388,7 @@
                 const frame = document.createElement('iframe');
                 frame.title = topic.titulo; frame.setAttribute('sandbox', '');
                 frame.style.cssText = 'display:block;width:100%;height:80vh;border:0';
-                frame.srcdoc = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">` + result.preview_html;
+                frame.srcdoc = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'self' 'unsafe-inline' https:; font-src https: data:;">` + result.preview_html;
                 modalBody.replaceChildren(frame);
             } catch (error) { setInteractiveLoadError(modalBody, topic); }
             return;
