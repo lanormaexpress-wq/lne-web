@@ -55,7 +55,7 @@
         if (!course) return Promise.resolve([]);
         if (dataPromises.has(course.id)) return dataPromises.get(course.id).then(async historical => {
             const dynamic = await loadPublishedTopics(course);
-            return [...historical, ...dynamic];
+            return [...dynamic, ...historical];
         });
 
         const promise = (course.contentFile ? fetchWithRetry(course.contentFile, 'json') : Promise.resolve([]))
@@ -66,7 +66,7 @@
             });
 
         dataPromises.set(course.id, promise);
-        return promise.then(async historical => [...historical, ...await loadPublishedTopics(course)]);
+        return promise.then(async historical => [...await loadPublishedTopics(course), ...historical]);
     }
 
     async function loadPublishedTopics(course) {

@@ -22,6 +22,8 @@ app.post('/mock/rest/v1/rpc/withdraw_summary_publication',(req,res)=>{
  const p=actor(req);if(p?.role!=='owner')return res.status(403).json({error:'Denied'});
  const row=docs.get(req.body.document_id);publications.delete(row.id);version(Object.assign(row,{status:'BORRADOR',published_at:null,published_by:null}));res.json(null);
 });
+app.post('/mock/rest/v1/rpc/ordered_summary_publications',(req,res)=>res.json([...publications.values()].filter(p=>p.course_id===req.body.course)));
+app.post('/mock/rest/v1/rpc/summary_cleanup_tasks',(_req,res)=>res.json([]));
 app.post('/mock/rest/v1/rpc/update_summary_publication',(req,res)=>{
  const p=actor(req),row=docs.get(req.body.document_id);
  if(!allowed(p,'summary_publish'))return res.status(403).json({error:'Denied'});

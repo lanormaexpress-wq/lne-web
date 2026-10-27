@@ -159,6 +159,46 @@
         finally { event.target.disabled = false; }
     };
     let listStatus = 'BORRADOR', nextOffset = null, listGeneration = 0;
+    const permanent = document.createElement('dialog'); permanent.className = 'summary-selection-dialog';
+    permanent.innerHTML = '<h2>¿Eliminar definitivamente este resumen?</h2><p data-delete-detail></p><p data-delete-result role="status"></p><button data-delete-cancel>Cancelar</button> <button data-delete-confirm>ELIMINAR DEFINITIVAMENTE</button>';
+    document.body.appendChild(permanent);
+    let deleting = null;
+    permanent.querySelector('[data-delete-cancel]').onclick = () => permanent.close();
+    const cleanup = document.createElement('button'); cleanup.type = 'button'; cleanup.hidden = true;
+    cleanup.textContent = 'REINTENTAR LIMPIEZA DE IMÁGENES'; list.appendChild(cleanup);
+    cleanup.onclick = async () => {
+        cleanup.disabled = true;
+        try {
+            const result = await api('/cleanup', { method: 'POST', body: '{}' });
+            cleanup.hidden = !result.cleanupPending;
+            list.querySelector('[data-list-status]').textContent = result.warning || 'Limpieza completada correctamente.';
+        } catch (error) { list.querySelector('[data-list-status]').textContent = error.message; }
+        finally { cleanup.disabled = false; }
+    };
+    permanent.addEventListener('cancel', event => { if (permanent.querySelector('[data-delete-confirm]').disabled) event.preventDefault(); });
+    permanent.querySelector('[data-delete-confirm]').onclick = async event => {
+        const row = deleting; if (!row) return;
+        event.target.disabled = true; permanent.querySelector('[data-delete-cancel]').disabled = true;
+        clearTimeout(timer); frame.inert = true;
+        try {
+            if (saving) await saving;
+            const result = await api('/' + row.id, { method: 'DELETE', body: JSON.stringify({ confirm: true, updated_at: row.updated_at }) });
+            const activeLink = window.LNESummaryStorage.documentLink(model()?.state.documentoId);
+            if (current?.id === row.id || activeLink?.summaryId === row.id || new URLSearchParams(location.search).get('resumen') === row.id) {
+                // Reuse the existing reset API. A deleted active document must not
+                // be resurrected by a pending autosave, undo or the next F5.
+                loading = true; sequence++; clearBinding(); model()?.resetDocument();
+                const url = new URL(location.href); url.searchParams.delete('resumen'); history.replaceState(null, '', url);
+                loading = false; dirty = false;
+            }
+            deleting = null; permanent.close(); await loadList(listStatus);
+            cleanup.hidden = !result.cleanupPending;
+            list.querySelector('[data-list-status]').textContent = result.warning || 'Resumen eliminado definitivamente. Recursos compartidos conservados.';
+        } catch (error) {
+            permanent.querySelector('[data-delete-result]').textContent = error.message;
+            if (dirty) schedule();
+        } finally { loading = false; frame.inert = false; event.target.disabled = false; permanent.querySelector('[data-delete-cancel]').disabled = false; }
+    };
     const nameOf = (collection, id) => window.LNEFormacion?.[collection]?.find(item => item.id === id)?.name || id || 'Sin seleccionar';
     async function loadList(status, offset = 0) {
         const generation = ++listGeneration;
@@ -170,6 +210,10 @@
             const data = await api(`?status=${status}&offset=${offset}`); canPublish = data.canPublish;
             if (generation !== listGeneration) return;
             nextOffset = data.nextOffset; list.querySelector('[data-more]').hidden = nextOffset === null;
+            cleanup.hidden = true;
+            if (data.canDeleteDocument) api('/cleanup').then(result => {
+                if (generation === listGeneration) cleanup.hidden = !result.cleanupPending;
+            }).catch(() => {});
             for (const item of data.documents) {
                 const article = document.createElement('article'); article.className = 'summary-workflow-row';
                 const heading = document.createElement('strong'); heading.textContent = item.title;
@@ -179,6 +223,15 @@
                 const open = document.createElement('button'); open.type = 'button'; open.textContent = item.status === 'PUBLICADO' && !data.canPublish ? 'VER PUBLICADO' : 'ABRIR / EDITAR';
                 open.onclick = () => openDocument(item.id).then(() => list.close()).catch(error => { message.textContent = error.message; });
                 article.append(heading, detail, open);
+                if (data.canDeleteDocument) {
+                    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'ELIMINAR DEFINITIVAMENTE';
+                    remove.onclick = () => {
+                        deleting = item;
+                        permanent.querySelector('[data-delete-detail]').textContent = `${item.title}. Esta acción eliminará el documento y, si corresponde, su publicación, cartilla e imagen exclusivas. Los recursos compartidos se conservarán.${item.status === 'PUBLICADO' ? ' Desaparecerá de la web pública.' : ''} No se puede deshacer.`;
+                        permanent.querySelector('[data-delete-result]').textContent = ''; permanent.showModal();
+                    };
+                    article.append(remove);
+                }
                 if (item.status === 'PUBLICADO' && data.canDeletePublication) {
                     const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = 'ELIMINAR PUBLICACIÓN';
                     remove.onclick = () => { withdrawalId = item.id; withdrawal.querySelector('[data-withdraw-status]').textContent = ''; withdrawal.showModal(); };
@@ -268,7 +321,7 @@
     function safePreview(html) {
         return `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'unsafe-inline' https:; font-src https: data:;">` + html;
     }
-    document.addEventListener('lne-admin-session-ready', event => { if (!event.detail.authenticated) { clearBinding(); list.close(); confirmation.close(); withdrawal.close(); withdrawalId = null; } });
+    document.addEventListener('lne-admin-session-ready', event => { if (!event.detail.authenticated) { clearBinding(); list.close(); confirmation.close(); withdrawal.close(); permanent.close(); withdrawalId = null; deleting = null; } });
     window.addEventListener('beforeunload', event => { if (saving || (dirty && hasContent() && (current?.status !== 'PUBLICADO' || canPublish))) { event.preventDefault(); event.returnValue = ''; } });
     window.LNESummaryWorkflow = Object.freeze({ save, hasContent, getDestination: () => destination,
         selectDestination(value) { destination = value; dirty = true; schedule(); }, getDocument: () => current });

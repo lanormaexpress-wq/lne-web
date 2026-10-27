@@ -7,6 +7,12 @@ let base,revision=0;const calls=[];
 const template={course_id:'contratos',name:'El Estado'},templates=new Map();
 app.use('/mock',express.json({limit:'30mb'}));
 app.post('/mock/rest/v1/rpc/withdraw_summary_publication',(req,res)=>{const row=docs.get(req.body.document_id);publications.delete(row.id);Object.assign(row,{status:'BORRADOR',published_at:null,published_by:null,submitted_at:null});res.json(null);});
+app.post('/mock/rest/v1/rpc/ordered_summary_publications',(_req,res)=>res.json([...publications.values()]));
+app.post('/mock/rest/v1/rpc/summary_cleanup_tasks',(_req,res)=>res.json([]));
+app.post('/mock/rest/v1/rpc/delete_summary_document',(req,res)=>{
+ const row=docs.get(req.body.document_id);if(!row||row.updated_at!==req.body.expected_updated_at)return res.status(409).json({code:'40001'});
+ publications.delete(row.id);docs.delete(row.id);templates.delete(row.template_id);res.json({document_id:row.id,template_deleted:row.template_id});
+});
 const queryMatch=(row,q)=>Object.entries(q).every(([key,value])=>key==='content_lne->>documentoId'?row.content_lne?.documentoId===value.slice(3):!['id','author_id','status','course_id','updated_at','image_path','template_id','is_active'].includes(key)||String(row[key])===value.slice(3));
 app.post('/mock/rest/v1/rpc/update_summary_publication',(req,res)=>{
  const row=docs.get(req.body.document_id);
@@ -141,5 +147,15 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser,page;try{
  await page.getByRole('button',{name:'Eliminar',exact:true}).click();
  await page.getByText('Publicación retirada. El documento permanece como BORRADOR; cartilla e imagen conservadas.',{exact:true}).waitFor();
  assert.equal(publications.size,0);assert.equal(docs.get(id).status,'BORRADOR');assert.equal(templates.size,1);assert.equal(docs.get(id).content_lne.bloques[0].texto,updatedText);
+ await page.locator('[data-filter="BORRADOR"]').click();
+ await page.getByRole('button',{name:'ELIMINAR DEFINITIVAMENTE',exact:true}).click();
+ await page.locator('[data-delete-cancel]').click();assert.equal(docs.size,1,'Cancel must not delete');
+ await page.getByRole('button',{name:'ELIMINAR DEFINITIVAMENTE',exact:true}).click();
+ await page.locator('[data-delete-confirm]').click();
+ await page.getByText('Resumen eliminado definitivamente. Recursos compartidos conservados.',{exact:true}).waitFor();
+ assert.equal(docs.size,0);assert.equal(templates.size,0);assert.equal(publications.size,0);
+ await page.locator('[data-close]').click();await page.reload({waitUntil:'domcontentloaded'});
+ await page.frameLocator('#summary-editor-frame').locator('#lne-summary-continue').waitFor();
+ assert.equal(new URL(page.url()).searchParams.has('resumen'),false);assert.equal(docs.size,0,'F5 must not resurrect deleted document');
  console.log(JSON.stringify({provider:'SIMULATED Supabase; real Chromium/Node/editor/public renderer',draft:true,browserClosedAndReopened:true,fullJsonRecovered:true,inlineTypingAutosaved:true,protectedAsyncReopen:true,reviewNotPublic:true,editReviewSameId:true,debouncedAutosave:true,finalPublication:true,oldAndNewCards:true,publishedContentOpens:true,ownerWithdrawalRetainsDraftAndCard:true,startupEditorialRequests:0}));
  }catch(e){console.error(e);if(page)console.error('Workflow diagnostics:',await page.frameLocator('#summary-editor-frame').locator('#lne-summary-save-status').textContent().catch(()=>''),JSON.stringify([...docs.values()].map(d=>({id:d.id,status:d.status,updated_at:d.updated_at,text:d.content_lne?.bloques[0]?.texto}))));process.exitCode=1;}finally{await browser?.close();server.close();server.closeAllConnections();}});
