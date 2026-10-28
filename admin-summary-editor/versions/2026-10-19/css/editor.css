@@ -656,6 +656,7 @@ body {
 .inline-icon-selected { outline:1px solid var(--lne-navy-light); border-radius:2px; }
 /* Selection chrome never changes the document box, text flow or exported HTML. */
 #document-sheet .lne-editor-block:is(.selected,.multi-selected,.copy-selected) { border-color:transparent; box-shadow:none; outline:none; }
+#document-sheet .lne-editor-block [contenteditable="true"]:focus { box-shadow:none; }
 .lne-selection-outline { position:absolute; pointer-events:none; left:var(--selection-x); top:var(--selection-y); width:var(--selection-w); height:var(--selection-h); outline:1px solid #6d89a4; border-radius:1px; z-index:90; }
 #document-sheet .object-resize-handle { width:7px; height:7px; border:1px solid #6d89a4; border-radius:1px; box-shadow:none; right:auto; bottom:auto; transform:none; }
 #document-sheet .handle-nw { left:calc(var(--selection-x) - 3.5px); top:calc(var(--selection-y) - 3.5px); }

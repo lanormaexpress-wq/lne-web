@@ -47,6 +47,10 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser;try{
   const labels=await page.locator('.lne-gap-guide').allTextContents();if(!labels.length)console.log('gap diagnostics',axis,await page.evaluate(()=>['a','b','c'].map(id=>({id,layout:LNEState.getBlockById(id).propiedades.layout,rect:LNEInteractions.visualRect(document.getElementById('block-'+id))}))));assert.ok(labels.includes(axis==='x'?'40 px':'92 px'),'Rendered distance label '+axis+' '+JSON.stringify(labels));
   await page.screenshot({path:path.join(out,'guides-'+axis+'.png')});await page.mouse.up();assert.equal(await page.locator('.lne-gap-guide').count(),0);
  }report.push('10–11: etiquetas reales de distancia durante drag');
+ // Adding a block after a pointer selection must not inherit a stale group.
+ id=await fixture('parrafo','Anterior');await page.locator('#block-'+id+' [contenteditable="true"]').click();
+ const previousId=id;await page.locator('#insert-panel [data-insert-type="parrafo"]').click();await settle();
+ const freshSelection=await page.evaluate(()=>({ids:LNEGroups.selectedIds(),id:LNEState.state.selectedBlockId}));assert.deepEqual(freshSelection.ids,[freshSelection.id]);assert.notEqual(freshSelection.id,previousId);assert.equal(await page.locator('.lne-group-outline').count(),0);report.push('bloque nuevo no hereda selección anterior');
  // Flow text: preserve 1/10 px, text caret, undo and persisted identity.
  id=await fixture('parrafo','Texto para mover sin editar');await page.locator('#block-'+id+' .object-move-top').click();
  const before=await geometry(id);await page.keyboard.press('ArrowRight');await settle();let layout=await page.evaluate(id=>LNEState.getBlockById(id).propiedades.layout,id);assert.equal(layout.offsetX,1);let after=await geometry(id);assert.ok(Math.abs(after.r.left-before.r.left-1)<.2);report.push('13: flecha 1 px');
