@@ -5,17 +5,18 @@
 
 /* Contenedor General del Documento Jurídico */
 .lne-document-body {
-    font-family: var(--font-cuerpo);
-    color: var(--lne-text-main);
-    line-height: 1.62;
-    font-size: 1rem;
+    font-family: var(--lne-reading-font);
+    color: var(--lne-reading-color);
+    line-height: var(--lne-reading-leading);
+    font-size: var(--lne-reading-size);
+    font-weight: var(--lne-reading-weight);
 }
 
 /* Shared document geometry: editor, read-only view and exported fragment. */
-.lne-rendered-sheet { width:860px; min-width:860px; max-width:none; min-height:1150px; padding:70px 85px; box-sizing:border-box; position:relative; }
+.lne-rendered-sheet { width:860px; min-width:860px; max-width:none; min-height:1150px; padding:70px var(--lne-reading-gutter); box-sizing:border-box; position:relative; }
 .lne-rendered-sheet .lne-editor-block { position:relative; padding:3px 6px; border:1px solid transparent; box-sizing:border-box; }
 .lne-rendered-sheet .block-absolute-text,.lne-rendered-sheet .block-absolute-image { position:absolute; margin:0; }
-.lne-rendered-sheet .block-absolute-image { padding:0; }
+.lne-rendered-sheet .block-absolute-image { padding:0; border:0; }
 .lne-rendered-sheet .block-insert-gap { height:12px; margin:-3px 0; }
 .lne-rendered-sheet .block-absolute-image .lne-block-imagen-wrapper,.lne-rendered-sheet .block-absolute-image .lne-block-imagen-container { width:100%!important; margin:0; }
 .lne-rendered-sheet .block-float-left { float:left; margin:0 20px 14px 0; }
@@ -188,28 +189,28 @@ span.lne-meta-object { display:inline-block; }
     margin: 1.35rem 0 0.55rem 0;
 }
 .lne-block-titulo.h1 {
-    font-size: 2rem;
+    font-size: var(--lne-reading-h1);
     border-bottom: 2px solid var(--lne-navy);
     padding-bottom: 12px;
     letter-spacing: -0.5px;
 }
 .lne-block-titulo.h2 {
-    font-size: 1.5rem;
+    font-size: var(--lne-reading-h2);
     border-bottom: 1px solid var(--lne-border);
     padding-bottom: 6px;
     color: var(--lne-navy);
 }
 .lne-block-titulo.h3 {
-    font-size: 1.2rem;
+    font-size: var(--lne-reading-h3);
     color: var(--lne-navy-light);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .lne-block-parrafo {
     margin: 0.7rem 0;
     text-align: justify;
-    color: var(--lne-text-main);
-    line-height: 1.62;
+    color: var(--lne-reading-color);
+    line-height: var(--lne-reading-leading);
     word-break: break-word;
 }
 
@@ -217,8 +218,8 @@ span.lne-meta-object { display:inline-block; }
 .lne-block-lista {
     margin: 0.65rem 0;
     padding-left: 2rem;
-    color: var(--lne-text-main);
-    line-height: 1.62;
+    color: var(--lne-reading-color);
+    line-height: var(--lne-reading-leading);
 }
 .lne-block-lista li {
     margin-bottom: 0.25rem;

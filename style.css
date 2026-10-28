@@ -1,3 +1,4 @@
+@import url('/legal-reading.css');
 /* Reset básico */
 * {
     margin: 0;
@@ -2205,7 +2206,7 @@ mark.resaltado-activo {
     width: min(1280px, 100%);
     max-height: calc(100vh - 36px);
     max-height: calc(100dvh - 36px);
-    padding: 54px 48px 36px;
+    padding: 54px var(--lne-reading-gutter, 48px) 36px;
     overflow-y: auto;
 }
 

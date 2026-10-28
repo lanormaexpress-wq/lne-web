@@ -504,7 +504,10 @@ window.LNECanvas = (function () {
             const anchor=(rect.left-bounds.rect.left)/bounds.scale;
             const room=lineWrap?{left:bounds.left,right:bounds.right}:getFlowHorizontalRoom((rect.top-bounds.rect.top)/bounds.scale,el.offsetHeight,el);
             if(block.tipo!=='imagen'&&!block.metaField)el.style.maxWidth=`${Math.min(Number(layout.width)||bounds.right-bounds.left,room.right-room.left)}px`;
-            const safeX=clamp(x,room.left-anchor,Math.max(room.left-anchor,room.right-anchor-el.offsetWidth));
+            const visual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
+            const visualLeft=visual?(visual.left-bounds.rect.left)/bounds.scale:anchor;
+            const visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
+            const safeX=clamp(x,room.left-visualLeft,Math.max(room.left-visualLeft,room.right-visualLeft-visualWidth));
             el.style.transform=`translate(${safeX}px,${y}px)`;
             return {offsetX:safeX};
         }
@@ -532,7 +535,7 @@ window.LNECanvas = (function () {
         const initial={...(block.propiedades?.layout||{})},bounds=getSheetBounds(),rect=el.getBoundingClientRect();
         const originalStyle=el.style.cssText;
         const image=el.querySelector('.lne-block-imagen'),imageRect=image?.getBoundingClientRect();
-        const width=imageRect?imageRect.width/bounds.scale:el.offsetWidth;
+        const width=imageRect?imageRect.width/bounds.scale:corner&&window.LNEInteractions?window.LNEInteractions.visualRect(el).width/bounds.scale:el.offsetWidth;
         const ratio=imageRect?imageRect.width/Math.max(1,imageRect.height):null;
         const x0=Number(initial.offsetX)||0,y0=Number(initial.offsetY)||0;
         const anchorX=(rect.left-bounds.rect.left)/bounds.scale-x0,anchorY=(rect.top-bounds.rect.top)/bounds.scale-y0;
@@ -552,7 +555,9 @@ window.LNECanvas = (function () {
                 next.offsetX=x0+imageInset+(west?width-next.width:0);
                 if(ratio)next.height=Math.round(next.width/ratio);
             } else {
-                next.offsetX=Math.round(clamp(x0+dx,bounds.left-anchorX,bounds.right-anchorX-el.offsetWidth));
+                const visual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
+                const visualAnchor=visual?(visual.left-bounds.rect.left)/bounds.scale-x0:anchorX,visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
+                next.offsetX=Math.round(clamp(x0+dx,bounds.left-visualAnchor,bounds.right-visualAnchor-visualWidth));
                 next.offsetY=Math.round(clamp(y0+dy,-anchorY,Math.max(-anchorY,bounds.bottom-anchorY-el.offsetHeight)));
                 if(getImageWrapMode(block)==='square') {
                     const left=clamp((imageRect.left-bounds.rect.left)/bounds.scale+dx,bounds.left,bounds.right-width);
@@ -666,7 +671,7 @@ window.LNECanvas = (function () {
         const rollback=promoteVisualObject(blockEl, block);
         const layout = block.propiedades?.layout || {};
         const startX = event.clientX;
-        const startWidth = blockEl.offsetWidth;
+        const startWidth = window.LNEInteractions?window.LNEInteractions.visualRect(blockEl).width/getSheetBounds().scale:blockEl.offsetWidth;
         const bounds = getSheetBounds();
         const startLeft = parseFloat(blockEl.style.left) || bounds.left;
         const west = corner.includes('w');
@@ -700,7 +705,7 @@ window.LNECanvas = (function () {
         metaEditables.forEach(el => {
             el.addEventListener('input', () => {
                 const field = el.dataset.metaField;
-                const clone=el.cloneNode(true);clone.querySelectorAll('.object-move-zone,.object-resize-handle').forEach(n=>n.remove());window.LNEState.state.metadata.richText={...window.LNEState.state.metadata.richText,[field]:clone.innerHTML};
+                const clone=el.cloneNode(true);clone.querySelectorAll('.object-move-zone,.object-resize-handle,.lne-selection-outline').forEach(n=>n.remove());window.LNEState.state.metadata.richText={...window.LNEState.state.metadata.richText,[field]:clone.innerHTML};
                 const textVal = el.innerText.trim();
                 window.LNEState.updateMetadata(field, textVal,clone.innerHTML);
                 if (field === 'titulo') {
@@ -1087,38 +1092,12 @@ window.LNECanvas = (function () {
     }
 
     function snapToGuides(x, width) {
-        clearGuides();
-        const bounds = getSheetBounds();
-        const center = (bounds.left + bounds.right) / 2;
-        const stops = [[bounds.left, bounds.left], [center - width / 2, center], [bounds.right - width, bounds.right]];
-        sheetContainer.querySelectorAll('.block-absolute-image,.block-absolute-text').forEach(el=>{
-            if(el.dataset.blockId===window.LNEState.state.selectedBlockId)return;
-            const left=parseFloat(el.style.left)||bounds.left,right=left+el.offsetWidth,mid=(left+right)/2;
-            stops.push([left,left],[right-width,right],[mid-width/2,mid]);
-        });
-        const stop = stops.find(([candidate]) => Math.abs(candidate - x) <= 6);
-        if (stop) {
-            const guide = document.createElement('div');
-            guide.className = 'object-alignment-guide';
-            guide.style.left = `${stop[1]}px`;
-            guide.style.top = `${bounds.top}px`;
-            guide.style.height = `${bounds.bottom - bounds.top}px`;
-            sheetContainer.appendChild(guide);
-            return stop[0];
-        }
+        // Guides are informational only; interaction.js never changes geometry.
         return x;
     }
 
     function snapYToObjects(y,height) {
-        const bounds=getSheetBounds(),stops=[];
-        sheetContainer.querySelectorAll('.block-absolute-image,.block-absolute-text').forEach(el=>{
-            if(el.dataset.blockId===window.LNEState.state.selectedBlockId)return;
-            const top=parseFloat(el.style.top)||bounds.top,bottom=top+el.offsetHeight,mid=(top+bottom)/2;
-            stops.push([top,top],[bottom-height,bottom],[mid-height/2,mid]);
-        });
-        const stop=stops.find(([value])=>Math.abs(value-y)<=6&&value>=bounds.top&&value<=bounds.bottom-height);
-        if(!stop)return y;
-        const guide=document.createElement('div');guide.className='object-alignment-guide horizontal';guide.style.left=`${bounds.left}px`;guide.style.top=`${stop[1]}px`;guide.style.width=`${bounds.right-bounds.left}px`;sheetContainer.append(guide);return stop[0];
+        return y;
     }
 
     function clearGuides() {
@@ -1533,7 +1512,7 @@ window.LNECanvas = (function () {
         staging.style.cssText='position:fixed;left:-10000px;top:0;visibility:hidden;width:860px;';
         const target=document.createElement('div');
         target.className='document-sheet lne-document-body lne-rendered-sheet';
-        target.style.cssText='position:relative;box-sizing:border-box;width:860px;max-width:none;padding:70px 85px;';
+        target.style.cssText='position:relative;box-sizing:border-box;width:860px;max-width:none;';
         staging.appendChild(target);document.body.appendChild(staging);
         try {
             sheetContainer=target;
