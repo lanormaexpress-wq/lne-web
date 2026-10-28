@@ -11,6 +11,11 @@ const { createLegalConverterRouter } = require('./lib/legal-converter');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const app = express();
+// Indexing directives supplement existing authentication; they never grant access.
+app.use((req, res, next) => {
+    if (/^\/(?:admin|api(?:\/|$)|tests(?:\/|$)|lib(?:\/|$)|scripts(?:\/|$)|migration(?:\/|$))/.test(req.path)) res.set('X-Robots-Tag', 'noindex, nofollow');
+    next();
+});
 app.use('/admin-summary-editor', (_req, res) => res.status(403).send('Acceso privado.'));
 const summaryAdminRouter = require('./lib/summary-editor')(requireAdmin, () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY }));
 app.use('/admin/resumenes', summaryAdminRouter);
@@ -392,22 +397,13 @@ app.get('/googlea91f2d4ac41a836d.html', (_req, res) => {
     res.sendFile(path.join(__dirname, 'googlea91f2d4ac41a836d.html'));
 });
 
-// Redirigir peticiones de páginas HTML a la shell index.html de la SPA (YouTube Music style persistent chat)
-app.get('*', (req, res, next) => {
-    const requestPath = req.path.toLowerCase();
-    
-    // Si es para la API, un fragmento de página (/pages/...), o datos (/data/...), continuar normal
-    if (requestPath.startsWith('/api/') || requestPath.startsWith('/pages/') || requestPath.startsWith('/data/')) {
-        return next();
-    }
-    
-    // Si es una petición de página HTML o no tiene extensión (deep linking), servir index.html
-    if (requestPath.endsWith('.html') || requestPath === '/' || !requestPath.includes('.')) {
-        return res.sendFile(path.join(__dirname, 'index.html'));
-    }
-    
-    next();
+// Real public pages render meaningful HTML for every visitor before SPA startup.
+// Unknown routes are 404; data outages are 503, never an empty indexable shell.
+const publicSeo = require('./lib/public-seo').createPublicSeo({
+    root: __dirname,
+    getConfig: () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY })
 });
+app.use(publicSeo.router);
 
 // Servir archivos estáticos del sitio
 app.use(express.static(__dirname));
@@ -445,6 +441,8 @@ app.post('/api/chat', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor al conectar con Gemini.' });
     }
 });
+
+app.use((_req, res) => res.status(404).set('X-Robots-Tag', 'noindex').send('Página no encontrada.'));
 
 // Iniciar servidor
 app.listen(PORT, () => {

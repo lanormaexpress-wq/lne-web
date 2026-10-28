@@ -33,6 +33,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     function navigate(targetPath) {
         const targetUrl = new URL(targetPath, document.baseURI);
         const route = resolvePage(targetUrl.pathname);
+        // Standalone legal/material URLs have real server content and status.
+        if (/\/(?:articulo|tema|resumen)\//.test(targetUrl.pathname)
+            || targetUrl.pathname === '/legislacion' || targetUrl.searchParams.has('art')
+            || !['home', 'codigo', 'curso', 'formacion'].includes(route.pageName)) {
+            window.location.assign(targetUrl.href);
+            return;
+        }
         const destination = `${route.canonicalUrl}${targetUrl.search}${targetUrl.hash}`;
 
         history.pushState(null, '', destination);
@@ -182,6 +189,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Cargar contenido de la página de forma dinámica
     function loadPage(pathName) {
         const navigationId = ++activeNavigation;
+        document.documentElement.dataset.lneDocument = 'false';
+        window.LNESEO?.update(pathName);
 
         // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
         if (window.LNEHomeSearchController) {
@@ -256,5 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindLegislationMenuToggle();
     renderFormationMenu();
     bindLinks();
-    loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    if (document.documentElement.dataset.lneDocument !== 'true') {
+        loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
 });
