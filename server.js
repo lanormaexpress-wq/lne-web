@@ -387,6 +387,11 @@ app.get(Array.from(legacyRedirects.keys()), (req, res) => {
     res.redirect(301, `${destination}${queryString}`);
 });
 
+// Verificación pública de Google Search Console, antes del fallback de la SPA.
+app.get('/googlea91f2d4ac41a836d.html', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'googlea91f2d4ac41a836d.html'));
+});
+
 // Redirigir peticiones de páginas HTML a la shell index.html de la SPA (YouTube Music style persistent chat)
 app.get('*', (req, res, next) => {
     const requestPath = req.path.toLowerCase();
