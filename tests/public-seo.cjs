@@ -30,7 +30,7 @@ async function fakeFetch(url, options) {
     return { ok: true, status: 200, headers: { get: name => name === 'content-range' && options.headers.Prefer ? `${offset}-${Math.min(offset + limit, data.length) - 1}/${data.length}` : null }, json: async () => structuredClone(data.slice(offset, offset + limit)) };
 }
 const app = express();
-const seo = createPublicSeo({ root, getConfig: () => ({ url: 'https://public.example', key: 'public-test-key' }), fetchImpl: fakeFetch, cacheMs: 60000 });
+const seo = createPublicSeo({ root, getConfig: () => ({ url: 'https://public.example', key: 'public-test-key' }), fetchImpl: fakeFetch, cacheMs: 60000, sitemapOptions: { seedFile: false, cacheFile: false, autoStart: false } });
 app.get('/googlea91f2d4ac41a836d.html', (_req, res) => res.sendFile(path.join(root, 'googlea91f2d4ac41a836d.html')));
 // Public SPA API fixtures; production uses the unchanged routes in server.js.
 app.get('/api/public/legislation', (_req, res) => res.json({ normas: [{ codigo: norm.codigo, slug: norm.slug, nombre: norm.nombre, total_articulos: articles.filter(a => a.estado === 'publicado').length }] }));
@@ -45,6 +45,7 @@ const server = app.listen(0, '127.0.0.1', async () => {
         assert.equal(text('<p>Uno &amp; dos &oacute;</p><p>Tres</p><script>hidden</script>'), 'Uno & dos ó Tres');
         assert(!safeHtml('<svg onload="x()"></svg><script>x()</script><a href="javascript:x()">x</a>').includes('javascript:'));
         const home = await request('/'); assert.equal(home.status, 200); assert(home.body.includes('<h1>Bienvenido a La Norma Express</h1>')); assert(home.body.includes('href="/legislacion/codigo-civil"'));
+        await seo.sitemapCache.refresh();
         const site = await request('/sitemap.xml'); assert.equal(site.status, 200); assert(site.headers.get('content-type').includes('xml'));
         assert(site.body.includes(`${ORIGIN}/legislacion/codigo-civil/articulo/1003`));
         assert(!site.body.includes('/articulo/1%232')); assert(!site.body.includes('/articulo/vacio')); assert(!site.body.includes('/articulo/privado')); assert(!site.body.includes('norma-privada')); assert(!site.body.includes('/admin'));
@@ -77,7 +78,7 @@ const server = app.listen(0, '127.0.0.1', async () => {
         summaries.length = 0; assert.equal((await request('/formacion/contratos/resumen/11111111-1111-4111-8111-111111111111')).status, 404);
         norm.estado = 'borrador'; assert.equal((await request('/legislacion/codigo-civil')).status, 404); norm.estado = 'publicado';
         fail = true; assert.equal((await request('/legislacion/codigo-civil/articulo/1')).status, 503);
-        const outage = createPublicSeo({ root, getConfig: () => ({ url: 'https://public.example', key: 'public-test-key' }), fetchImpl: fakeFetch });
+        const outage = createPublicSeo({ root, getConfig: () => ({ url: 'https://public.example', key: 'public-test-key' }), fetchImpl: fakeFetch, sitemapOptions: { seedFile: false, cacheFile: false, autoStart: false } });
         await assert.rejects(outage.sitemapEntries()); fail = false;
         if (process.env.LNE_SEO_BROWSER === '1') {
             const { chromium } = require('C:/Users/Usuario/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
