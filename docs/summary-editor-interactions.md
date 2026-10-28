@@ -25,6 +25,9 @@ uses a 3-screen-pixel tolerance. Equal-gap references are searched independently
 each axis and labeled in unscaled document pixels. Guides are informational only:
 the former magnetizing functions now return the pointer-driven coordinate unchanged.
 The DOM overlay is editor-only and is excluded from exports and document storage.
+Changed editor assets carry an explicit URL revision, so intermediary HTTP caches
+cannot keep executing the previous selection implementation after deployment.
+The resource preload manifest preserves those query strings and CSS resource types.
 
 Arrow keys move selected movable objects by 1px, or 10px with Shift. Text editing
 and form controls keep normal caret navigation. Existing snapshot, state notification,
