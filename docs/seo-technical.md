@@ -100,7 +100,14 @@ conserva su lógica y delega al servidor solo las nuevas URLs de documentos.
 - Se actualiza la versión del service worker para el código SEO. Verificación,
   robots y sitemaps se consultan siempre en la red.
 
-Se incorpora `sanitize-html@2.18.1`, con versión fija y lockfile. El texto
+Se incorpora `sanitize-html@2.18.1`, con versión fija y lockfile. Su copia
+CommonJS `lib/seo-sanitizer.cjs` se genera con `npm run build:seo-sanitizer`
+y es compatible con el Node **22.11.0 exacto de Nixpacks**, sin cambiar
+flags, variables ni el runtime de la aplicación. Esbuild 0.28.2 es solo una
+dependencia de desarrollo; producción usa el archivo ya compilado y versionado.
+Se incluyen las licencias completas de sus dependencias en el archivo contiguo.
+Una prueba evita que la copia quede desactualizada respecto a la versión fijada.
+El texto
 publicado se limpia antes de insertarlo en los nuevos documentos: se eliminan
 scripts, eventos, iframes, formularios y URLs JavaScript. Las vistas públicas
 anteriores y su renderer compartido no se modifican.
@@ -108,7 +115,9 @@ anteriores y su renderer compartido no se modifican.
 ## Archivos
 
 Nuevos: `lib/public-seo.js`, `seo.js`, `tests/public-seo.cjs`,
-`tests/public-seo-live.cjs`, `docs/seo-technical.md`.
+`tests/public-seo-live.cjs`, `docs/seo-technical.md`,
+`scripts/build-seo-sanitizer.cjs`, `lib/seo-sanitizer.cjs` y
+`lib/seo-sanitizer.LICENSE.txt`.
 
 Modificados: `server.js`, `index.html`, `router.js`, `sw.js`, `package.json`,
 `package-lock.json`. No se cambian Supabase, Auth, administradores, editores,
@@ -128,7 +137,7 @@ node tests/admin-session-regression.cjs
 node tests/summary-publication-update.cjs
 node tests/legal-source-sync.cjs
 npm audit --omit=dev
-git diff --check
+git diff --cached --check
 ```
 
 Las pruebas HTTP cubren HTML sin JS, metadatos y JSON-LD, paginación >1,000,
@@ -137,6 +146,14 @@ borradores, revocación con caché caliente, duplicados, vacíos, XSS, enlaces,
 metadatos, recarga de artículos y funcionamiento de los modales de cursos.
 Las regresiones existentes verifican sesión, permisos de publicación y
 sincronización del contenido jurídico, con proveedores simulados.
+
+Se verifica también el runtime exacto Node 22.11.0 con el binario oficial y
+su checksum SHA-256. El primer intento con sanitize-html 2.18.1 no arrancó
+por una dependencia ESM compatible con el Node 24 local pero no con Node
+22.11. Se restauró primero la imagen anterior `25763a7`, sin cambiar datos,
+y se compiló la versión corregida como CommonJS antes de volver a desplegar.
+La alternativa de bajar a 2.17.4 se descartó por sus avisos de seguridad;
+esa versión nunca se desplegó.
 
 La integración GET con Supabase real pasó para las diez normas, artículos
 de diferentes posiciones del índice, cursos, temas, protección administrativa,

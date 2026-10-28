@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "generate:search-index": "node scripts/generate-search-index.js"
+    "generate:search-index": "node scripts/generate-search-index.js",
+    "build:seo-sanitizer": "node scripts/build-seo-sanitizer.cjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -15,5 +16,8 @@
     "multer": "2.5.0",
     "pdf-parse": "^2.4.5",
     "sanitize-html": "2.18.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
   }
 }

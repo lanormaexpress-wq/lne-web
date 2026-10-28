@@ -4,6 +4,7 @@ const express = require('express');
 const path = require('node:path');
 const { createPublicSeo, text, safeHtml, ORIGIN } = require('../lib/public-seo');
 const root = path.resolve(__dirname, '..');
+assert.equal(require('../lib/seo-sanitizer.cjs').lneVersion, require('../package.json').dependencies['sanitize-html'], 'Rebuild the sanitizer after updating its pinned dependency');
 const norm = { codigo: 'codigo-civil', slug: 'codigo-civil', nombre: 'Código Civil', estado: 'publicado', introduccion: 'Texto público de la legislación civil peruana.' };
 const base = { codigo: norm.codigo, estado: 'publicado', actualizado_en: '2026-09-28T12:00:00Z', contenido_lne: {}, estructura: {} };
 const articles = Array.from({ length: 1003 }, (_, i) => ({ ...base, id: i + 1, orden: i + 1, numero_articulo: String(i + 1), titulo: `Regla ${i + 1}`, contenido: `<p>Texto jurídico publicado y suficiente del artículo ${i + 1}. La ley se deroga sólo por otra ley.</p>` }));
