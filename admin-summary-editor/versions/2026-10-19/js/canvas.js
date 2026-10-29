@@ -1174,6 +1174,11 @@ window.LNECanvas = (function () {
     function getFlowSpacing(id) {
         const block=window.LNEState.getBlockById(id);
         if(!block||window.LNEState.getBlockMode(block)!=='flow')return 0;
+        const props=block.propiedades||{},layout=props.layout||{};
+        // Subscribers may paint the inspector before the canvas. Once an edge
+        // is canonical, read its source of truth, not the previous DOM frame.
+        if(props.spacingBefore!==undefined&&layout.offsetY===0&&layout.flowOffsetY===0)
+            return Math.max(0,Number(props.spacingBefore)||0);
         return createFlowMove([block])?.gap.total??Math.max(0,Number(block.propiedades?.spacingBefore)||0)+
             Math.max(0,Number(block.propiedades?.layout?.offsetY)||0)+Math.max(0,Number(block.propiedades?.layout?.flowOffsetY)||0);
     }

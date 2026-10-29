@@ -37,7 +37,12 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser;try{
  // Every type reaches exactly zero through the same public inspector adapter,
  // then actual pointer and keyboard gestures use the same canonical fields.
  for(const id of 'ABCDEFGHI'){await reset();await page.evaluate(id=>LNECanvas.changeFlowSpacing(id,'spacingBefore',96),id);assert.equal(await prop(id,'spacingBefore'),96);await page.evaluate(id=>LNECanvas.changeFlowSpacing(id,'spacingBefore',0),id);assert.equal(await prop(id,'spacingBefore'),0);assert.equal((await prop(id,'layout')).offsetY,0);assert.equal((await prop(id,'layout')).flowOffsetY,0);}
- await reset();await page.evaluate(()=>LNECanvas.changeSquareOffset('C',0));assert.equal(await prop('C','spacingBefore'),0);assert.equal((await prop('C','layout')).flowOffsetY,0);passed.push('6: all A–I reach zero, no 55/64 floor; image inspector shares model');
+ await reset();await page.evaluate(()=>LNECanvas.changeSquareOffset('C',0));assert.equal(await prop('C','spacingBefore'),0);assert.equal((await prop('C','layout')).flowOffsetY,0);
+ // Actual inspector controls, not just Canvas API: the value must reflect the
+ // committed state even when its subscriber runs before Canvas.render.
+ await page.evaluate(()=>LNEState.selectBlock('B'));await settle();await page.locator('[data-spacing="before"]').fill('64');await page.locator('[data-spacing="before"]').press('Tab');await settle();assert.equal(await prop('B','spacingBefore'),64);assert.equal(await page.locator('[data-spacing="before"]').inputValue(),'64');
+ await page.locator('#block-B > .object-move-top').click();await page.keyboard.press('ArrowDown');await settle();assert.equal(await page.locator('[data-spacing="before"]').inputValue(),'65');
+ passed.push('6: all A–I reach zero, no 55/64 floor; native inspector and image inspector share model');
  await reset();await page.evaluate(()=>LNECanvas.changeSquareOffset('C',0));await settle();let before=await geometry();await resize('C',45);let after=await geometry();assert.ok(after.C.height>before.C.height+35);await wrapCheck();assert.ok(after.E.top>=after.D.bottom-1);passed.push('7: square resize, glyph exclusion and following flow');
  before=await geometry();await resize('H',40);after=await geometry();assert.ok(Math.abs(after.I.top-before.I.top-(after.H.height-before.H.height))<1);passed.push('8: inline resize shifts follower by real height');
  await reset();await page.evaluate(()=>LNECanvas.changeTextMode('D','absolute'));assert.deepEqual(await page.evaluate(()=>LNEState.state.bloques.filter(b=>LNEState.getBlockMode(b)==='absolute').map(b=>b.id)),['D']);passed.push('9: only D becomes independent');
