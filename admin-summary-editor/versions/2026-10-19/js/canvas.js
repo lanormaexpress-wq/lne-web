@@ -1509,10 +1509,11 @@ window.LNECanvas = (function () {
     function renderDocument(state, {editable=false}={}) {
         const original=sheetContainer;
         const staging=document.createElement('div');
-        staging.style.cssText='position:fixed;left:-10000px;top:0;visibility:hidden;width:860px;';
+        const width=sheetContainer?.offsetWidth||parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--lne-reading-sheet-width'))||1200;
+        staging.style.cssText=`position:fixed;left:-10000px;top:0;visibility:hidden;width:${width}px;`;
         const target=document.createElement('div');
         target.className='document-sheet lne-document-body lne-rendered-sheet';
-        target.style.cssText='position:relative;box-sizing:border-box;width:860px;max-width:none;';
+        target.style.cssText='position:relative;box-sizing:border-box;max-width:none;';
         staging.appendChild(target);document.body.appendChild(staging);
         try {
             sheetContainer=target;

@@ -1049,6 +1049,11 @@ window.LNEToolbar = (function () {
 
     return {
         init,
+        clearSelection() {
+            savedRange=null;savedActiveBlockId=null;savedSelectedText='';
+            selectedInlineIcon?.classList.remove('inline-icon-selected');selectedInlineIcon=null;
+            document.querySelectorAll('#document-sheet .inline-icon-selected').forEach(el=>el.classList.remove('inline-icon-selected'));
+        },
         openIconPicker,
         getIconCategories:()=>iconCategories,
         insertAt,

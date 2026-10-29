@@ -43,7 +43,7 @@ class StateManager {
 
     notify(changeType = 'update') {
         this.subscribers.forEach(cb => cb(this.state, changeType));
-        this.scheduleAutosave();
+        if (!['select-block','select-blocks'].includes(changeType)) this.scheduleAutosave();
     }
 
     // Guardado de Snapshot para Deshacer/Rehacer
@@ -405,6 +405,13 @@ class StateManager {
         if (this.state.selectedBlockId === blockId) return;
         this.state.selectedBlockId = blockId;
         this.notify('select-block');
+    }
+
+    clearSelection() {
+        this.state.selectedBlockId = null;
+        this.selectedBlockIds.clear();
+        this.selectionMode = false;
+        this.notify('select-blocks');
     }
 
     togglePreviewMode() {

@@ -138,6 +138,16 @@ window.LNEInteractions = (() => {
         }
     }
     function end(){gesture=null;manipulating=false;overlay?.querySelectorAll('.lne-smart-guide,.lne-gap-guide').forEach(n=>n.remove());queue();}
+    function deselectOnBlank(event) {
+        if(event.button!==0||manipulating||gesture)return;
+        const target=event.target;
+        // These surfaces own focus/text ranges and must keep the active object.
+        if(target.closest('[data-block-id],[data-meta-field],[contenteditable],input,textarea,select,button,a,[role="button"],[role="menu"],[role="dialog"],.editor-top-nav,.editor-toolbar,.primary-toolbar,.secondary-toolbar,.editor-side-panel,.insert-panel,.context-inspector,.mobile-editor-bar,.modal-overlay,.web-preview-modal,.block-object-menu,.icon-picker-card,.document-menu-dropdown'))return;
+        if(!ids().length&&!S().selectionMode)return;
+        document.activeElement?.closest('#document-sheet [contenteditable]')?.blur();
+        window.LNEToolbar?.clearSelection();
+        S().clearSelection();end();
+    }
     function nudge(event) {
         const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
         if(!directions[event.key]||event.defaultPrevented||event.ctrlKey||event.metaKey||event.altKey||S().state.previewMode)return;
@@ -166,6 +176,7 @@ window.LNEInteractions = (() => {
     function init() {
         overlay=document.createElement('div');overlay.id='lne-interaction-overlay';overlay.setAttribute('aria-hidden','true');document.body.append(overlay);
         document.addEventListener('pointerdown',begin,true);
+        document.addEventListener('pointerdown',deselectOnBlank);
         document.addEventListener('pointermove',event=>{if(gesture)gesture.moved ||= Math.abs(event.clientX-gesture.origin.x)+Math.abs(event.clientY-gesture.origin.y)>2;if(manipulating)queue();},true);
         document.addEventListener('pointerup',end,true);document.addEventListener('pointercancel',end,true);
         document.addEventListener('keydown',nudge);document.addEventListener('keyup',()=>{heldKey=null;});
