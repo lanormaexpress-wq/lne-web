@@ -17,7 +17,7 @@
 .lne-rendered-sheet .lne-editor-block { position:relative; padding:3px 6px; border:1px solid transparent; box-sizing:border-box; }
 .lne-rendered-sheet .block-absolute-text,.lne-rendered-sheet .block-absolute-image { position:absolute; margin:0; }
 .lne-rendered-sheet .block-absolute-image { padding:0; border:0; }
-.lne-rendered-sheet .block-insert-gap { height:12px; margin:-3px 0; }
+.lne-rendered-sheet .block-insert-gap { position:absolute; top:0; left:var(--lne-reading-gutter); width:calc(100% - 2 * var(--lne-reading-gutter)); height:6px; margin:0; user-select:none; pointer-events:auto; }
 .lne-rendered-sheet .block-absolute-image .lne-block-imagen-wrapper,.lne-rendered-sheet .block-absolute-image .lne-block-imagen-container { width:100%!important; margin:0; }
 .lne-rendered-sheet .block-float-left { float:left; margin:0 20px 14px 0; }
 .lne-rendered-sheet .block-float-right { float:right; margin:0 0 14px 20px; }
@@ -794,7 +794,7 @@ span.lne-meta-object { display:inline-block; }
 .lne-list-marker { display:inline-block; min-width:var(--list-marker-space,2em); white-space:pre; text-indent:0; }
 .lne-block-lista > li:has(.icon-bullet) { text-indent:0; }
 .lne-block-lista [data-list-content] :is(p,div) { text-indent:0; }
-.lne-document-content > .lne-editor-block:not(.block-absolute-image):not(.block-absolute-text):not(.block-float-left):not(.block-float-right):not(.block-inline-icon):not(.block-line-wrap) { display:flow-root; }
+.lne-document-content > .lne-editor-block:not(.block-absolute-image):not(.block-absolute-text):not(.block-float-left):not(.block-float-right):not(.block-inline-icon):not(.block-line-wrap) { display:flow-root; clear:both; }
 .lne-document-content > .block-float-left,.lne-document-content > .block-float-right { shape-margin:16px; }
 .lne-document-content > .lne-editor-block { overflow-wrap:anywhere; }
 .lne-document-content > .lne-editor-block.block-line-wrap { display:block; }
@@ -810,5 +810,16 @@ span.lne-meta-object { display:inline-block; }
 .lne-rendered-sheet .lne-auto-height :is(span,strong,b,em,i,font):has(:is(div,p,h1,h2,h3,h4,h5,h6,ul,ol)) { display:contents; }
 /* Public reading defaults; saved inline/block formatting retains precedence. */
 .lne-rendered-sheet .lne-comp-body { font-size:inherit; font-weight:inherit; line-height:inherit; letter-spacing:inherit; }
+
+/* Marker inset belongs to the list, not a non-editable pseudo element.
+   Framed text retains its existing outer padding; native cell lists no longer
+   depend on the browser's outside-marker/negative indentation defaults. */
+:is(.lne-cuadro-col,.lne-columna,.lne-comp-body,td,th) :is(ul,ol):not(.lne-block-lista) {
+    padding-inline-start:1.5em; padding-inline-end:6px;
+    margin-block:.4em; list-style-position:outside; box-sizing:border-box;
+}
+:is(.lne-cuadro-col,.lne-columna,.lne-comp-body,td,th) li { padding-inline-start:.25em; }
+:is(.lne-cuadro-col,.lne-columna,.lne-comp-body,td,th) .lne-block-lista { padding-inline:6px; }
+:is(.lne-cuadro-col,.lne-columna,.lne-comp-body,td,th) .icon-bullet { margin-inline-start:6px; }
 /* Read-only exports retain coordinates but remain fully reachable on narrow screens. */
 body:has(> .lne-readonly-sheet) { overflow-x:auto; }

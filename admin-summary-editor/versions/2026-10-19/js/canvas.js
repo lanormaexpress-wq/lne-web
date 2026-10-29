@@ -32,7 +32,7 @@ window.LNECanvas = (function () {
                 if (target.isConnected) fitFreeObjects(target);
             });
         });
-        target.querySelectorAll('.lne-auto-height,.lne-meta-object').forEach(el=>textSizeObserver.observe(el));
+        target.querySelectorAll('.lne-editor-block,.lne-meta-object').forEach(el=>textSizeObserver.observe(el));
     }
 
 
@@ -126,11 +126,11 @@ window.LNECanvas = (function () {
         } else {
             const mainContentEl = document.createElement('main');
             mainContentEl.className = 'lne-document-content';
+            const insertionOverlay=document.createElement('div');insertionOverlay.className='lne-insertion-overlay';
 
             state.bloques.forEach((block, index) => {
-                mainContentEl.appendChild(createInsertGap(index, state));
-                const reserve=block.propiedades?.layout?.flowReserve;
-                if(reserve){const holder=document.createElement('span');holder.className='group-flow-reserve';holder.style.cssText=`display:block;height:${reserve.height}px;margin:${reserve.margin};float:${reserve.float};width:${reserve.float==='none'?'auto':reserve.width+'px'};`;mainContentEl.appendChild(holder);}
+                // Free objects no longer reserve a second, invisible copy of
+                // their former footprint. Old JSON is left untouched.
                 const blockEl = document.createElement('div');
                 let blockClasses = `lne-editor-block ${state.selectedBlockId === block.id ? 'selected' : ''}`;
                 blockClasses += ` block-type-${block.tipo}`;
@@ -203,6 +203,10 @@ window.LNECanvas = (function () {
                         <button data-object-action="duplicate">Duplicar</button><button data-object-action="lock">${locked?'Desbloquear posición':'Bloquear posición'}</button>
                         <button data-object-action="select">Separar contenido / seleccionar</button><button data-object-action="delete" ${locked?'disabled':''}>Eliminar</button></div></div>`;
                     blockEl.innerHTML = controlsHtml + innerHtml;
+                    const previous=state.bloques[index-1];
+                    if(previous&&window.LNEState.getBlockMode(previous)!=='absolute'&&window.LNEState.getBlockMode(block)!=='absolute'){
+                        const gap=createInsertGap(index,state);gap.dataset.previousId=previous.id;gap.dataset.nextId=block.id;insertionOverlay.appendChild(gap);
+                    }
                     const copyCheck = blockEl.querySelector('.block-copy-check');
                     copyCheck.addEventListener('click', event=>event.stopPropagation());
                     copyCheck.addEventListener('change', ()=>window.LNEState.toggleBlockForCopy(block.id, copyCheck.checked));
@@ -231,6 +235,7 @@ window.LNECanvas = (function () {
 
                     // Eventos de selección
                     blockEl.addEventListener('click', (e) => {
+                        if(e.target.closest('.block-insert-gap'))return;
                         if (e.altKey) return;
                         if (!blockEl.classList.contains('selected')) {
                             window.LNEState.selectBlock(block.id);
@@ -301,9 +306,9 @@ window.LNECanvas = (function () {
 
                 mainContentEl.appendChild(blockEl);
             });
-            mainContentEl.appendChild(createInsertGap(state.bloques.length, state));
 
             sheetContainer.appendChild(mainContentEl);
+            if(!isPreview)sheetContainer.appendChild(insertionOverlay);
         }
 
         // 3. Renderizado de Pie Editorial Institucional
@@ -324,7 +329,6 @@ window.LNECanvas = (function () {
         sheetContainer.appendChild(footerEl);
         bindMetadataObjects(state,isPreview);
         window.LNEGroups?.wrap(sheetContainer);
-        fitFreeObjects();
         const renderedSheet=sheetContainer;
         renderedSheet.querySelectorAll('.lne-editor-block').forEach(el=>{
             const block=state.bloques.find(b=>b.id===el.dataset.blockId)||{metaField:el.dataset.metaField,propiedades:{layout:state.metadata?.layouts?.[el.dataset.metaField]}};
@@ -335,6 +339,7 @@ window.LNECanvas = (function () {
             parent.classList.add('lne-icon-list-item');
             parent.style.setProperty('--lne-marker-width',`${(parseFloat(icon.style.fontSize)||16)+10}px`);
         });
+        fitFreeObjects(renderedSheet);
         renderedSheet.querySelectorAll('img').forEach(image=>image.addEventListener('load',()=>fitFreeObjects(renderedSheet),{once:true}));
         if (renderedSheet.id === 'document-sheet') observeTextSizes(renderedSheet);
 
@@ -395,6 +400,7 @@ window.LNECanvas = (function () {
 
     function closeInsertMenus() {
         sheetContainer?.querySelectorAll('.menu-open').forEach(el => el.classList.remove('menu-open'));
+        if(document.activeElement?.closest('.block-insert-gap'))document.activeElement.blur();
     }
 
     function bindObjectMenu(element,block) {
@@ -460,7 +466,11 @@ window.LNECanvas = (function () {
     }
 
     function applyRelativeLayout(el,block,layout) {
-        const x=Number(layout.offsetX)||0,y=Number(layout.offsetY)||0;
+        const x=Number(layout.offsetX)||0;
+        const squareImage=block.tipo==='imagen'&&getImageWrapMode(block)==='square';
+        // Negative legacy translations must not pull ordinary flow over its
+        // predecessor. This is presentation only, not a saved migration.
+        const y=squareImage?(Number(layout.offsetY)||0):Math.max(0,Number(layout.offsetY)||0);
         const lineWrap=['parrafo','lista'].includes(block.tipo)&&!x&&!y;
         el.classList?.toggle('block-line-wrap',lineWrap);
         if(block.tipo==='imagen') {
@@ -468,6 +478,7 @@ window.LNECanvas = (function () {
             if(block.propiedades?.spacingAfter!==undefined&&!el.dataset.flowBaseMargin)el.style.marginBottom=`${Math.max(0,Number(block.propiedades.spacingAfter)||0)}px`;
         }
         if(!el.dataset.flowBaseMargin)el.dataset.flowBaseMargin=String(parseFloat(getComputedStyle(el).marginBottom)||0);
+        if(el.dataset.flowBaseTop===undefined)el.dataset.flowBaseTop=String(parseFloat(getComputedStyle(el).marginTop)||0);
         const square=block.tipo==='imagen'&&getImageWrapMode(block)==='square';
         if(square) {
             const side=layout.wrapSide||(block.propiedades?.alineacion==='align-right'?'right':'left');
@@ -486,8 +497,14 @@ window.LNECanvas = (function () {
             el.style.marginRight=`${side==='right'?inset:16}px`;
             el.style.shapeOutside=`inset(${parseFloat(el.style.paddingTop)||0}px 0 0 0) border-box`;
         } else {
-            el.style.transform=`translate(${x}px,${y}px)`;
-            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)+Math.max(0,y)}px`;
+            // Real flow spacing, not a translated box plus an independent
+            // trailing reservation. Browser layout carries the whole chain.
+            el.style.transform=`translate(${x}px,0px)`;
+            const previous=el.previousElementSibling;
+            const previousStyle=previous?.hasAttribute('data-block-id')?getComputedStyle(previous):null;
+            const precedingMargin=previousStyle&&previousStyle.position!=='absolute'&&previousStyle.float==='none'?(parseFloat(previousStyle.marginBottom)||0):0;
+            el.style.marginTop=`${Math.max(Number(el.dataset.flowBaseTop),precedingMargin)+y}px`;
+            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)}px`;
         }
         if(Number(layout.width)>0) {
             const bounds=getSheetBounds(),width=Math.min(Number(layout.width),(bounds.right-bounds.left)*(square?.48:1));
@@ -499,7 +516,7 @@ window.LNECanvas = (function () {
             }
         }
         if(!square&&el.getBoundingClientRect) {
-            el.style.transform=`translate(0px,${y}px)`;
+            el.style.transform='translate(0px,0px)';
             const bounds=getSheetBounds(),rect=el.getBoundingClientRect();
             const anchor=(rect.left-bounds.rect.left)/bounds.scale;
             const room=lineWrap?{left:bounds.left,right:bounds.right}:getFlowHorizontalRoom((rect.top-bounds.rect.top)/bounds.scale,el.offsetHeight,el);
@@ -508,7 +525,7 @@ window.LNECanvas = (function () {
             const visualLeft=visual?(visual.left-bounds.rect.left)/bounds.scale:anchor;
             const visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
             const safeX=clamp(x,room.left-visualLeft,Math.max(room.left-visualLeft,room.right-visualLeft-visualWidth));
-            el.style.transform=`translate(${safeX}px,${y}px)`;
+            el.style.transform=`translate(${safeX}px,0px)`;
             return {offsetX:safeX};
         }
     }
@@ -535,12 +552,17 @@ window.LNECanvas = (function () {
         const initial={...(block.propiedades?.layout||{})},bounds=getSheetBounds(),rect=el.getBoundingClientRect();
         const originalStyle=el.style.cssText;
         const image=el.querySelector('.lne-block-imagen'),imageRect=image?.getBoundingClientRect();
-        const width=imageRect?imageRect.width/bounds.scale:corner&&window.LNEInteractions?window.LNEInteractions.visualRect(el).width/bounds.scale:el.offsetWidth;
+        const width=imageRect?el.offsetWidth:corner&&window.LNEInteractions?window.LNEInteractions.visualRect(el).width/bounds.scale:el.offsetWidth;
         const ratio=imageRect?imageRect.width/Math.max(1,imageRect.height):null;
-        const x0=Number(initial.offsetX)||0,y0=Number(initial.offsetY)||0;
+        const imageFrameInset=imageRect?el.offsetWidth-imageRect.width/bounds.scale:0;
+        const square=block.tipo==='imagen'&&getImageWrapMode(block)==='square';
+        const x0=Number(initial.offsetX)||0,y0=square?(Number(initial.offsetY)||0):Math.max(0,Number(initial.offsetY)||0);
         const anchorX=(rect.left-bounds.rect.left)/bounds.scale-x0,anchorY=(rect.top-bounds.rect.top)/bounds.scale-y0;
         const baseMargin=parseFloat(getComputedStyle(el).marginBottom)||0;
-        el.dataset.flowBaseMargin=String(baseMargin-Math.max(0,getImageWrapMode(block)==='square'?-y0:y0));
+        el.dataset.flowBaseMargin=String(baseMargin-(square?Math.max(0,-y0):0));
+        const initialVisual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
+        const fixedVisualAnchor=initialVisual?(initialVisual.left-bounds.rect.left)/bounds.scale-x0:anchorX;
+        const fixedVisualWidth=initialVisual?initialVisual.width/bounds.scale:el.offsetWidth;
         let changed=false,next={...initial,mode:'flow'},targetIndex=null;
         function move(e) {
             const dx=(e.clientX-event.clientX)/bounds.scale,dy=(e.clientY-event.clientY)/bounds.scale;
@@ -551,14 +573,11 @@ window.LNECanvas = (function () {
                 const delta=ratio&&['n','s'].includes(corner)?dy*ratio*(corner==='n'?-1:1):dx*(west?-1:1);
                 const limit=Math.min(west?anchorX+x0+width-bounds.left:bounds.right-anchorX-x0,getImageWrapMode(block)==='square'?(bounds.right-bounds.left)*.48:Infinity);
                 next.width=Math.round(clamp(width+delta,Math.min(image?16:100,limit),limit));
-                const imageInset=imageRect?(imageRect.left-rect.left)/bounds.scale:0;
-                next.offsetX=x0+imageInset+(west?width-next.width:0);
-                if(ratio)next.height=Math.round(next.width/ratio);
+                next.offsetX=x0+(west?width-next.width:0);
+                if(ratio)next.height=Math.round((next.width-imageFrameInset)/ratio);
             } else {
-                const visual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
-                const visualAnchor=visual?(visual.left-bounds.rect.left)/bounds.scale-x0:anchorX,visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
-                next.offsetX=Math.round(clamp(x0+dx,bounds.left-visualAnchor,bounds.right-visualAnchor-visualWidth));
-                next.offsetY=Math.round(clamp(y0+dy,-anchorY,Math.max(-anchorY,bounds.bottom-anchorY-el.offsetHeight)));
+                next.offsetX=Math.round(clamp(x0+dx,bounds.left-fixedVisualAnchor,bounds.right-fixedVisualAnchor-fixedVisualWidth));
+                next.offsetY=Math.round(clamp(y0+dy,square?-anchorY:0,Math.max(0,bounds.bottom-anchorY-el.offsetHeight)));
                 if(getImageWrapMode(block)==='square') {
                     const left=clamp((imageRect.left-bounds.rect.left)/bounds.scale+dx,bounds.left,bounds.right-width);
                     next.wrapSide=left+width/2<(bounds.left+bounds.right)/2?'left':'right';
@@ -599,7 +618,6 @@ window.LNECanvas = (function () {
             el.dataset.blockId=block.id;
             if(state.metadata.groupIds?.[field])el.dataset.groupId=state.metadata.groupIds[field];
             if(layout.mode==='absolute') {
-                if(layout.flowReserve){const holder=document.createElement('span'),r=layout.flowReserve;holder.className='group-flow-reserve';holder.style.cssText=`display:block;height:${r.height}px;margin:${r.margin};`;el.before(holder);}
                 el.classList.add('block-absolute-text');
                 Object.assign(el.style,{position:'absolute',left:`${Number(layout.x)||0}px`,top:`${Number(layout.y)||0}px`,width:`${Number(layout.width)||160}px`,margin:'0',zIndex:String(layout.zIndex??15)});
             }
@@ -942,7 +960,8 @@ window.LNECanvas = (function () {
         const left = parseFloat(style.paddingLeft)||85;
         const right = sheetContainer.clientWidth-(parseFloat(style.paddingRight)||85);
         const top = 0;
-        const bottom = sheetContainer.clientHeight;
+        // Logical editing room must not collapse with a short rendered sheet.
+        const bottom = Math.max(1150,sheetContainer.clientHeight);
         const rect=sheetContainer.getBoundingClientRect();
         return {
             rect, scale:rect.width/sheetContainer.clientWidth||1,
@@ -1083,12 +1102,40 @@ window.LNECanvas = (function () {
     }
 
     function fitFreeObjects(target=sheetContainer) {
-        target.style.minHeight='1150px';
-        let bottom=1150;
-        target.querySelectorAll('.block-absolute-image, .block-absolute-text').forEach(el => {
-            bottom=Math.max(bottom,(parseFloat(el.style.top)||0)+el.offsetHeight+70);
+        if(!target.isConnected)return;
+        const sheetRect=target.getBoundingClientRect(),scale=sheetRect.width/target.offsetWidth||1;
+        const footer=target.querySelector('.lne-editorial-footer');if(!footer)return;
+        const visibilityCache=new WeakMap();
+        const visible=el=>{
+            if(visibilityCache.has(el))return visibilityCache.get(el);
+            if(!el.offsetHeight||getComputedStyle(el).display==='none'||getComputedStyle(el).opacity==='0')return false;
+            const copy=el.cloneNode(true);
+            copy.querySelectorAll('.block-controls,.block-copy-check,.block-insert-gap,.object-move-zone,.img-resize-handle,.lne-selection-outline').forEach(n=>n.remove());
+            const result=!!(copy.textContent.trim()||[...el.querySelectorAll('img,svg,table,hr,video,iframe')].some(n=>n.getBoundingClientRect().height&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).opacity!=='0'));
+            visibilityCache.set(el,result);return result;
+        };
+        const content=target.querySelector('.lne-document-content')||target.querySelector('.document-clean-state')||target.querySelector('header');
+        const flowBottom=(content.getBoundingClientRect().bottom-sheetRect.top)/scale;
+        let bottom=flowBottom;
+        const blocks=new Map([...target.querySelectorAll('.lne-document-content > [data-block-id]')].map(n=>[n.dataset.blockId,n]));
+        target.querySelectorAll('.block-insert-gap').forEach(gap=>{
+            const previous=blocks.get(gap.dataset.previousId),next=blocks.get(gap.dataset.nextId);
+            const a=previous?.getBoundingClientRect(),b=next?.getBoundingClientRect();
+            const hidden=!previous||!next||!visible(previous)||!visible(next)||a.bottom>b.top+1;
+            if(gap.hidden!==hidden)gap.hidden=hidden;
+            if(!hidden){
+                const top=((a.bottom+b.top)/2-sheetRect.top)/scale-3;
+                if(Math.abs((parseFloat(gap.style.top)||0)-top)>.5)gap.style.top=`${top}px`;
+            }
         });
-        target.style.minHeight=`${Math.ceil(bottom)}px`;
+        target.querySelectorAll('.block-absolute-image,.block-absolute-text').forEach(el=>{
+            if(visible(el))bottom=Math.max(bottom,(el.getBoundingClientRect().bottom-sheetRect.top)/scale);
+        });
+        // Compute a footer offset from the actual flow end, not from sheet
+        // height; writing only changed values makes ResizeObserver idempotent.
+        const margin=48+Math.max(0,bottom-flowBottom);
+        if(Math.abs((parseFloat(footer.style.marginTop)||48)-margin)>.5)footer.style.marginTop=`${margin}px`;
+        if(target.style.minHeight!=='0px')target.style.minHeight='0px';
     }
 
     function snapToGuides(x, width) {
@@ -1362,7 +1409,9 @@ window.LNECanvas = (function () {
     function bindContentEditableSync(blockEl, block) {
         const cleanHTML = editable => {
             const clone = editable.cloneNode(true);
-            clone.querySelectorAll('[data-list-marker]').forEach(marker=>marker.remove());
+            // Only the current structured item's generated marker is auxiliary.
+            // Markers pasted into a cell/box remain ordinary editable content.
+            if(editable.dataset.listIndex!==undefined)clone.querySelector(':scope > [data-list-marker]')?.remove();
             clone.querySelectorAll('.lne-wrap-proxy').forEach(proxy=>proxy.remove());
             clone.querySelectorAll('[data-list-empty]').forEach(empty=>{empty.innerHTML=empty.innerHTML.replace(/\u200b/g,'');empty.replaceWith(...empty.childNodes);});
             clone.querySelectorAll('[data-list-content]').forEach(content=>content.replaceWith(...content.childNodes));
@@ -1407,8 +1456,22 @@ window.LNECanvas = (function () {
                     block.propiedades.items[parseInt(listIdx, 10)] = cleanHTML(editable);
                     const marker=editable.querySelector('[data-list-marker]'),expected=window.LNELists.markers(block,window.LNEState.state.bloques)[Number(listIdx)];
                     if(!editable.querySelector('.icon-bullet')&&(!marker||marker.textContent.trim()!==expected)) {
-                        window.LNEState.changeTextBlockType(block.id,'parrafo');
-                        addFocus(block.id);return;
+                        const index=Number(listIdx),props=JSON.parse(JSON.stringify(block.propiedades)),state=window.LNEState.state,position=state.bloques.indexOf(block);
+                        const paragraph=window.LNEComponents.createBlock('parrafo',block.propiedades.items[index]);
+                        paragraph.propiedades={...props};
+                        ['items','itemLevels','formato','listStyle','startValue','continueFrom','docxLevels'].forEach(key=>delete paragraph.propiedades[key]);
+                        if(marker?.textContent.trim())paragraph.texto=escapeHtml(marker.textContent.trim())+' '+paragraph.texto;
+                        const replacements=[];
+                        if(index){block.propiedades={...props,items:props.items.slice(0,index),itemLevels:props.itemLevels?.slice(0,index)};replacements.push(block);}
+                        else paragraph.id=block.id;
+                        replacements.push(paragraph);
+                        if(index+1<props.items.length){
+                            const rest=window.LNEComponents.createBlock('lista',props.formato,props.items.slice(index+1));
+                            rest.propiedades={...props,items:props.items.slice(index+1),itemLevels:props.itemLevels?.slice(index+1),startValue:window.LNELists.start(block,state.bloques)+index+1,continueFrom:null};
+                            replacements.push(rest);
+                        }
+                        state.bloques.splice(position,1,...replacements);state.selectedBlockId=paragraph.id;
+                        window.LNEState.notify('list-marker-edit');addFocus(paragraph.id);return;
                     }
                     window.LNEState.scheduleAutosave();
                     return;
@@ -1521,7 +1584,7 @@ window.LNECanvas = (function () {
             if(!editable) {
                 target.classList.add('lne-readonly-sheet');
                 target.querySelectorAll('.block-controls,.block-copy-check,.object-resize-handle,.img-resize-handle,.object-move-zone,.table-context-bar,.image-context-bar,.block-insert-menu,.document-clean-state button').forEach(el=>el.remove());
-                target.querySelectorAll('.block-insert-gap').forEach(el=>el.replaceChildren());
+                target.querySelectorAll('.lne-insertion-overlay').forEach(el=>el.remove());
                 target.querySelectorAll('[contenteditable]').forEach(el=>{
                     if(!el.textContent.trim()&&!el.querySelector('img,svg'))el.style.minHeight=getComputedStyle(el).height;
                     el.removeAttribute('contenteditable');

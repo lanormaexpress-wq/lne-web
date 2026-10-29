@@ -87,6 +87,50 @@ spacing and existing flow reserves when deliberately moved into absolute layout.
 
 ## Limitations
 
+## Flow semantics correction (2026-10-29)
+
+Normal vertical movement is a nonnegative **leading margin**, not an absolute
+coordinate or a painted translation. Following siblings reflow natively when
+text, width, font or an inline image changes height. Reducing a previous drag
+offset recovers the space; moving above the preceding flow requires free mode.
+Square images retain native float exclusion and its existing wrap behavior.
+Free text/images remain independent overlays: no follower chain or new snap.
+Legacy `flowReserve` placeholders are not rendered, even if still present in
+saved JSON. Opening/rendering does not migrate or persist any source changes.
+
+The old 1150px visible minimum and 70px free-object tail are replaced with a
+footer margin calculated **after** relative layout: actual main flow / visible
+free-content bottom, then the existing 48px footer separation and 36px sheet
+bottom padding. Logical drag bounds keep at least 1150px independently of the
+short visible sheet. Empty free content and transparent free images do not
+extend the page. Intentional visible free content at a large Y still does.
+ResizeObserver batches text/image-size notifications via RAF and writes only
+changed geometry; it never changes the model or issues save notifications.
+
+Insertion UI uses one auxiliary absolute overlay, outside the content chain.
+There are no leading/trailing gaps and no gaps adjacent to free/empty objects.
+Only the actual boundary of two visible flow blocks exposes a control; it does
+not select a block, affect bounds/height or enter readonly HTML/export.
+
+Structured list markers are editable HTML spans. Deleting/changing one converts
+only that item into a paragraph, retaining its content (and a typed replacement
+symbol), other items and ordinary layout/style properties. Native lists in
+cells/component bodies retain browser editing and existing toolbar commands.
+No forced marker pseudo-element is introduced. Nested native lists get 1.5em
+leading marker space, 6px trailing inset and .25em item spacing; frame padding
+itself is unchanged. Explicit image widths now size the image, not only its
+container; resizing uses the outer frame and a frozen inset, so actual height
+growth/shrinkage propagates through the normal flow.
+
+Specific checks: `tests/summary-flow-semantics-browser.cjs` covers A–N, wrap,
+marker replacement, source immutability, an over-10,000px synthetic document,
+a visible free object and an empty object at Y=30,000. Local fixtures block
+non-read requests. Layout, interactions, global selection/typography, editorial
+unit checks and basic Word/tools regressions are retained.
+
+Changed resources use `20261029-flow-semantics-1`; stored publication HTML is
+not rewritten or republished by this implementation.
+
 Explicit historical document formatting intentionally remains different from the
 defaults. Existing stored publication HTML requires its normal editorial update to
 adopt freshly compiled markup. Subpixel font metrics can vary by browser/zoom.

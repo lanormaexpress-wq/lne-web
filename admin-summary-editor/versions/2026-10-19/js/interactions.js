@@ -12,7 +12,7 @@ window.LNEInteractions = (() => {
         const right=Math.max(...rects.map(r=>r.right)),bottom=Math.max(...rects.map(r=>r.bottom));
         return {left,top,right,bottom,width:right-left,height:bottom-top};
     }
-    const chrome = '.block-controls,.block-copy-check,.object-resize-handle,.img-resize-handle,.object-move-zone,.image-context-bar,.table-context-bar,.lne-selection-outline,.lne-wrap-proxy';
+    const chrome = '.block-controls,.block-copy-check,.object-resize-handle,.img-resize-handle,.object-move-zone,.image-context-bar,.table-context-bar,.lne-selection-outline,.lne-wrap-proxy,.block-insert-gap';
     function visualRect(el) {
         const isText=el.classList.contains('lne-auto-height')||el.classList.contains('lne-meta-object');
         let rects=[];
@@ -115,6 +115,7 @@ window.LNEInteractions = (() => {
         }return out;
     }
     function begin(event) {
+        if(event.target.closest('.block-insert-gap'))return;
         const el=event.target.closest('#document-sheet [data-block-id]');if(!el||event.button!==0||S().isBlockLocked(el.dataset.blockId))return;
         manipulating=!!event.target.closest('.object-move-zone,.block-drag-handle,.lne-block-imagen,.img-resize-handle');
         const moving=event.target.closest('.object-move-zone,.block-drag-handle,.lne-block-imagen');

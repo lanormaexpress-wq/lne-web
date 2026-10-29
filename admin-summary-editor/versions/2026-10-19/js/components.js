@@ -289,7 +289,7 @@ window.LNEComponents = (function () {
                         <div class="lne-block-imagen-container" style="width: ${ancho};">
                             ${contextBarHtml}
                             ${resizeHandlesHtml}
-                            <img src="${src}" class="lne-block-imagen" alt="Imagen del Material" draggable="false" style="opacity: ${opacity};">
+                            <img src="${src}" class="lne-block-imagen" alt="Imagen del Material" draggable="false" style="opacity: ${opacity};${Number(layout?.width)>0?'width:100%;':''}">
                             <figcaption class="lne-imagen-pie" ${isPreview ? '' : `contenteditable="true" data-field="pie"`} placeholder="Escribe un pie de imagen opcional...">${pie}</figcaption>
                         </div>
                     </div>

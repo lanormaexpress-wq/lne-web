@@ -76,7 +76,7 @@ window.LNEToolbar = (function () {
             if (e.altKey) return;
             // Las imágenes libres gestionan su selección al finalizar Pointer Events.
             // Evita un render global entre pointerdown y pointerup durante el arrastre.
-            if (e.target.closest('.lne-block-imagen')) return;
+            if (e.target.closest('.lne-block-imagen,.block-insert-gap')) return;
             const blockEl = e.target.closest('.lne-editor-block');
             if (blockEl && blockEl.dataset.blockId) {
                 savedActiveBlockId = blockEl.dataset.blockId;

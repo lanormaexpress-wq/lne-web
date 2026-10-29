@@ -334,9 +334,11 @@ body {
     transition: box-shadow 0.2s ease;
 }
 
-.block-insert-gap { height:12px; position:relative; margin:-3px 0; }
+.lne-insertion-overlay { position:absolute; inset:0; z-index:116; pointer-events:none; }
+.block-insert-gap { position:absolute; top:0; left:var(--lne-reading-gutter); width:calc(100% - 2 * var(--lne-reading-gutter)); height:6px; margin:0; user-select:none; pointer-events:auto; }
 .block-insert-gap > button { visibility:hidden; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:20px; height:20px; border:1px solid var(--lne-border-dark); border-radius:50%; background:#fff; color:var(--lne-navy); cursor:pointer; z-index:75; }
 .block-insert-gap:hover > button, .block-insert-gap.menu-open > button, .block-insert-gap:focus-within > button { visibility:visible; }
+.block-insert-gap > button { width:16px; height:16px; }
 .block-insert-gap.menu-open { z-index:120; }
 .block-insert-menu { display:none; position:absolute; top:16px; left:50%; width:205px; padding:8px; background:#fff; border:1px solid var(--lne-border); border-radius:4px; box-shadow:var(--shadow-dropdown); z-index:120; max-height:360px; overflow-y:auto; }
 .block-insert-gap.menu-open .block-insert-menu { display:block; }
