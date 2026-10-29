@@ -9,6 +9,7 @@ window.LNECanvas = (function () {
     let draggedBlockId = null;
     let textSizeObserver = null;
     let fitFrame = null;
+    let keyboardFlow = null;
 
     // Derived presentation only: opening an old document must never rewrite it.
     const autoTextTypes = new Set(['titulo','parrafo','lista','idea-clave','importante',
@@ -40,6 +41,7 @@ window.LNECanvas = (function () {
         sheetContainer = document.getElementById('document-sheet');
         sheetContainer.classList.add('lne-rendered-sheet');
         window.LNEState.subscribe((state, changeType) => {
+            if(changeType!=='flow-move')keyboardFlow=null;
             if (['set-document','reset','load-storage'].includes(changeType)) { draggedBlockId=null;clearDropIndicators();clearGuides(); }
             if (changeType === 'select-block' || changeType === 'select-blocks') updateSelection(state);
             else render(state);
@@ -283,10 +285,8 @@ window.LNECanvas = (function () {
                             blockEl.classList.remove('dragging');
                             clearDropIndicators();
                         });
-                        if (textLayout?.mode === 'absolute') {
-                            dragHandle.draggable = false;
-                            dragHandle.addEventListener('pointerdown', event => beginAbsoluteTextMove(event, blockEl, block));
-                        }
+                        dragHandle.draggable = false;
+                        dragHandle.addEventListener('pointerdown', event => beginAbsoluteTextMove(event, blockEl, block));
                     }
 
                     // Eventos Contextuales de Imagen
@@ -545,10 +545,97 @@ window.LNECanvas = (function () {
         return {left,right:Math.max(left,right)};
     }
 
+    // Fixed geometry for the gesture: no live swaps, negative margins or
+    // remeasured thresholds that could bounce A/B/A/B during a slow crossing.
+    function createFlowMove(blocks) {
+        const state=window.LNEState,ids=new Set(blocks.map(b=>b.id)),bounds=getSheetBounds();
+        const all=state.state.bloques.filter(b=>state.getBlockMode(b)==='flow');
+        const entries=all.filter(b=>ids.has(b.id)).map(b=>{
+            const el=sheetContainer.querySelector(`[data-block-id="${b.id}"]`),r=el.getBoundingClientRect();
+            return {block:b,el,layout:{...b.propiedades?.layout},css:el.style.cssText,classes:el.className,
+                top:(r.top-bounds.rect.top)/bounds.scale,bottom:(r.bottom-bounds.rect.top)/bounds.scale};
+        });
+        if(!entries.length)return null;
+        const center=(Math.min(...entries.map(n=>n.top))+Math.max(...entries.map(n=>n.bottom)))/2;
+        const units=[],seen=new Set();
+        all.filter(b=>!ids.has(b.id)).forEach(b=>{
+            const key=b.propiedades?.groupId||b.id;if(seen.has(key))return;seen.add(key);
+            const members=all.filter(n=>!ids.has(n.id)&&(b.propiedades?.groupId?n.propiedades?.groupId===key:n.id===b.id));
+            const rects=members.map(n=>sheetContainer.querySelector(`[data-block-id="${n.id}"]`).getBoundingClientRect());
+            units.push({id:b.id,last:members.at(-1).id,index:all.indexOf(b),
+                center:(Math.min(...rects.map(r=>r.top))+Math.max(...rects.map(r=>r.bottom))-2*bounds.rect.top)/bounds.scale/2});
+        });
+        const origin=units.filter(n=>n.index<all.indexOf(entries[0].block)).length;
+        const thresholds=units.map((n,i)=>i<origin?Math.min(-6,n.center-center):Math.max(6,n.center-center));
+        for(let i=origin-2;i>=0;i--)thresholds[i]=Math.min(thresholds[i],thresholds[i+1]-1);
+        for(let i=origin+1;i<thresholds.length;i++)thresholds[i]=Math.max(thresholds[i],thresholds[i-1]+1);
+        return {entries,units,origin,slot:origin,thresholds,bounds};
+    }
+
+    function planFlowMove(move,dy,dx=0) {
+        const hysteresis=6;
+        while(move.slot>0&&dy<move.thresholds[move.slot-1]-hysteresis)move.slot--;
+        while(move.slot<move.units.length&&dy>move.thresholds[move.slot]+hysteresis)move.slot++;
+        const reordered=move.slot!==move.origin,layouts={};
+        move.entries.forEach((n,i)=>{
+            const next={...n.layout,mode:'flow',offsetX:(Number(n.layout.offsetX)||0)+dx};
+            next.offsetY=reordered?(i===0?0:Math.max(0,Number(n.layout.offsetY)||0)):
+                Math.max(0,(Number(n.layout.offsetY)||0)+(i===0?dy:0));
+            if(reordered&&n.block.tipo==='imagen')next.flowOffsetY=0;
+            layouts[n.block.id]=next;
+        });
+        return {beforeId:move.units[move.slot]?.id||null,layouts,reordered};
+    }
+
+    function beginFlowMove(event,blocks) {
+        if(blocks.some(b=>b.metaField||window.LNEState.getBlockMode(b)!=='flow'||window.LNEState.isBlockLocked(b.id)))return;
+        const move=createFlowMove(blocks);if(!move)return;
+        event.preventDefault();event.stopImmediatePropagation();
+        window.LNEInteractions?.begin(event);
+        if(blocks.length===1)window.LNEState.selectBlock(blocks[0].id);
+        const bounds=move.bounds,visuals=move.entries.map(n=>window.LNEInteractions?.visualRect(n.el)||n.el.getBoundingClientRect());
+        const minX=Math.min(...visuals.map(r=>(r.left-bounds.rect.left)/bounds.scale));
+        const maxX=Math.max(...visuals.map(r=>(r.right-bounds.rect.left)/bounds.scale));
+        let changed=false,plan=null;
+        function drag(e) {
+            const dx=clamp((e.clientX-event.clientX)/bounds.scale,Math.min(0,bounds.left-minX),Math.max(0,bounds.right-maxX));
+            const dy=(e.clientY-event.clientY)/bounds.scale;
+            if(!changed&&Math.abs(dx)+Math.abs(dy)<2)return;
+            changed=true;plan=planFlowMove(move,dy,Math.round(dx));clearDropIndicators();
+            if(plan.reordered) {
+                move.entries.forEach(n=>{n.el.style.cssText=n.css;n.el.className=n.classes;});
+                const id=plan.beforeId||move.units.at(-1)?.last;
+                sheetContainer.querySelector(`[data-block-id="${id}"]`)?.classList.add(plan.beforeId?'drop-target-top':'drop-target-bottom');
+            } else move.entries.forEach(n=>{
+                const applied=applyRelativeLayout(n.el,n.block,plan.layouts[n.block.id]);
+                if(applied)plan.layouts[n.block.id].offsetX=applied.offsetX;
+            });
+        }
+        function end(e) {
+            document.removeEventListener('pointermove',drag);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);
+            clearDropIndicators();move.entries.forEach(n=>{n.el.style.cssText=n.css;n.el.className=n.classes;});
+            if(changed&&e.type!=='pointercancel')window.LNEState.commitFlowMove(move.entries.map(n=>n.block.id),plan.beforeId,plan.layouts);
+            fitFreeObjects(sheetContainer);
+        }
+        document.addEventListener('pointermove',drag);document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
+    }
+
+    function nudgeFlow(blocks,dy) {
+        const signature=JSON.stringify(window.LNEState.state.bloques),ids=blocks.map(b=>b.id).join('|');
+        if(!keyboardFlow||keyboardFlow.signature!==signature||keyboardFlow.ids!==ids)
+            keyboardFlow={move:createFlowMove(blocks),ids,dy:0};
+        if(!keyboardFlow.move)return;
+        keyboardFlow.dy+=dy;
+        const plan=planFlowMove(keyboardFlow.move,keyboardFlow.dy);
+        window.LNEState.commitFlowMove(blocks.map(b=>b.id),plan.beforeId,plan.layouts,{snapshot:false});
+        keyboardFlow.signature=JSON.stringify(window.LNEState.state.bloques);
+    }
+
     // Relative movement never removes the block's real height from the flow.
     // Positive vertical offset additionally reserves its displaced bottom edge.
     function beginRelativeManipulation(event,el,block,corner=null) {
         if(window.LNEState.isBlockLocked(block.id))return;
+        if(!corner&&!block.metaField)return beginFlowMove(event,[block]);
         event.preventDefault();event.stopPropagation();
         window.LNEState.selectBlock(block.id);
         const initial={...(block.propiedades?.layout||{})},bounds=getSheetBounds(),rect=el.getBoundingClientRect();
@@ -1614,6 +1701,8 @@ window.LNECanvas = (function () {
         changeImageWidth,
         replaceImage,
         changeTextMode,
-        changeTextGeometry
+        changeTextGeometry,
+        beginFlowMove,
+        nudgeFlow
     };
 })();

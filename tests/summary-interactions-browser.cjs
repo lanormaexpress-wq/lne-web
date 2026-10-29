@@ -8,7 +8,7 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser;try{
  const session=await fetch(base+'/admin/resumenes/session',{method:'POST'}),cookie=session.headers.get('set-cookie').split(';')[0];
  const manifest=await(await fetch(base+'/admin/resumenes/resources',{headers:{cookie}})).json();
  assert.equal(manifest.resources.filter(r=>r.as==='style').length,3);
- assert.ok(manifest.resources.some(r=>r.url.includes('groups.js?v=20261029-flow-semantics-1')&&r.as==='script'));
+ assert.ok(manifest.resources.some(r=>r.url.includes('groups.js?v=20261029-flow-reorder-1')&&r.as==='script'));
  assert.ok(manifest.resources.some(r=>r.url.includes('editor.css?v=20261029-flow-semantics-1')&&r.as==='style'));
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
  const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];page.on('pageerror',e=>errors.push(e.message));

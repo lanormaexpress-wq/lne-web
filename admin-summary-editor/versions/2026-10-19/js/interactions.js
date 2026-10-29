@@ -162,6 +162,9 @@ window.LNEInteractions = (() => {
         if(Math.sign(dx)!==Math.sign(directions[event.key][0]))dx=0;if(Math.sign(dy)!==Math.sign(directions[event.key][1]))dy=0;
         if(!dx&&!dy)return;event.preventDefault();
         if(!event.repeat||heldKey!==event.key){S().snapshot();heldKey=event.key;}
+        if(dy&&blocks.every(b=>!b.metaField&&S().getBlockMode(b)==='flow')) {
+            window.LNECanvas.nudgeFlow(blocks,dy);queue();return;
+        }
         blocks.forEach(b=>{
             const el=element(b.id),layout={...b.propiedades?.layout};
             if(blocks.length>1&&S().getBlockMode(b)!=='absolute') {
