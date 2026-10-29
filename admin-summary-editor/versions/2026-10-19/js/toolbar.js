@@ -540,7 +540,7 @@ window.LNEToolbar = (function () {
                 const side = container.querySelector('[data-inspector-side]');
                 if (mode === 'square') {
                     const label=document.createElement('label');label.textContent='Desplazamiento vertical (px)';
-                    const offset=document.createElement('input');offset.type='number';offset.min='0';offset.max='800';offset.step='4';offset.value=Number(layout.flowOffsetY)||0;offset.dataset.squareOffset='';offset.disabled=locked;
+                    const offset=document.createElement('input');offset.type='number';offset.min='0';offset.max='800';offset.step='4';offset.value=window.LNECanvas.getFlowSpacing(block.id);offset.dataset.squareOffset='';offset.disabled=locked;
                     offset.addEventListener('change',()=>window.LNECanvas.changeSquareOffset(block.id,offset.value));
                     label.appendChild(offset);container.appendChild(label);
                 }
@@ -564,7 +564,7 @@ window.LNEToolbar = (function () {
                     picker.addEventListener('change',()=>window.LNEState.updateBlockProperties(block.id,{visualIcon:{...block.propiedades.visualIcon,color:picker.value},src:window.LNEComponents.iconDataURL(block.propiedades.visualIcon.icon,picker.value)}));
                 }
                 if(!['front','behind'].includes(mode))for(const [key,text] of [['spacingBefore','Espacio antes'],['spacingAfter','Espacio después']]) {
-                    const label=document.createElement('label');label.textContent=text;const input=document.createElement('input');input.type='number';input.min='0';input.max='64';input.value=Number(block.propiedades[key])||0;input.disabled=locked;label.appendChild(input);container.appendChild(label);input.addEventListener('change',()=>window.LNEState.updateBlockProperties(block.id,{[key]:Math.max(0,Math.min(64,Number(input.value)||0))}));
+                    const label=document.createElement('label');label.textContent=text;const input=document.createElement('input');input.type='number';input.min='0';input.max='64';input.value=key==='spacingBefore'?window.LNECanvas.getFlowSpacing(block.id):Number(block.propiedades[key])||0;input.disabled=locked;label.appendChild(input);container.appendChild(label);input.addEventListener('change',()=>window.LNECanvas.changeFlowSpacing(block.id,key,Math.max(0,Number(input.value)||0)));
                 }
                 container.querySelector('[data-image-replace]').addEventListener('click', () => window.LNECanvas.replaceImage(block.id));
                 const inlineCopy=document.createElement('button');inlineCopy.textContent='Copiar dentro del texto';inlineCopy.title='Sitúa primero el cursor en el texto y después selecciona esta imagen';
@@ -630,14 +630,13 @@ window.LNEToolbar = (function () {
                 const label=document.createElement('label');label.textContent='Altura';const select=document.createElement('select');select.dataset.heightPolicy='';select.disabled=locked||autoText;select.innerHTML='<option value="auto">Automática por contenido</option><option value="minimum">Altura mínima manual</option>';select.value=autoText?'auto':layout.heightMode||'auto';
                 select.addEventListener('change',()=>window.LNEState.updateBlockLayout(block.id,{heightMode:select.value,height:document.getElementById('block-'+block.id)?.offsetHeight||100}));label.append(select);container.append(label);
             }
-            container.querySelectorAll('[data-spacing]').forEach(input => input.addEventListener('input', () => {
-                const element = document.getElementById(`block-${block.id}`);
-                const value = Math.max(0, Math.min(64, Number(input.value) || 0));
-                if (element) element.style[input.dataset.spacing === 'before' ? 'marginTop' : 'marginBottom'] = `${value}px`;
-            }));
+            // Commit through Canvas; a raw margin preview would bypass the
+            // common edge model and reintroduce a separate 64px channel.
+            const beforeSpacing=container.querySelector('[data-spacing="before"]');
+            if(beforeSpacing)beforeSpacing.value=window.LNECanvas.getFlowSpacing(block.id);
             container.querySelectorAll('[data-spacing]').forEach(input => input.addEventListener('change', () => {
                 const field = input.dataset.spacing === 'before' ? 'spacingBefore' : 'spacingAfter';
-                window.LNEState.updateBlockProperties(block.id, { [field]: Math.max(0, Math.min(64, Number(input.value) || 0)) });
+                window.LNECanvas.changeFlowSpacing(block.id,field,Math.max(0,Number(input.value)||0));
             }));
             container.querySelector('[data-free-text]')?.addEventListener('click', () => {
                 window.LNECanvas.changeTextMode(block.id, absolute ? 'flow' : 'absolute');

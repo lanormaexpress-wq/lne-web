@@ -128,6 +128,10 @@ window.LNECanvas = (function () {
         } else {
             const mainContentEl = document.createElement('main');
             mainContentEl.className = 'lne-document-content';
+            // Keep the first flow edge inside content: otherwise CSS collapses
+            // its margin into the header's margin and swallows small movements.
+            // Floats still wrap natively within this formatting context.
+            mainContentEl.style.display='flow-root';
             const insertionOverlay=document.createElement('div');insertionOverlay.className='lne-insertion-overlay';
 
             state.bloques.forEach((block, index) => {
@@ -182,8 +186,8 @@ window.LNECanvas = (function () {
                 if(block.tipo==='imagen'){blockEl.dataset.wrapMode=getImageWrapMode(block);blockEl.dataset.wrapSide=block.propiedades?.layout?.wrapSide||(block.propiedades?.alineacion==='align-right'?'right':'left');}
                 if (block.tipo !== 'imagen' && textLayout?.mode !== 'absolute') {
                     const props = block.propiedades || {};
-                    if (props.spacingBefore !== undefined) blockEl.style.marginTop = `${clamp(Number(props.spacingBefore) || 0, 0, 64)}px`;
-                    if (props.spacingAfter !== undefined) blockEl.style.marginBottom = `${clamp(Number(props.spacingAfter) || 0, 0, 64)}px`;
+                    if (props.spacingBefore !== undefined) blockEl.style.marginTop = `${Math.max(0,Number(props.spacingBefore) || 0)}px`;
+                    if (props.spacingAfter !== undefined) blockEl.style.marginBottom = `${Math.max(0,Number(props.spacingAfter) || 0)}px`;
                 }
 
                 const innerHtml = window.LNEComponents.renderBlock(block, isPreview,state.bloques);
@@ -466,10 +470,9 @@ window.LNECanvas = (function () {
 
     function applyRelativeLayout(el,block,layout) {
         const x=Number(layout.offsetX)||0;
-        const squareImage=block.tipo==='imagen'&&getImageWrapMode(block)==='square';
         // Negative legacy translations must not pull ordinary flow over its
         // predecessor. This is presentation only, not a saved migration.
-        const y=squareImage?(Number(layout.offsetY)||0):Math.max(0,Number(layout.offsetY)||0);
+        const y=Math.max(0,Number(layout.offsetY)||0);
         // Vertical spacing participates in native float layout. Clearing the
         // float here would move the paragraph below the entire image instead
         // of letting its lines use the available side space.
@@ -488,11 +491,11 @@ window.LNECanvas = (function () {
             el.classList?.toggle('block-float-right',side==='right');
             applySquareOffset(el,layout.flowOffsetY);
             if(el.dataset.flowBaseTop===undefined)el.dataset.flowBaseTop=String(parseFloat(getComputedStyle(el).marginTop)||0);
-            // Floats must move in layout, not just paint: their exclusion rectangle
-            // and the text must move together. Negative movement keeps its footprint.
+            // Floats move in layout, not just paint: their exclusion rectangle
+            // and the text move together, without a negative-margin reservation.
             el.style.transform='none';
             el.style.marginTop=`${Number(el.dataset.flowBaseTop)+y}px`;
-            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)+Math.max(0,-y)}px`;
+            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)}px`;
             el.style.shapeMargin='16px';
             const bounds=getSheetBounds(),area=bounds.right-bounds.left,inset=clamp(side==='right'?-x:x,0,Math.max(0,area-Math.min(Number(layout.width)||el.offsetWidth,area*.48)));
             el.style.marginLeft=`${side==='left'?inset:16}px`;
@@ -550,6 +553,9 @@ window.LNECanvas = (function () {
     function createFlowMove(blocks) {
         const state=window.LNEState,ids=new Set(blocks.map(b=>b.id)),bounds=getSheetBounds();
         const all=state.state.bloques.filter(b=>state.getBlockMode(b)==='flow');
+        // Inspector listeners can run before the canvas on add/undo. Never
+        // measure a partially rendered document or interrupt other listeners.
+        if(all.some(b=>!sheetContainer.querySelector(`[data-block-id="${b.id}"]`)))return null;
         const entries=all.filter(b=>ids.has(b.id)).map(b=>{
             const el=sheetContainer.querySelector(`[data-block-id="${b.id}"]`),r=el.getBoundingClientRect();
             return {block:b,el,layout:{...b.propiedades?.layout},css:el.style.cssText,classes:el.className,
@@ -567,24 +573,26 @@ window.LNECanvas = (function () {
         });
         const origin=units.filter(n=>n.index<all.indexOf(entries[0].block)).length;
         const thresholds=units.map((n,i)=>i<origin?Math.min(-6,n.center-center):Math.max(6,n.center-center));
-        for(let i=origin-2;i>=0;i--)thresholds[i]=Math.min(thresholds[i],thresholds[i+1]-1);
+        // Float centers can extend below later paragraphs. Preserve logical
+        // order without moving the float threshold to an unrelated paragraph.
+        for(let i=1;i<origin;i++)thresholds[i]=Math.max(thresholds[i],thresholds[i-1]+1);
         for(let i=origin+1;i<thresholds.length;i++)thresholds[i]=Math.max(thresholds[i],thresholds[i-1]+1);
-        // Internal component/table margins are part of the editable gap too,
-        // not an irreducible floor hidden behind offsetY=0. Keep defaults until
-        // the user actually reduces this edge; never normalize on opening.
+        // One editable edge for EVERY flow block. Read historical spacing only
+        // at gesture start; opening/rendering never migrates stored documents.
+        // Floats may overlap a sibling's vertical range intentionally (wrap),
+        // so their edge is measured from margins, never from that sibling's bottom.
         const first=entries[0],previous=all[all.indexOf(first.block)-1];
         const contentRoot=el=>[...el.children].find(n=>!n.matches('.block-controls,.block-copy-check,.object-resize-handle,.object-move-zone'));
-        let gap=null;
-        if(previous&&!ids.has(previous.id)&&first.block.tipo!=='imagen'&&previous.tipo!=='imagen'&&!state.isBlockLocked(previous.id)) {
-            const el=sheetContainer.querySelector(`[data-block-id="${previous.id}"]`),root=contentRoot(el),nextRoot=contentRoot(first.el);
-            if(root&&nextRoot&&getComputedStyle(el).float==='none'&&getComputedStyle(first.el).float==='none') {
-                const total=Math.max(0,first.top-(el.getBoundingClientRect().bottom-bounds.rect.top)/bounds.scale)+
-                    Math.max(0,parseFloat(getComputedStyle(root).marginBottom)||0)+Math.max(0,parseFloat(getComputedStyle(nextRoot).marginTop)||0);
-                if(total-Math.max(0,Number(first.layout.offsetY)||0)>.1)
-                    gap={previous,total,entry:{block:previous,el,css:el.style.cssText,classes:el.className}};
-            }
-        }
-        const restoreEntries=[...entries,...(gap?[gap.entry]:[])];
+        const nextRoot=contentRoot(first.el),style=getComputedStyle(first.el);
+        const el=previous&&sheetContainer.querySelector(`[data-block-id="${previous.id}"]`);
+        const ordinaryEdge=el&&getComputedStyle(el).float==='none'&&style.float==='none';
+        const canConsume=ordinaryEdge&&!ids.has(previous.id)&&!state.isBlockLocked(previous.id);
+        const margin=n=>Math.max(0,parseFloat(n)||0);
+        const total=(ordinaryEdge?Math.max(0,first.top-(el.getBoundingClientRect().bottom-bounds.rect.top)/bounds.scale):margin(style.marginTop))+
+            (canConsume?margin(getComputedStyle(contentRoot(el)).marginBottom):0)+
+            (nextRoot?margin(getComputedStyle(nextRoot).marginTop):0)+margin(first.layout.flowOffsetY);
+        const gap={total,previous:canConsume?previous:null};
+        const restoreEntries=[...entries,...(canConsume?[{block:previous,el,css:el.style.cssText,classes:el.className}]:[])];
         restoreEntries.forEach(n=>n.flowData={flowBaseTop:n.el.dataset.flowBaseTop,flowBaseMargin:n.el.dataset.flowBaseMargin});
         return {entries,units,origin,slot:origin,thresholds,bounds,gap,restoreEntries};
     }
@@ -598,17 +606,16 @@ window.LNECanvas = (function () {
             const next={...n.layout,mode:'flow',offsetX:(Number(n.layout.offsetX)||0)+dx};
             next.offsetY=reordered?(i===0?0:Math.max(0,Number(n.layout.offsetY)||0)):
                 Math.max(0,(Number(n.layout.offsetY)||0)+(i===0?dy:0));
-            if(reordered&&n.block.tipo==='imagen')next.flowOffsetY=0;
+            if(i===0&&dy!==0){next.offsetY=0;next.flowOffsetY=0;}
             layouts[n.block.id]=next;
         });
         const properties={};
-        if(move.gap) {
+        if(move.gap&&dy!==0) {
             const first=move.entries[0],id=first.block.id;
-            if(!reordered&&dy<0) {
+            if(!reordered) {
                 const space=Math.max(0,move.gap.total+dy);
-                properties[move.gap.previous.id]={spacingAfter:0};
-                properties[id]={spacingBefore:Math.min(64,space)};
-                layouts[id].offsetY=Math.max(0,space-64);
+                if(move.gap.previous)properties[move.gap.previous.id]={spacingAfter:0};
+                properties[id]={spacingBefore:space};
             } else if(reordered)properties[id]={spacingBefore:0};
         }
         return {beforeId:move.units[move.slot]?.id||null,layouts,properties,reordered};
@@ -649,7 +656,7 @@ window.LNECanvas = (function () {
                 const id=plan.beforeId||move.units.at(-1)?.last;
                 sheetContainer.querySelector(`[data-block-id="${id}"]`)?.classList.add(plan.beforeId?'drop-target-top':'drop-target-bottom');
             } else {previewFlowSpacing(move,plan);move.entries.forEach(n=>{
-                const applied=applyRelativeLayout(n.el,n.block,plan.layouts[n.block.id]);
+                const applied=applyRelativeLayout(n.el,{...n.block,propiedades:{...n.block.propiedades,...plan.properties[n.block.id]}},plan.layouts[n.block.id]);
                 if(applied)plan.layouts[n.block.id].offsetX=applied.offsetX;
             });}
         }
@@ -1161,8 +1168,29 @@ window.LNECanvas = (function () {
     }
 
     function changeSquareOffset(id, value) {
-        if (window.LNEState.isBlockLocked(id)) return;
-        window.LNEState.updateImageLayout(id,{flowOffsetY:clamp(Number(value)||0,0,800)});
+        changeFlowSpacing(id,'spacingBefore',value);
+    }
+
+    function getFlowSpacing(id) {
+        const block=window.LNEState.getBlockById(id);
+        if(!block||window.LNEState.getBlockMode(block)!=='flow')return 0;
+        return createFlowMove([block])?.gap.total??Math.max(0,Number(block.propiedades?.spacingBefore)||0)+
+            Math.max(0,Number(block.propiedades?.layout?.offsetY)||0)+Math.max(0,Number(block.propiedades?.layout?.flowOffsetY)||0);
+    }
+
+    // Inspector inputs and pointer/keyboard gestures share the same planner
+    // and atomic history commit. No independent image displacement channel.
+    function changeFlowSpacing(id,field,value) {
+        const state=window.LNEState,block=state.getBlockById(id);
+        if(!block||state.isBlockLocked(id)||state.getBlockMode(block)!=='flow')return;
+        value=Math.max(0,Number(value)||0);
+        if(field==='spacingAfter')return state.updateBlockProperties(id,{spacingAfter:value});
+        const move=createFlowMove([block]);if(!move)return;
+        const plan=planFlowMove(move,0);
+        plan.layouts[id].offsetY=0;plan.layouts[id].flowOffsetY=0;
+        plan.properties[id]={spacingBefore:value};
+        if(move.gap.previous)plan.properties[move.gap.previous.id]={spacingAfter:0};
+        state.commitFlowMove([id],plan.beforeId,plan.layouts,{properties:plan.properties});
     }
 
     function changeImageWidth(blockId, width) {
@@ -1740,6 +1768,8 @@ window.LNECanvas = (function () {
         getImageWrapMode,
         changeImageWrap,
         changeSquareOffset,
+        changeFlowSpacing,
+        getFlowSpacing,
         changeImageWidth,
         replaceImage,
         changeTextMode,
