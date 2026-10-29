@@ -324,6 +324,7 @@ window.LNECanvas = (function () {
         sheetContainer.appendChild(footerEl);
         bindMetadataObjects(state,isPreview);
         window.LNEGroups?.wrap(sheetContainer);
+        fitFreeObjects();
         const renderedSheet=sheetContainer;
         renderedSheet.querySelectorAll('.lne-editor-block').forEach(el=>{
             const block=state.bloques.find(b=>b.id===el.dataset.blockId)||{metaField:el.dataset.metaField,propiedades:{layout:state.metadata?.layouts?.[el.dataset.metaField]}};
@@ -334,7 +335,6 @@ window.LNECanvas = (function () {
             parent.classList.add('lne-icon-list-item');
             parent.style.setProperty('--lne-marker-width',`${(parseFloat(icon.style.fontSize)||16)+10}px`);
         });
-        fitFreeObjects(renderedSheet);
         renderedSheet.querySelectorAll('img').forEach(image=>image.addEventListener('load',()=>fitFreeObjects(renderedSheet),{once:true}));
         if (renderedSheet.id === 'document-sheet') observeTextSizes(renderedSheet);
 
@@ -487,7 +487,7 @@ window.LNECanvas = (function () {
             el.style.shapeOutside=`inset(${parseFloat(el.style.paddingTop)||0}px 0 0 0) border-box`;
         } else {
             el.style.transform=`translate(${x}px,${y}px)`;
-            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)+y}px`;
+            el.style.marginBottom=`${Number(el.dataset.flowBaseMargin)+Math.max(0,y)}px`;
         }
         if(Number(layout.width)>0) {
             const bounds=getSheetBounds(),width=Math.min(Number(layout.width),(bounds.right-bounds.left)*(square?.48:1));
@@ -539,19 +539,8 @@ window.LNECanvas = (function () {
         const ratio=imageRect?imageRect.width/Math.max(1,imageRect.height):null;
         const x0=Number(initial.offsetX)||0,y0=Number(initial.offsetY)||0;
         const anchorX=(rect.left-bounds.rect.left)/bounds.scale-x0,anchorY=(rect.top-bounds.rect.top)/bounds.scale-y0;
-        // Freeze pointer geometry for the entire gesture. Re-measuring a
-        // translated/re-wrapped text box each frame feeds its correction back
-        // into the next frame, especially at the left edge.
-        const visual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
-        const visualAnchor=visual?(visual.left-bounds.rect.left)/bounds.scale-x0:anchorX;
-        const visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
-        const soften=createSoftAlignment(el,bounds);
-        const previous=[...sheetContainer.querySelectorAll('.lne-document-content > [data-block-id]')]
-            .filter(n=>n!==el&&(n.compareDocumentPosition(el)&Node.DOCUMENT_POSITION_FOLLOWING))
-            .map(n=>n.getBoundingClientRect()).filter(r=>r.right>rect.left&&r.left<rect.right&&r.bottom<=rect.top+1);
-        const minimumY=Math.max(-anchorY,previous.length?(Math.max(...previous.map(r=>r.bottom))-bounds.rect.top)/bounds.scale+4-anchorY:-anchorY);
         const baseMargin=parseFloat(getComputedStyle(el).marginBottom)||0;
-        el.dataset.flowBaseMargin=String(baseMargin-(getImageWrapMode(block)==='square'?Math.max(0,-y0):y0));
+        el.dataset.flowBaseMargin=String(baseMargin-Math.max(0,getImageWrapMode(block)==='square'?-y0:y0));
         let changed=false,next={...initial,mode:'flow'},targetIndex=null;
         function move(e) {
             const dx=(e.clientX-event.clientX)/bounds.scale,dy=(e.clientY-event.clientY)/bounds.scale;
@@ -566,9 +555,10 @@ window.LNECanvas = (function () {
                 next.offsetX=x0+imageInset+(west?width-next.width:0);
                 if(ratio)next.height=Math.round(next.width/ratio);
             } else {
-                const aligned=soften(anchorX+x0+dx,anchorY+y0+dy);
-                next.offsetX=clamp(aligned.x-anchorX,bounds.left-visualAnchor,bounds.right-visualAnchor-visualWidth);
-                next.offsetY=clamp(aligned.y-anchorY,minimumY,Math.max(minimumY,bounds.bottom-anchorY-el.offsetHeight));
+                const visual=block.tipo!=='imagen'&&window.LNEInteractions?.visualRect(el);
+                const visualAnchor=visual?(visual.left-bounds.rect.left)/bounds.scale-x0:anchorX,visualWidth=visual?visual.width/bounds.scale:el.offsetWidth;
+                next.offsetX=Math.round(clamp(x0+dx,bounds.left-visualAnchor,bounds.right-visualAnchor-visualWidth));
+                next.offsetY=Math.round(clamp(y0+dy,-anchorY,Math.max(-anchorY,bounds.bottom-anchorY-el.offsetHeight)));
                 if(getImageWrapMode(block)==='square') {
                     const left=clamp((imageRect.left-bounds.rect.left)/bounds.scale+dx,bounds.left,bounds.right-width);
                     next.wrapSide=left+width/2<(bounds.left+bounds.right)/2?'left':'right';
@@ -634,7 +624,6 @@ window.LNECanvas = (function () {
         if(window.LNEState.getBlockMode(block)!=='absolute')return beginRelativeManipulation(event,blockEl,block);
         event.preventDefault();
         event.stopPropagation();
-        const originalStyle=blockEl.style.cssText;
         const rollback=promoteVisualObject(blockEl, block);
         const layout = block.propiedades?.layout || {};
         const bounds = getSheetBounds();
@@ -645,32 +634,29 @@ window.LNECanvas = (function () {
         const height = blockEl.offsetHeight;
         const offsetX = (event.clientX-sheet.left)/bounds.scale-startX;
         const offsetY = (event.clientY-sheet.top)/bounds.scale-startY;
-        const soften=createSoftAlignment(blockEl,bounds),followers=createLocalFollowers(blockEl,bounds);
         let changed=false;
 
         function move(moveEvent) {
             if(Math.abs(moveEvent.clientX-event.clientX)+Math.abs(moveEvent.clientY-event.clientY)<2)return;
             changed=true;
-            const point=soften((moveEvent.clientX-sheet.left)/bounds.scale-offsetX,(moveEvent.clientY-sheet.top)/bounds.scale-offsetY);
-            const x=clamp(point.x,bounds.left,Math.max(bounds.left,bounds.right-width));
-            const y=clamp(followers.limit(point.y-startY,x-startX)+startY,Math.max(bounds.top,followers.floor),Math.max(bounds.top,bounds.bottom-height));
-            blockEl.style.left = `${x}px`;
-            blockEl.style.top = `${y}px`;
-            followers.move(y-startY,x-startX);
+            const x = snapToGuides(clamp((moveEvent.clientX-sheet.left)/bounds.scale-offsetX, bounds.left, Math.max(bounds.left, bounds.right - width)), width);
+            const y = snapYToObjects(clamp((moveEvent.clientY-sheet.top)/bounds.scale-offsetY,bounds.top,Math.max(bounds.top,bounds.bottom-height)),height);
+            blockEl.style.left = `${Math.round(x)}px`;
+            blockEl.style.top = `${Math.round(y)}px`;
         }
-        function end(event) {
+        function end() {
             document.removeEventListener('pointermove', move);
             document.removeEventListener('pointerup', end);
             document.removeEventListener('pointercancel', end);
             clearGuides();
-            if(!changed||event.type==='pointercancel'){followers.restore();blockEl.style.cssText=originalStyle;rollback?.();return;}
-            commitWithFollowers(block, {
+            if(!changed){rollback?.();return;}
+            commitObjectLayout(block, {
                 mode: 'absolute',
                 x: Math.round(parseFloat(blockEl.style.left) ?? startX),
                 y: Math.round(parseFloat(blockEl.style.top) ?? startY),
                 width: blockEl.offsetWidth,
                 zIndex: Number(layout.zIndex) || 15
-            }, followers, 'text-layout-move');
+            }, 'text-layout-move');
         }
         document.addEventListener('pointermove', move);
         document.addEventListener('pointerup', end);
@@ -956,9 +942,7 @@ window.LNECanvas = (function () {
         const left = parseFloat(style.paddingLeft)||85;
         const right = sheetContainer.clientWidth-(parseFloat(style.paddingRight)||85);
         const top = 0;
-        // Interaction room is independent of the visible content height: a
-        // short sheet must still allow dragging content farther down.
-        const bottom = Math.max(1150,sheetContainer.clientHeight+400);
+        const bottom = sheetContainer.clientHeight;
         const rect=sheetContainer.getBoundingClientRect();
         return {
             rect, scale:rect.width/sheetContainer.clientWidth||1,
@@ -1099,26 +1083,11 @@ window.LNECanvas = (function () {
     }
 
     function fitFreeObjects(target=sheetContainer) {
-        // Reset first so a previously taller document can shrink again. Flow
-        // content (including the footer) continues to determine natural height.
-        target.style.minHeight='0px';
-        let bottom=0;
-        const inset=parseFloat(getComputedStyle(target).paddingBottom)||0;
-        const footer=target.querySelector('.lne-editorial-footer');
-        if(footer)footer.style.marginTop='';
+        target.style.minHeight='1150px';
+        let bottom=1150;
         target.querySelectorAll('.block-absolute-image, .block-absolute-text').forEach(el => {
-            if(!el.offsetParent)return;
-            // offsetTop is local to the actual positioned parent, including groups.
-            let y=el.offsetTop,parent=el.offsetParent;
-            while(parent&&parent!==target){y+=parent.offsetTop;parent=parent.offsetParent;}
-            bottom=Math.max(bottom,y+el.offsetHeight+inset);
+            bottom=Math.max(bottom,(parseFloat(el.style.top)||0)+el.offsetHeight+70);
         });
-        if(footer&&bottom){
-            const scale=target.getBoundingClientRect().width/target.offsetWidth||1;
-            const naturalTop=(footer.getBoundingClientRect().top-target.getBoundingClientRect().top)/scale;
-            const gap=parseFloat(getComputedStyle(footer).marginTop)||0;
-            footer.style.marginTop=`${gap+Math.max(0,bottom-inset+16-naturalTop)}px`;
-        }
         target.style.minHeight=`${Math.ceil(bottom)}px`;
     }
 
@@ -1129,81 +1098,6 @@ window.LNECanvas = (function () {
 
     function snapYToObjects(y,height) {
         return y;
-    }
-
-    function createSoftAlignment(el,bounds) {
-        const origin=el.getBoundingClientRect(),w=origin.width/bounds.scale,h=origin.height/bounds.scale;
-        const peers=[...sheetContainer.querySelectorAll('.lne-document-content > [data-block-id]')]
-            .filter(n=>n!==el&&!n.dataset.groupId).map(n=>n.getBoundingClientRect());
-        const values={x:[bounds.left,bounds.right,(bounds.left+bounds.right)/2],y:[]};
-        peers.forEach(r=>{
-            values.x.push((r.left-bounds.rect.left)/bounds.scale,(r.right-bounds.rect.left)/bounds.scale,(r.left+r.width/2-bounds.rect.left)/bounds.scale);
-            values.y.push((r.top-bounds.rect.top)/bounds.scale,(r.bottom-bounds.rect.top)/bounds.scale,(r.top+r.height/2-bounds.rect.top)/bounds.scale);
-        });
-        const latch={};
-        return (x,y)=>{
-            const result={x,y};
-            for(const [axis,size] of [['x',w],['y',h]]) {
-                const raw=result[axis],enter=2/bounds.scale,exit=6/bounds.scale;
-                if(latch[axis]!==undefined&&Math.abs(latch[axis]-raw)>exit)delete latch[axis];
-                if(latch[axis]===undefined){
-                    let best=enter;
-                    for(const value of values[axis])for(const offset of [0,size/2,size]){
-                        const target=value-offset,distance=Math.abs(target-raw);
-                        if(distance<best){best=distance;latch[axis]=target;}
-                    }
-                }
-                if(latch[axis]!==undefined){
-                    const delta=latch[axis]-raw;
-                    // Continuous, subpixel attraction, not a hard positional snap.
-                    result[axis]+=delta*.25*Math.pow(Math.max(0,1-Math.abs(delta)/exit),2);
-                }
-            }
-            return result;
-        };
-    }
-
-    function createLocalFollowers(el,bounds) {
-        const origin=el.getBoundingClientRect(),items=[];
-        let edge=origin.bottom,floor=0,ceiling=Infinity;
-        const overlap=r=>Math.min(origin.right,r.right)-Math.max(origin.left,r.left)>=Math.min(origin.width,r.width)*.5;
-        const peers=[...sheetContainer.querySelectorAll('.lne-document-content > [data-block-id]')]
-            .filter(n=>n!==el).map(n=>({el:n,rect:n.getBoundingClientRect(),block:window.LNEState.getBlockById(n.dataset.blockId)}))
-            .filter(p=>p.block&&overlap(p.rect)).sort((a,b)=>a.rect.top-b.rect.top);
-        // Groups, floating overlays and independent columns retain manual control.
-        if(el.dataset.groupId)return {floor:0,limit:dy=>dy,move(){},restore(){},patches:()=>[]};
-        for(const p of peers){
-            if(p.rect.bottom<=origin.top+1){floor=Math.max(floor,(p.rect.bottom-bounds.rect.top)/bounds.scale+4);continue;}
-            if(p.rect.top<origin.bottom-1)continue;
-            if((p.rect.top-edge)/bounds.scale>96)break;
-            if(window.LNEState.isBlockLocked(p.block.id)||p.el.dataset.groupId||window.LNEState.getBlockMode(p.block)!=='absolute'){
-                ceiling=Math.max(0,(p.rect.top-edge)/bounds.scale-4);break;
-            }
-            // Behind/front images are deliberate overlays, not flow followers.
-            if(p.block.tipo==='imagen'&&['front','behind'].includes(getImageWrapMode(p.block)))break;
-            items.push({...p,style:p.el.style.cssText,y:Number(p.block.propiedades?.layout?.y)||0});edge=p.rect.bottom;
-        }
-        let shift=0;
-        return {floor,
-            limit:(dy,dx)=>Math.abs(dx)<origin.width/bounds.scale*.5?Math.min(dy,ceiling):dy,
-            move(dy,dx){shift=Math.abs(dx)<origin.width/bounds.scale*.5?dy:0;items.forEach(p=>p.el.style.top=`${p.y+shift}px`);},
-            restore(){items.forEach(p=>p.el.style.cssText=p.style);shift=0;},
-            patches:()=>Math.abs(shift)>.001?items.map(p=>({block:p.block,layout:{...p.block.propiedades.layout,y:p.y+shift}})):[]
-        };
-    }
-
-    function commitWithFollowers(block,layout,followers,reason) {
-        const patches=followers.patches();
-        if(!patches.length){
-            if(block.tipo==='imagen')window.LNEState.commitImageLayout(block.id,layout);
-            else commitObjectLayout(block,layout,reason);
-            return;
-        }
-        window.LNEState.snapshot();
-        if(block.metaField)window.LNEState.state.metadata.layouts={...window.LNEState.state.metadata.layouts,[block.metaField]:layout};
-        else block.propiedades={...block.propiedades,layout:{...block.propiedades?.layout,...layout}};
-        patches.forEach(p=>p.block.propiedades={...p.block.propiedades,layout:p.layout});
-        window.LNEState.notify(reason);
     }
 
     function clearGuides() {
@@ -1238,7 +1132,6 @@ window.LNECanvas = (function () {
         selectImageVisual(blockEl);
         const initial = getImageLayoutFromDom(blockEl, container, image);
         const initialBounds = getSheetBounds();
-        const soften=createSoftAlignment(blockEl,initialBounds),followers=createLocalFollowers(blockEl,initialBounds);
         const pointerOffsetX = (e.clientX-initialBounds.rect.left)/initialBounds.scale-initial.x;
         const pointerOffsetY = (e.clientY-initialBounds.rect.top)/initialBounds.scale-initial.y;
         let didMove = false;
@@ -1255,27 +1148,23 @@ window.LNECanvas = (function () {
                 blockEl.querySelector('.lne-block-imagen-wrapper')?.classList.add('is-absolute-image');
             }
 
-            const bounds = initialBounds;
-            const point=soften((moveEvent.clientX-bounds.rect.left)/bounds.scale-pointerOffsetX,(moveEvent.clientY-bounds.rect.top)/bounds.scale-pointerOffsetY);
-            point.y=initial.y+followers.limit(point.y-initial.y,point.x-initial.x);
+            const bounds = getSheetBounds();
             applyAbsoluteGeometry(blockEl, {
                 ...initial,
-                x: clamp(point.x,bounds.left,Math.max(bounds.left,bounds.right-initial.width)),
-                y: clamp(point.y,Math.max(bounds.top,followers.floor),Math.max(bounds.top,bounds.bottom-blockEl.offsetHeight))
+                x: snapToGuides(clamp((moveEvent.clientX-bounds.rect.left)/bounds.scale-pointerOffsetX,bounds.left,Math.max(bounds.left,bounds.right-initial.width)),initial.width),
+                y: snapYToObjects(clamp((moveEvent.clientY-bounds.rect.top)/bounds.scale-pointerOffsetY,bounds.top,Math.max(bounds.top,bounds.bottom-blockEl.offsetHeight)),blockEl.offsetHeight)
             });
-            followers.move(parseFloat(blockEl.style.top)-initial.y,parseFloat(blockEl.style.left)-initial.x);
         }
 
-        function onPointerUp(event) {
+        function onPointerUp() {
             document.removeEventListener('pointermove', onPointerMove);
             document.removeEventListener('pointerup', onPointerUp);
             document.removeEventListener('pointercancel', onPointerUp);
             clearGuides();
-            if(event.type==='pointercancel'){followers.restore();applyAbsoluteGeometry(blockEl,initial);return;}
             if (didMove) {
                 const geometry=getImageLayoutFromDom(blockEl,container,image);
                 if(promote)window.LNEState.updateImageLayout(block.id,{...geometry,mode:'absolute',wrapMode:'front',zIndex:20},'image-layout-commit');
-                else commitWithFollowers(block,geometry,followers,'image-layout-commit');
+                else window.LNEState.commitImageLayout(block.id, geometry);
             } else {
                 window.LNEState.selectBlock(block.id);
             }

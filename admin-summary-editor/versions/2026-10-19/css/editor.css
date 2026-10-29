@@ -324,7 +324,7 @@ body {
 .document-sheet {
     width: var(--lne-reading-sheet-width,1200px);
     max-width: 100%;
-    min-height: 0;
+    min-height: 1150px;
     background: var(--lne-bg-sheet);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-sheet);
