@@ -359,18 +359,22 @@ class StateManager {
     }
 
     // One transaction for flow spacing + order. Free objects are never converted.
-    commitFlowMove(blockIds, beforeId, layouts, { snapshot = true } = {}) {
+    commitFlowMove(blockIds, beforeId, layouts, { snapshot = true, properties = {} } = {}) {
         const ids = new Set(blockIds);
         const moving = this.state.bloques.filter(b => ids.has(b.id));
         if (!moving.length || moving.some(b => this.getBlockMode(b) !== 'flow' || this.isBlockLocked(b.id))) return;
         const remaining = this.state.bloques.filter(b => !ids.has(b.id));
         const index = beforeId === null ? remaining.length : remaining.findIndex(b => b.id === beforeId);
         if (index < 0) return;
+        const spacingBlocks = Object.keys(properties).map(id => this.getBlockById(id));
+        if (spacingBlocks.some(b => !b || this.getBlockMode(b) !== 'flow' || this.isBlockLocked(b.id))) return;
         const ordered = [...remaining.slice(0,index), ...moving, ...remaining.slice(index)];
         const changed = ordered.some((b,i) => b !== this.state.bloques[i]) || moving.some(b =>
-            Object.entries(layouts[b.id] || {}).some(([key,value]) => b.propiedades?.layout?.[key] !== value));
+            Object.entries(layouts[b.id] || {}).some(([key,value]) => b.propiedades?.layout?.[key] !== value)) ||
+            spacingBlocks.some(b => Object.entries(properties[b.id]).some(([key,value]) => b.propiedades?.[key] !== value));
         if (!changed) return;
         if (snapshot) this.snapshot();
+        spacingBlocks.forEach(b => { b.propiedades = { ...b.propiedades, ...properties[b.id] }; });
         moving.forEach(b => { b.propiedades = { ...b.propiedades, layout: { ...b.propiedades?.layout, ...layouts[b.id], mode:'flow' } }; });
         this.state.bloques = ordered;
         this.notify('flow-move');

@@ -400,7 +400,8 @@ span.lne-meta-object { display:inline-block; }
     border: 1px solid var(--lne-border);
     font-size: 0.95rem;
 }
-.lne-block-tabla th {
+/* Grid rules belong to this table, not residual nested tables in cell HTML. */
+.lne-block-tabla > :is(thead,tbody,tfoot) > tr > th {
     background-color: #f8fafc;
     color: var(--lne-navy);
     text-align: left;
@@ -409,17 +410,17 @@ span.lne-meta-object { display:inline-block; }
     border-bottom: 2px solid var(--lne-navy);
     border-right: 1px solid var(--lne-border);
 }
-.lne-block-tabla td {
+.lne-block-tabla > :is(thead,tbody,tfoot) > tr > td {
     padding: 10px 14px;
     border-bottom: 1px solid var(--lne-border);
     border-right: 1px solid var(--lne-border);
     vertical-align: top;
 }
-.lne-block-tabla tr:nth-child(even) td {
+.lne-block-tabla > :is(thead,tbody,tfoot) > tr:nth-child(even) > td {
     background-color: #fafbfc;
 }
-.lne-block-tabla th:last-child,
-.lne-block-tabla td:last-child {
+.lne-block-tabla > :is(thead,tbody,tfoot) > tr > th:last-child,
+.lne-block-tabla > :is(thead,tbody,tfoot) > tr > td:last-child {
     border-right: none;
 }
 

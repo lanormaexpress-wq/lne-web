@@ -569,7 +569,24 @@ window.LNECanvas = (function () {
         const thresholds=units.map((n,i)=>i<origin?Math.min(-6,n.center-center):Math.max(6,n.center-center));
         for(let i=origin-2;i>=0;i--)thresholds[i]=Math.min(thresholds[i],thresholds[i+1]-1);
         for(let i=origin+1;i<thresholds.length;i++)thresholds[i]=Math.max(thresholds[i],thresholds[i-1]+1);
-        return {entries,units,origin,slot:origin,thresholds,bounds};
+        // Internal component/table margins are part of the editable gap too,
+        // not an irreducible floor hidden behind offsetY=0. Keep defaults until
+        // the user actually reduces this edge; never normalize on opening.
+        const first=entries[0],previous=all[all.indexOf(first.block)-1];
+        const contentRoot=el=>[...el.children].find(n=>!n.matches('.block-controls,.block-copy-check,.object-resize-handle,.object-move-zone'));
+        let gap=null;
+        if(previous&&!ids.has(previous.id)&&first.block.tipo!=='imagen'&&previous.tipo!=='imagen'&&!state.isBlockLocked(previous.id)) {
+            const el=sheetContainer.querySelector(`[data-block-id="${previous.id}"]`),root=contentRoot(el),nextRoot=contentRoot(first.el);
+            if(root&&nextRoot&&getComputedStyle(el).float==='none'&&getComputedStyle(first.el).float==='none') {
+                const total=Math.max(0,first.top-(el.getBoundingClientRect().bottom-bounds.rect.top)/bounds.scale)+
+                    Math.max(0,parseFloat(getComputedStyle(root).marginBottom)||0)+Math.max(0,parseFloat(getComputedStyle(nextRoot).marginTop)||0);
+                if(total-Math.max(0,Number(first.layout.offsetY)||0)>.1)
+                    gap={previous,total,entry:{block:previous,el,css:el.style.cssText,classes:el.className}};
+            }
+        }
+        const restoreEntries=[...entries,...(gap?[gap.entry]:[])];
+        restoreEntries.forEach(n=>n.flowData={flowBaseTop:n.el.dataset.flowBaseTop,flowBaseMargin:n.el.dataset.flowBaseMargin});
+        return {entries,units,origin,slot:origin,thresholds,bounds,gap,restoreEntries};
     }
 
     function planFlowMove(move,dy,dx=0) {
@@ -584,7 +601,33 @@ window.LNECanvas = (function () {
             if(reordered&&n.block.tipo==='imagen')next.flowOffsetY=0;
             layouts[n.block.id]=next;
         });
-        return {beforeId:move.units[move.slot]?.id||null,layouts,reordered};
+        const properties={};
+        if(move.gap) {
+            const first=move.entries[0],id=first.block.id;
+            if(!reordered&&dy<0) {
+                const space=Math.max(0,move.gap.total+dy);
+                properties[move.gap.previous.id]={spacingAfter:0};
+                properties[id]={spacingBefore:Math.min(64,space)};
+                layouts[id].offsetY=Math.max(0,space-64);
+            } else if(reordered)properties[id]={spacingBefore:0};
+        }
+        return {beforeId:move.units[move.slot]?.id||null,layouts,properties,reordered};
+    }
+
+    function restoreFlowPresentation(move) {
+        move.restoreEntries.forEach(n=>{
+            n.el.style.cssText=n.css;n.el.className=n.classes;
+            for(const [key,value] of Object.entries(n.flowData))if(value===undefined)delete n.el.dataset[key];else n.el.dataset[key]=value;
+        });
+    }
+
+    function previewFlowSpacing(move,plan) {
+        for(const [id,patch] of Object.entries(plan.properties)) {
+            const n=move.restoreEntries.find(n=>n.block.id===id);if(!n)continue;
+            if(patch.spacingBefore!==undefined){n.el.classList.add('flow-spacing-before');n.el.dataset.flowBaseTop=String(patch.spacingBefore);}
+            if(patch.spacingAfter!==undefined){n.el.classList.add('flow-spacing-after');n.el.dataset.flowBaseMargin=String(patch.spacingAfter);}
+            applyRelativeLayout(n.el,{...n.block,propiedades:{...n.block.propiedades,...patch}},plan.layouts[id]||n.block.propiedades?.layout||{});
+        }
     }
 
     function beginFlowMove(event,blocks) {
@@ -601,20 +644,19 @@ window.LNECanvas = (function () {
             const dx=clamp((e.clientX-event.clientX)/bounds.scale,Math.min(0,bounds.left-minX),Math.max(0,bounds.right-maxX));
             const dy=(e.clientY-event.clientY)/bounds.scale;
             if(!changed&&Math.abs(dx)+Math.abs(dy)<2)return;
-            changed=true;plan=planFlowMove(move,dy,Math.round(dx));clearDropIndicators();
+            changed=true;plan=planFlowMove(move,dy,Math.round(dx));clearDropIndicators();restoreFlowPresentation(move);
             if(plan.reordered) {
-                move.entries.forEach(n=>{n.el.style.cssText=n.css;n.el.className=n.classes;});
                 const id=plan.beforeId||move.units.at(-1)?.last;
                 sheetContainer.querySelector(`[data-block-id="${id}"]`)?.classList.add(plan.beforeId?'drop-target-top':'drop-target-bottom');
-            } else move.entries.forEach(n=>{
+            } else {previewFlowSpacing(move,plan);move.entries.forEach(n=>{
                 const applied=applyRelativeLayout(n.el,n.block,plan.layouts[n.block.id]);
                 if(applied)plan.layouts[n.block.id].offsetX=applied.offsetX;
-            });
+            });}
         }
         function end(e) {
             document.removeEventListener('pointermove',drag);document.removeEventListener('pointerup',end);document.removeEventListener('pointercancel',end);
-            clearDropIndicators();move.entries.forEach(n=>{n.el.style.cssText=n.css;n.el.className=n.classes;});
-            if(changed&&e.type!=='pointercancel')window.LNEState.commitFlowMove(move.entries.map(n=>n.block.id),plan.beforeId,plan.layouts);
+            clearDropIndicators();restoreFlowPresentation(move);
+            if(changed&&e.type!=='pointercancel')window.LNEState.commitFlowMove(move.entries.map(n=>n.block.id),plan.beforeId,plan.layouts,{properties:plan.properties});
             fitFreeObjects(sheetContainer);
         }
         document.addEventListener('pointermove',drag);document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);
@@ -627,7 +669,7 @@ window.LNECanvas = (function () {
         if(!keyboardFlow.move)return;
         keyboardFlow.dy+=dy;
         const plan=planFlowMove(keyboardFlow.move,keyboardFlow.dy);
-        window.LNEState.commitFlowMove(blocks.map(b=>b.id),plan.beforeId,plan.layouts,{snapshot:false});
+        window.LNEState.commitFlowMove(blocks.map(b=>b.id),plan.beforeId,plan.layouts,{snapshot:false,properties:plan.properties});
         keyboardFlow.signature=JSON.stringify(window.LNEState.state.bloques);
     }
 
