@@ -24,8 +24,9 @@ Images and manual components retain their existing sizing model, not text autohe
 Drag guides use the same visible rectangles. Peer geometry and distance references
 are cached at gesture start; rendering is requestAnimationFrame-coalesced. Alignment
 uses a 3-screen-pixel tolerance. Equal-gap references are searched independently on
-each axis and labeled in unscaled document pixels. Guides are informational only:
-the former magnetizing functions now return the pointer-driven coordinate unchanged.
+each axis and labeled in unscaled document pixels. Equal-gap guides are informational.
+Single-object canvas drags also use the gentle alignment described below; keyboard
+and group movement remain pointer/keyboard-driven without attraction.
 The DOM overlay is editor-only and is excluded from exports and document storage.
 Changed editor assets carry an explicit URL revision, so intermediary HTTP caches
 cannot keep executing the previous selection implementation after deployment.
@@ -70,6 +71,40 @@ autosave and persistence mechanisms are reused. Groups preserve their internal
 spacing and existing flow reserves when deliberately moved into absolute layout.
 
 ## Verification
+
+### Local flow and sheet fit follow-up
+
+The old CSS and `fitFreeObjects` both imposed a 1150px minimum; the latter
+also left 70px after free objects. Visible sheet height now follows natural
+flow plus positioned content and the existing 36px bottom padding. The footer
+is pushed after free content, rather than clipped or left under an object.
+The available drag area is independent of that content-sized visible sheet.
+
+Framed paragraphs receive a small 6px inner gutter; nested lists keep 2rem
+marker room and framed icons have a 6px left inset. Normal public paragraphs,
+fonts and sheet width are unchanged. These rules are shared with readonly output.
+
+Native flow movement now reserves signed vertical displacement, allowing the
+following flow to recover space when dragging up. Its upper bound protects
+the preceding overlapping-column block. Square image wrapping retains its own
+exclusion footprint logic. Absolute text/image drags capture a local chain of
+free blocks below them: at least 50% horizontal overlap and at most 96px gap.
+Other columns, locked objects, groups and deliberate front/behind image overlays
+are not automatically repositioned. Followers move from fixed starting geometry,
+and their changes share the primary object's one undo snapshot. This is a
+conservative local aid, not a global collision solver or a layout migration.
+
+Alignment captures peer references once per gesture. Acquisition is within
+2 screen pixels, release outside 6; attraction is a continuous distance-weighted
+quarter of the correction, not a hard snap. Relative text drag uses a frozen
+visual origin/width instead of feeding the moving rectangle into itself.
+Keyboard movement, text caret handling, selection and guide painting are unchanged.
+Changed canvas/components/editor assets use `20261029-local-flow-1`.
+
+`node tests/summary-local-flow-browser.cjs` exercises short/tall sheet fitting,
+footer preservation, readonly output, framed bullets/icons, local down/up movement,
+other-column isolation, image flow, undo/redo, fine drag and 1/10px arrows.
+It blocks all non-GET/HEAD requests and uses only fictitious in-memory content.
 
 - `node tests/summary-interactions-browser.cjs`: 18 requested cases, real Chromium
   drags and 92px/40px equal-gap labels, group mouse/keyboard, undo/redo, F5,

@@ -13,7 +13,7 @@
 }
 
 /* Shared document geometry: editor, read-only view and exported fragment. */
-.lne-rendered-sheet { width:var(--lne-reading-sheet-width,1200px); min-width:var(--lne-reading-sheet-width,1200px); max-width:none; min-height:1150px; padding:54px var(--lne-reading-gutter) 36px; box-sizing:border-box; position:relative; }
+.lne-rendered-sheet { width:var(--lne-reading-sheet-width,1200px); min-width:var(--lne-reading-sheet-width,1200px); max-width:none; min-height:0; padding:54px var(--lne-reading-gutter) 36px; box-sizing:border-box; position:relative; }
 .lne-rendered-sheet .lne-editor-block { position:relative; padding:3px 6px; border:1px solid transparent; box-sizing:border-box; }
 .lne-rendered-sheet .block-absolute-text,.lne-rendered-sheet .block-absolute-image { position:absolute; margin:0; }
 .lne-rendered-sheet .block-absolute-image { padding:0; border:0; }
@@ -810,5 +810,21 @@ span.lne-meta-object { display:inline-block; }
 .lne-rendered-sheet .lne-auto-height :is(span,strong,b,em,i,font):has(:is(div,p,h1,h2,h3,h4,h5,h6,ul,ol)) { display:contents; }
 /* Public reading defaults; saved inline/block formatting retains precedence. */
 .lne-rendered-sheet .lne-comp-body { font-size:inherit; font-weight:inherit; line-height:inherit; letter-spacing:inherit; }
+
+/* A small inner gutter for framed text, shared by editing and readonly output.
+   Ordinary paragraphs retain their public width and typography. */
+:is(.lne-block-cuadro,.lne-cuadro-col,.lne-columna,.lne-comp-body) > :is(p,ul,ol) {
+    padding-inline-start: 6px;
+    padding-inline-end: 6px;
+}
+:is(.lne-block-cuadro,.lne-cuadro-col,.lne-columna,.lne-comp-body) :is(ul,ol) {
+    padding-inline-start: 2rem;
+}
+:is(.lne-block-cuadro,.lne-cuadro-col,.lne-columna,.lne-comp-body) .lne-icon-list-item,
+.lne-comp-body:has(> .icon-bullet) {
+    padding-left: calc(var(--lne-marker-width,1.8em) + 6px) !important;
+}
+:is(.lne-block-cuadro,.lne-cuadro-col,.lne-columna,.lne-comp-body) .lne-icon-list-item > .icon-bullet,
+.lne-comp-body > .icon-bullet { left:6px; }
 /* Read-only exports retain coordinates but remain fully reachable on narrow screens. */
 body:has(> .lne-readonly-sheet) { overflow-x:auto; }
