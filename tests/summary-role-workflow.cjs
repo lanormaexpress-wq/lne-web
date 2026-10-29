@@ -104,6 +104,18 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser, shared, isolationSt
  assert.equal(docs.get(id).author_id,people.writer.id);assert.equal(docs.get(id).status,'BORRADOR');
  const firstEditable=frame.locator('#document-sheet [contenteditable="true"]').first();await firstEditable.fill('Corrección del redactor ficticio');await page.evaluate(()=>LNESummaryWorkflow.save());
  assert.ok(JSON.stringify(docs.get(id).content_lne).includes('Corrección del redactor ficticio'));
+ if(process.env.LNE_DRAFT_WORKFLOW_ONLY==='1'){
+  for(let i=0;i<2;i++){
+   const before=docs.get(id).updated_at;await firstEditable.fill('Autosave ficticio '+i);
+   await page.waitForFunction(before=>LNESummaryWorkflow.getDocument()?.updated_at!==before,before,{timeout:15000});
+   assert.equal(docs.get(id).status,'BORRADOR');assert.equal(docs.size,1);
+  }
+  await page.reload({waitUntil:'domcontentloaded'});await page.waitForFunction(id=>LNESummaryWorkflow.getDocument()?.id===id,id);
+  assert.equal(docs.get(id).status,'BORRADOR');assert.equal(docs.size,1);assert.equal(publications.size,0);
+  assert.equal(await frame.locator('#lne-summary-publish').isVisible(),false);
+  for(const action of ['publish','update-publication'])assert.equal((await api(page,'/documents/'+id,'PATCH',{action,updated_at:docs.get(id).updated_at})).status,403);
+  assert.equal(docs.get(id).status,'BORRADOR');assert.equal(publications.size,0);
+ }
  await frame.locator('#lne-summary-continue').click();await page.locator('[data-area] option').nth(1).waitFor({state:'attached'});
  const area=require('../formacion').courses.find(c=>c.id==='contratos').area;
  await page.locator('[data-area]').selectOption(area);await page.locator('[data-course]').selectOption('contratos');
@@ -130,6 +142,10 @@ const server=app.listen(0,'127.0.0.1',async()=>{let browser, shared, isolationSt
  assert.equal(docs.get(id).author_id,people.writer.id);assert.ok(JSON.stringify(docs.get(id).content_lne).includes('Corrección del revisor sobre documento ajeno'));
  assert.equal(await reviewFrame.locator('#lne-summary-publish').isVisible(),true);await reviewFrame.locator('#lne-summary-publish').click();await reviewPage.locator('[data-confirm]').click();
  await reviewPage.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='PUBLICADO');assert.equal(publications.size,1);assert.equal(docs.get(id).published_by,people.reviewer.id);
+ if(process.env.LNE_DRAFT_WORKFLOW_ONLY==='1'){
+  assert.deepEqual(forbiddenNetwork,[]);
+  console.log(JSON.stringify({scope:'LOCAL MOCK ONLY; real frontend + Express routers, fake Auth/PostgREST/Storage',create:'BORRADOR',repeatedAutosaveAndF5:'BORRADOR; same ID; no duplicate',writerPublicationUI:'hidden',writerPublish:403,writerUpdatePublication:403,explicitSubmit:'EN_REVISION',reviewerPublish:'PUBLICADO',realSupabaseRequests:0}));return;
+ }
  await reviewPage.getByRole('dialog').getByRole('button',{name:'Cerrar',exact:true}).click();
  await reviewFrame.locator('#lne-summary-list').click();await reviewPage.locator('[data-filter="PUBLICADO"]').click();await reviewPage.getByRole('button',{name:'ABRIR / EDITAR',exact:true}).waitFor();
  assert.equal(await reviewPage.getByRole('button',{name:'ELIMINAR PUBLICACIÓN',exact:true}).count(),0);

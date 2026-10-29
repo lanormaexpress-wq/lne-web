@@ -159,8 +159,7 @@ window.LNECanvas = (function () {
                         applySquareOffset(blockEl, imageLayout?.flowOffsetY);
                     } else if (wrapMode === 'top-bottom') {
                         blockClasses += ' block-image-top-bottom';
-                    } else if (align === 'align-left') blockClasses += ' block-float-left';
-                    else if (align === 'align-right') blockClasses += ' block-float-right';
+                    }
                 }
                 const textLayout = block.tipo !== 'imagen' ? block.propiedades?.layout : null;
                 if (textLayout?.mode === 'absolute') {
@@ -471,7 +470,10 @@ window.LNECanvas = (function () {
         // Negative legacy translations must not pull ordinary flow over its
         // predecessor. This is presentation only, not a saved migration.
         const y=squareImage?(Number(layout.offsetY)||0):Math.max(0,Number(layout.offsetY)||0);
-        const lineWrap=['parrafo','lista'].includes(block.tipo)&&!x&&!y;
+        // Vertical spacing participates in native float layout. Clearing the
+        // float here would move the paragraph below the entire image instead
+        // of letting its lines use the available side space.
+        const lineWrap=['parrafo','lista'].includes(block.tipo)&&!x;
         el.classList?.toggle('block-line-wrap',lineWrap);
         if(block.tipo==='imagen') {
             if(block.propiedades?.spacingBefore!==undefined)el.style.marginTop=`${Math.max(0,Number(block.propiedades.spacingBefore)||0)}px`;
@@ -573,7 +575,10 @@ window.LNECanvas = (function () {
                 const delta=ratio&&['n','s'].includes(corner)?dy*ratio*(corner==='n'?-1:1):dx*(west?-1:1);
                 const limit=Math.min(west?anchorX+x0+width-bounds.left:bounds.right-anchorX-x0,getImageWrapMode(block)==='square'?(bounds.right-bounds.left)*.48:Infinity);
                 next.width=Math.round(clamp(width+delta,Math.min(image?16:100,limit),limit));
-                next.offsetX=x0+(west?width-next.width:0);
+                const rightFloat=square&&(initial.wrapSide||(block.propiedades?.alineacion==='align-right'?'right':'left'))==='right';
+                // A right float already grows to the left in native layout.
+                // Do not apply the west-handle displacement a second time.
+                next.offsetX=x0+(west&&!rightFloat?width-next.width:0);
                 if(ratio)next.height=Math.round((next.width-imageFrameInset)/ratio);
             } else {
                 next.offsetX=Math.round(clamp(x0+dx,bounds.left-fixedVisualAnchor,bounds.right-fixedVisualAnchor-fixedVisualWidth));
