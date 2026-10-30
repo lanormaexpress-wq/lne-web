@@ -387,7 +387,7 @@
                 const publicDocument = await response.text();
                 const frame = document.createElement('iframe');
                 frame.className='lne-summary-public-frame'+(response.headers.get('X-LNE-Summary-Layout')==='canvas'?' lne-summary-canvas-frame':'');
-                frame.title = topic.titulo; frame.setAttribute('sandbox', '');
+                frame.title = topic.titulo; frame.setAttribute('sandbox', 'allow-same-origin');
                 frame.style.cssText = 'display:block;width:100%;height:80vh;border:0';
                 frame.srcdoc = publicDocument;
                 const viewport=document.createElement('div');viewport.className='lne-summary-viewport';viewport.appendChild(frame);

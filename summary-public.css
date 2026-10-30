@@ -40,14 +40,34 @@ html:has(.lne-public-summary), body:has(> .lne-public-summary) {
 .lne-public-summary .lne-block-columnas > * { min-width:0; overflow-wrap:anywhere; }
 .lne-summary-public-frame { display:block; width:100%; height:80vh; border:0; }
 .lne-summary-viewport { position:relative; width:100%; min-width:0; min-height:80vh; container-type:inline-size; }
-/* The iframe's unscaled layout box is wider than its painted footprint.
-   Clip only that empty footprint; the complete 1200px document is fitted inside
-   the frame and retains its own vertical scroll. Unlike zoom, transform does
-   not change font metrics or wrapping at fractional scales. */
+/* Keep the established public viewport and its vertical scroll. The sheet
+   fits inside the frame without transforming the frame's painted surface. */
 .lne-summary-viewport:has(> .lne-summary-canvas-frame) { overflow-x:clip; }
 .lne-summary-canvas-frame {
-    position:absolute; top:0; left:0; transform-origin:top left;
-    width:1200px !important;
-    height:max(80vh,calc(80vh * (1200px / 100cqw))) !important;
-    transform:scale(min(1,calc(100cqw / 1200px)));
+    position:absolute; top:0; left:0;
+    width:100% !important; height:80vh !important;
+    transform:none;
+}
+.lne-public-summary-canvas { height:var(--lne-public-height,auto); }
+.lne-public-summary-canvas .lne-rendered-sheet {
+    transform:scale(var(--lne-public-scale,1)); transform-origin:top left;
+}
+/* Paint HTML at the destination resolution, not a scaled iframe surface.
+   Keep the same logical sheet, physical viewport and scrollable extent.
+   Other browsers receive the same dimensions from summary-public-frame.js. */
+@supports (height:calc-size(auto,size * 0.5)) {
+    body:has(> .lne-public-summary-canvas) { container-type:inline-size; }
+    .lne-public-summary-canvas {
+        --lne-public-native-fit:1;
+        height:calc-size(auto,size * min(1,calc(100cqw / 1200px)));
+    }
+    .lne-public-summary-canvas .lne-rendered-sheet {
+        transform:scale(min(1,calc(100cqw / 1200px)));
+        transform-origin:top left;
+    }
+    .lne-summary-canvas-frame {
+        width:100% !important;
+        height:80vh !important;
+        transform:none;
+    }
 }
