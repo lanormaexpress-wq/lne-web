@@ -382,14 +382,16 @@
         if (topic.publicationId) {
             setModalLoading(modalBody);
             try {
-                const response = await fetch(`/api/formation/summaries/${encodeURIComponent(topic.publicationId)}`, { cache: 'no-store' });
+                const response = await fetch(`/api/formation/summaries/${encodeURIComponent(topic.publicationId)}/view`, { cache: 'no-store' });
                 if (!response.ok) throw new Error('Resumen no disponible.');
-                const result = await response.json();
+                const publicDocument = await response.text();
                 const frame = document.createElement('iframe');
+                frame.className='lne-summary-public-frame'+(response.headers.get('X-LNE-Summary-Layout')==='canvas'?' lne-summary-canvas-frame':'');
                 frame.title = topic.titulo; frame.setAttribute('sandbox', '');
                 frame.style.cssText = 'display:block;width:100%;height:80vh;border:0';
-                frame.srcdoc = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; style-src 'self' 'unsafe-inline' https:; font-src https: data:;">` + result.preview_html;
-                modalBody.replaceChildren(frame);
+                frame.srcdoc = publicDocument;
+                const viewport=document.createElement('div');viewport.className='lne-summary-viewport';viewport.appendChild(frame);
+                modalBody.replaceChildren(viewport);
             } catch (error) { setInteractiveLoadError(modalBody, topic); }
             return;
         }

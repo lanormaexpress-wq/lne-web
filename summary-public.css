@@ -1,0 +1,53 @@
+/* Public presentation only. Never loaded by the editable canvas. */
+html:has(.lne-public-summary), body:has(> .lne-public-summary) {
+    width:100%; min-width:0; height:auto; min-height:100%; margin:0;
+    display:block; overflow-x:visible; overflow-y:auto; background:#fff;
+}
+.lne-public-summary {
+    --lne-reading-font:'Roboto',sans-serif;
+    --lne-reading-heading-font:'Playfair Display',serif;
+    --font-cuerpo:var(--lne-reading-font);
+    --font-titulos:var(--lne-reading-heading-font);
+    --lne-reading-size:16.8px; --lne-reading-weight:400; --lne-reading-leading:1.8;
+    width:100%; min-width:0; box-sizing:border-box;
+    font:400 16.8px/1.8 'Roboto',sans-serif;
+}
+.lne-public-summary .lne-rendered-sheet {
+    width:100%; min-width:0; max-width:1200px !important;
+    margin:0 auto; padding-inline:clamp(16px,4vw,48px); box-sizing:border-box;
+}
+/* A free-positioned composition has its own coordinate space. Fit that entire
+   space rather than clipping, moving its boxes or reflowing text underneath it. */
+.lne-public-summary-canvas .lne-rendered-sheet {
+    width:1200px; min-width:1200px; padding-inline:48px;
+}
+.lne-public-summary .lne-document-body { font-family:var(--lne-reading-font); font-size:16.8px; font-weight:400; line-height:1.8; }
+.lne-public-summary :is(.lne-block-parrafo,.lne-block-lista,.lne-block-tabla) { font-family:var(--lne-reading-font); }
+.lne-public-summary :is(h1,h2,h3,h4,h5,h6,.lne-editorial-title,.lne-block-titulo) { font-family:var(--lne-reading-heading-font); }
+.lne-public-summary .lne-meta-topline { gap:12px; flex-wrap:wrap; }
+.lne-public-summary .lne-meta-topline > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.lne-public-summary .lne-editorial-header { margin-bottom:16px; padding-bottom:0; }
+/* The default header loses 28px. Flow follows it automatically; free objects
+   retain their stored sheet coordinates, so apply the same presentation shift
+   to their painted boxes. Never change their saved top/left, size or mode. */
+.lne-public-summary .lne-document-content > :is(.block-absolute-text,.block-absolute-image) { translate:0 -28px; }
+.lne-public-summary .lne-document-content { min-width:0; overflow-wrap:anywhere; }
+.lne-public-summary :is(.lne-block-imagen-wrapper,.lne-block-imagen-container) { max-width:100%; box-sizing:border-box; }
+.lne-public-summary img { max-width:100%; height:auto; object-fit:contain; }
+.lne-public-summary .block-type-imagen:not(.block-float-left):not(.block-float-right) { max-width:100% !important; }
+.lne-public-summary .lne-block-tabla-wrapper { max-width:100%; overflow-x:auto; }
+.lne-public-summary .lne-block-columnas { min-width:0; }
+.lne-public-summary .lne-block-columnas > * { min-width:0; overflow-wrap:anywhere; }
+.lne-summary-public-frame { display:block; width:100%; height:80vh; border:0; }
+.lne-summary-viewport { position:relative; width:100%; min-width:0; min-height:80vh; container-type:inline-size; }
+/* The iframe's unscaled layout box is wider than its painted footprint.
+   Clip only that empty footprint; the complete 1200px document is fitted inside
+   the frame and retains its own vertical scroll. Unlike zoom, transform does
+   not change font metrics or wrapping at fractional scales. */
+.lne-summary-viewport:has(> .lne-summary-canvas-frame) { overflow-x:clip; }
+.lne-summary-canvas-frame {
+    position:absolute; top:0; left:0; transform-origin:top left;
+    width:1200px !important;
+    height:max(80vh,calc(80vh * (1200px / 100cqw))) !important;
+    transform:scale(min(1,calc(100cqw / 1200px)));
+}
