@@ -21,7 +21,8 @@ const server=app.listen(0,'127.0.0.1',async()=>{const base=`http://127.0.0.1:${s
   const before=validations;
   assert.equal((await fetch(base+'/editor',{headers})).status,200);
   const editorHtml=await fetch(base+'/assets/2026-10-19/index.html',{headers}).then(r=>r.text());
-  assert.ok(editorHtml.indexOf('LNESummaryStorage.install(')<editorHtml.indexOf('src="js/state.js"'),'El adaptador debe ejecutarse antes de recuperar el borrador.');
+  const storageBootstrap=editorHtml.indexOf('LNESummaryStorage.install('), stateScript=editorHtml.search(/src="js\/state\.js(?:\?[^"\s]*)?"/);
+  assert.ok(storageBootstrap>=0&&stateScript>=0&&storageBootstrap<stateScript,'El adaptador debe ejecutarse antes de recuperar el borrador, también con recursos versionados.');
   assert.equal((await fetch(base+'/editor',{headers})).status,200,'Recarga/nueva pestaña con cookie compartida');
   const fs=require('fs'),path=require('path'),root=path.resolve(__dirname,'../admin-summary-editor/versions/2026-10-19');
   for(const match of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/(?:src|href)="((?:js|css|vendor)\/[^"?#]+)"/g))assert.equal((await fetch(base+'/assets/2026-10-19/'+match[1],{headers})).status,200);

@@ -67,5 +67,5 @@
         if (content) new MutationObserver(enhanceArticles).observe(content, { childList: true, subtree: true });
         if (initial) apply(initial);
     });
-    window.LNESEO = Object.freeze({ update });
+    window.LNESEO = Object.freeze({ update, apply });
 })();

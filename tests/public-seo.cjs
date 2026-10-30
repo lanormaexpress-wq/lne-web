@@ -20,9 +20,10 @@ function unquote(value) { return value?.replace(/^eq\./, '').replace(/^"|"$/g, '
 async function fakeFetch(url, options) {
     const request = new URL(url); calls.push(request.pathname + request.search);
     assert.equal(options.headers.apikey, 'public-test-key');
-    assert.equal(options.headers.Authorization, 'Bearer public-test-key');
-    assert(!options.method || options.method === 'GET', 'Read model must never write');
+    if (!request.pathname.includes('/rpc/')) assert.equal(options.headers.Authorization, 'Bearer public-test-key');
+    assert(!options.method || options.method === 'GET' || (options.method === 'POST' && request.pathname === '/rest/v1/rpc/ordered_summary_publications'), 'Only the existing read-only course RPC may use POST');
     if (fail) return { ok: false, status: 500 };
+    if (request.pathname === '/rest/v1/rpc/ordered_summary_publications') return Response.json([]);
     const table = request.pathname.split('/').pop(), query = request.searchParams;
     let data = table === 'normas_legales' ? [norm, { ...norm, codigo: 'draft', slug: 'norma-privada', estado: 'borrador' }] : table === 'articulos_legales' ? articles : summaries;
     for (const name of ['codigo', 'numero_articulo', 'estado', 'id', 'course_id']) if (query.has(name)) data = data.filter(row => String(row[name]) === unquote(query.get(name)));
@@ -45,6 +46,8 @@ const server = app.listen(0, '127.0.0.1', async () => {
         assert.equal(text('<p>Uno &amp; dos &oacute;</p><p>Tres</p><script>hidden</script>'), 'Uno & dos ó Tres');
         assert(!safeHtml('<svg onload="x()"></svg><script>x()</script><a href="javascript:x()">x</a>').includes('javascript:'));
         const home = await request('/'); assert.equal(home.status, 200); assert(home.body.includes('<h1>Bienvenido a La Norma Express</h1>')); assert(home.body.includes('href="/legislacion/codigo-civil"'));
+        assert.equal(home.headers.get('content-encoding'), 'gzip');
+        assert(home.headers.get('vary').includes('Accept-Encoding'));
         await seo.sitemapCache.refresh();
         const site = await request('/sitemap.xml'); assert.equal(site.status, 200); assert(site.headers.get('content-type').includes('xml'));
         assert(site.body.includes(`${ORIGIN}/legislacion/codigo-civil/articulo/1003`));
@@ -63,6 +66,7 @@ const server = app.listen(0, '127.0.0.1', async () => {
         const oldArticle = await request('/legislacion/codigo-civil?art=1'); assert.equal(oldArticle.status, 301); assert.equal(oldArticle.headers.get('location'), '/legislacion/codigo-civil/articulo/1');
         assert.equal((await request('/legislacion/codigo-civil/')).status, 301);
         const course = await request('/formacion/contratos'); assert.equal(course.status, 200); assert(course.body.includes('Teoría General del Contrato')); assert(course.body.includes('"@type":"Course"'));
+        assert(course.body.includes('href="/formacion/contratos/tema/1"'), 'Keep crawlable material links in the initial course presentation');
         const lesson = await request('/formacion/contratos/tema/1'); assert.equal(lesson.status, 200); assert(lesson.body.includes('El contrato es un acuerdo de voluntades')); assert(lesson.body.includes('data-lne-document="true"'));
         const summary = await request('/formacion/contratos/resumen/11111111-1111-4111-8111-111111111111'); assert.equal(summary.status, 200); assert(summary.body.includes('Este es el texto del resumen')); assert(!summary.body.includes('PRIVATE_JS')); assert(!summary.body.includes('.secret'));
         const preparing = await request('/formacion/introduccion-al-derecho'); assert.equal(preparing.status, 200); assert(preparing.headers.get('x-robots-tag').includes('noindex'));

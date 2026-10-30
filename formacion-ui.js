@@ -119,7 +119,7 @@
         container.replaceChildren(...courses.map(createCourseCard));
     }
 
-    function mountDirectory() {
+    function mountDirectory({ hydrate = false } = {}) {
         const signal = beginMount();
         const areaGrid = document.getElementById('formacion-area-grid');
         const modal = document.getElementById('formacion-area-modal');
@@ -150,7 +150,7 @@
             card.append(iconWrap, title, description);
             return card;
         });
-        areaGrid.replaceChildren(...cards);
+        if (!hydrate) areaGrid.replaceChildren(...cards);
 
         const closeModal = () => {
             modal.classList.remove('active');
@@ -174,7 +174,7 @@
         if (area) {
             modalTitle.textContent = area.name;
             modalDescription.textContent = area.description;
-            renderAreaCourses(modalCourses, area);
+            if (!hydrate) renderAreaCourses(modalCourses, area);
             modal.classList.add('active');
             modal.setAttribute('aria-hidden', 'false');
             document.body.style.overflow = 'hidden';
@@ -435,7 +435,7 @@
         }
     }
 
-    async function mountCourse() {
+    async function mountCourse({ topics: initialTopics } = {}) {
         const signal = beginMount();
         const course = window.LNEActiveCourse;
         const title = document.getElementById('formacion-course-title');
@@ -458,11 +458,12 @@
             if (event.key === 'Escape' && modal.classList.contains('active')) closeTopicModal(modal, course);
         }, { signal });
 
-        content.innerHTML = '<div class="formacion-course-loading"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>';
+        if (!initialTopics) content.innerHTML = '<div class="formacion-course-loading"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i></div>';
 
         try {
-            const topics = await loadCourseTopics(course);
+            const topics = initialTopics || await loadCourseTopics(course);
             if (!content.isConnected || window.LNEActiveCourse !== course) return;
+            window.LNEActiveCourseTopics = topics;
 
             if (!topics.length) {
                 content.innerHTML = `
@@ -473,10 +474,29 @@
                 return;
             }
 
-            const grid = document.createElement('div');
-            grid.className = 'formacion-topic-grid';
-            grid.replaceChildren(...topics.map((topic, index) => createTopicCard(topic, course, index)));
-            content.replaceChildren(grid);
+            if (initialTopics) {
+                content.querySelectorAll('[data-topic-id]').forEach(card => {
+                    card.addEventListener('click', event => {
+                        event.preventDefault();
+                        window.LNERouter.navigate(`${course.route}?class=${encodeURIComponent(card.dataset.topicId)}`);
+                    }, { signal });
+                    if (card.tagName === 'A') card.addEventListener('keydown', event => {
+                        if (event.key === ' ') { event.preventDefault(); card.click(); }
+                    }, { signal });
+                });
+                content.querySelectorAll('.formacion-topic-image').forEach(image => {
+                    const placeholder = image.parentElement.querySelector('.formacion-topic-placeholder');
+                    const loaded = () => { image.classList.add('loaded'); placeholder.hidden = true; };
+                    image.addEventListener('load', loaded, { once: true, signal });
+                    image.addEventListener('error', () => { image.remove(); placeholder.hidden = false; }, { once: true, signal });
+                    if (image.complete && image.naturalWidth) loaded();
+                });
+            } else {
+                const grid = document.createElement('div');
+                grid.className = 'formacion-topic-grid';
+                grid.replaceChildren(...topics.map((topic, index) => createTopicCard(topic, course, index)));
+                content.replaceChildren(grid);
+            }
 
             const params = new URLSearchParams(window.location.search);
             const topicId = params.get('class') || params.get('clase');

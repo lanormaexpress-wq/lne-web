@@ -1,6 +1,23 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    await window.LNEDynamicLegislation?.ready;
     let activeNavigation = 0;
+    let initialPage;
+    try { initialPage = JSON.parse(document.getElementById('lne-bootstrap')?.textContent || 'null'); } catch (_) { /* Offline shell. */ }
+
+    function hydratePage(route, bootstrap) {
+        window.LNEActiveNorm = route.norma;
+        window.LNEActiveCourse = route.course || null;
+        window.LNEActiveFormationArea = route.area || null;
+        if (bootstrap.pageName === 'codigo') window.LNELegislacion.mount({ hydrate: true });
+        if (bootstrap.pageName === 'formacion') window.LNEFormacionUI.mountDirectory({ hydrate: true });
+        if (bootstrap.pageName === 'curso') window.LNEFormacionUI.mountCourse({ topics: bootstrap.courseTopics });
+        if (bootstrap.pageName === 'home') {
+            const script = document.createElement('script');
+            script.src = '/home-search.js?v=3';
+            script.onload = () => script.remove();
+            document.body.appendChild(script);
+        }
+        bindLinks();
+    }
 
     function resolvePage(pathName) {
         const cleanPath = window.LNENormas.normalizePath(pathName);
@@ -41,8 +58,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         const destination = `${route.canonicalUrl}${targetUrl.search}${targetUrl.hash}`;
-
+        const sameCourse = route.course && window.location.pathname === route.course.route && window.LNEActiveCourseTopics && document.getElementById('formacion-course-content');
         history.pushState(null, '', destination);
+        if (sameCourse) {
+            window.LNEFormacionUI.mountCourse({ topics: window.LNEActiveCourseTopics });
+            return;
+        }
         loadPage(destination);
     }
 
@@ -121,6 +142,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     function bindLinks() {
         const links = document.querySelectorAll('a');
         links.forEach(link => {
+            // Topic cards keep their native SEO URL; their own handler opens
+            // the existing course modal after the initial markup is bound.
+            if (link.matches('.formacion-topic-card[data-topic-id]')) return;
             const href = link.getAttribute('href');
             if (href && !link.dataset.lneRouterBound) {
                 const targetUrl = new URL(href, document.baseURI);
@@ -130,6 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (isInternal && isRoutable) {
                     link.dataset.lneRouterBound = 'true';
                     link.addEventListener('click', e => {
+                        if (e.defaultPrevented) return;
                         if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                         if (link.target && link.target !== '_self') return;
 
@@ -190,7 +215,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     function loadPage(pathName) {
         const navigationId = ++activeNavigation;
         document.documentElement.dataset.lneDocument = 'false';
-        window.LNESEO?.update(pathName);
 
         // Restaurar el scroll del body por si había un modal de curso abierto antes de navegar
         if (window.LNEHomeSearchController) {
@@ -213,20 +237,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? '/pages/home.html?v=3'
             : `/pages/${route.pageName}.html`;
         const appContent = document.getElementById('app-content');
-        
-        // Mostrar spinner de carga
-        appContent.innerHTML = `
-            <div style="display:flex; justify-content:center; align-items:center; min-height:60vh; color:#1b263b;">
-                <i class="fa-solid fa-circle-notch fa-spin fa-3x"></i>
-            </div>`;
-        
-        fetch(pageUrl)
+
+        // Keep the current page while obtaining the next server presentation.
+        // The offline shell still uses its existing cached fragments.
+        const serverPage = Boolean(initialPage);
+        if (!serverPage) window.LNESEO?.update(pathName);
+        fetch(serverPage ? pathName : pageUrl)
             .then(response => {
-                if (!response.ok) throw new Error('Página no encontrada');
+                if (!response.ok && !serverPage) throw new Error('Página no encontrada');
                 return response.text();
             })
             .then(html => {
                 if (navigationId !== activeNavigation) return;
+
+                if (serverPage) {
+                    const parsed = new DOMParser().parseFromString(html, 'text/html');
+                    const content = parsed.getElementById('app-content');
+                    const metadata = JSON.parse(parsed.getElementById('lne-seo-data')?.textContent || 'null');
+                    const bootstrap = JSON.parse(parsed.getElementById('lne-bootstrap')?.textContent || 'null');
+                    if (!content || !metadata) throw new Error('Respuesta de página inválida');
+                    window.LNESEO?.apply(metadata);
+                    document.documentElement.dataset.lneDocument = String(Boolean(metadata.standalone));
+                    appContent.innerHTML = content.innerHTML;
+                    if (bootstrap) hydratePage(resolvePage(cleanPath), bootstrap);
+                    bindLinks();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
 
                 appContent.innerHTML = html;
                 
@@ -265,7 +302,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindLegislationMenuToggle();
     renderFormationMenu();
     bindLinks();
-    if (document.documentElement.dataset.lneDocument !== 'true') {
+    window.LNEDynamicLegislation?.ready.then(() => { renderLegislationMenu(); bindLinks(); });
+    if (initialPage?.path === window.location.pathname) {
+        window.LNESEO?.update(`${window.location.pathname}${window.location.search}`);
+        hydratePage(resolvePage(window.location.pathname), initialPage);
+    } else if (document.documentElement.dataset.lneDocument !== 'true') {
+        await window.LNEDynamicLegislation?.ready;
         loadPage(`${window.location.pathname}${window.location.search}${window.location.hash}`);
     }
 });

@@ -308,13 +308,19 @@
         return window.LNENormas.captureData(norma);
     }
 
-    async function mount() {
+    async function mount({ hydrate = false } = {}) {
         const norma = window.LNEActiveNorm;
         const introMount = document.getElementById('norma-introduccion');
         const articlesMount = document.getElementById('contenedor-leyes');
 
         if (!norma || !introMount || !articlesMount) return;
 
+        if (hydrate) {
+            window.LNEIntroductionRenderer.hydrate(introMount);
+            scrollToRequestedArticle(articlesMount);
+            initializeSearch(articlesMount);
+            return;
+        }
         window.LNEIntroductionRenderer.render(introMount, norma);
 
         if (norma.status === 'preparing' || (!norma.dynamic && (!norma.contentScript || !Array.isArray(norma.dataVariables)))) {

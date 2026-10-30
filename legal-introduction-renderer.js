@@ -82,5 +82,23 @@
         container.replaceChildren(introContainer);
     }
 
-    window.LNEIntroductionRenderer = Object.freeze({ render });
+    function hydrate(container) {
+        const paragraph = container?.querySelector('.intro-parrafo');
+        const image = container?.querySelector('img');
+        if (!paragraph || !image) return;
+        const syncImageHeight = () => {
+            const height = paragraph.getBoundingClientRect().height;
+            if (height > 0) image.style.height = `${height}px`;
+        };
+        image.addEventListener('load', syncImageHeight, { once: true });
+        syncImageHeight();
+        if (window.ResizeObserver) {
+            const observer = new ResizeObserver(() => {
+                if (!paragraph.isConnected) { observer.disconnect(); return; }
+                syncImageHeight();
+            });
+            observer.observe(paragraph);
+        }
+    }
+    window.LNEIntroductionRenderer = Object.freeze({ render, hydrate });
 })();

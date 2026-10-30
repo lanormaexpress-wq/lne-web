@@ -1,23 +1,22 @@
-const CACHE_NAME = 'lne-cache-v24';
+const CACHE_NAME = 'lne-cache-v25';
 
 // Archivos clave para precargar durante la instalación
 const PRECACHE_ASSETS = [
-    '/',
     '/index.html',
     '/style.css?v=3.9',
     '/asistente.js?v=2.3',
   '/normas.js?v=10',
     '/formacion.js?v=2',
-    '/legal-visual-renderer.js?v=1',
-    '/legal-introduction-renderer.js?v=2',
-    '/legal-introduction.css?v=5',
-    '/legislacion.js?v=6',
+    '/legal-visual-renderer.js?v=2',
+    '/legal-introduction-renderer.js?v=3',
+    '/legal-introduction.css?v=6',
+    '/legislacion.js?v=7',
     '/legislacion-explorer.js?v=1',
-    '/formacion-ui.js?v=2',
-    '/dynamic-legislation.js?v=2',
-    '/seo.js?v=1',
-    '/router.js?v=13',
-    '/home-search.js?v=2',
+    '/formacion-ui.js?v=20261030-initial-1',
+    '/dynamic-legislation.js?v=3',
+    '/seo.js?v=2',
+    '/router.js?v=14',
+    '/home-search.js?v=3',
     '/manifest.json',
     '/pages/home.html?v=3',
     '/pages/codigo.html',

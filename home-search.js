@@ -111,6 +111,7 @@
 
     function renderHomeCards() {
         if (!legislationCards) return;
+        if (legislationCards.children.length) return;
         window.LNENormas.all.forEach(norma => {
             if (!norma.homeCard) return;
             const card = document.createElement('a');

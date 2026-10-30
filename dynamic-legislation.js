@@ -112,7 +112,9 @@
         return groupArticles(body.articulos);
     }
 
-    const ready = readPublicJson('/api/public/legislation')
+    let bootstrap;
+    try { bootstrap = JSON.parse(document.getElementById('lne-bootstrap')?.textContent || 'null'); } catch (_) { /* Offline shell. */ }
+    const ready = (bootstrap?.normas ? Promise.resolve({ normas: bootstrap.normas }) : readPublicJson('/api/public/legislation'))
         .then(body => {
             if (!Array.isArray(body.normas)) throw new Error('Catálogo jurídico inválido.');
             (body.normas || []).forEach(applyPublicNorm);

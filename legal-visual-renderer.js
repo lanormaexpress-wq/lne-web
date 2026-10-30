@@ -6,6 +6,10 @@
     }
     function getSectionTitle(norma, title) {
         if (!title || !norma.hideEmbeddedDocumentHeader) return title || '';
+        if (typeof document === 'undefined') return require('./lib/seo-sanitizer.cjs')(title, {
+            allowedTags: false, allowedAttributes: false,
+            exclusiveFilter: frame => Object.hasOwn(frame.attribs, 'data-lne-document-header')
+        }).trim();
         const template = document.createElement('template');
         template.innerHTML = title;
         template.content.querySelectorAll('[data-lne-document-header]').forEach(header => header.remove());
@@ -67,5 +71,7 @@
         content.setAttribute('aria-label', 'Contenido del artículo');
         return { content, article: container.querySelector('.articulo-contenedor-bloque') };
     }
-    window.LNEVisualRenderer = Object.freeze({ buildNormHtml, renderNorm, renderEditableArticle });
+    const api = Object.freeze({ buildNormHtml, renderNorm, renderEditableArticle });
+    if (typeof module !== 'undefined' && module.exports) module.exports = api;
+    else window.LNEVisualRenderer = api;
 })();

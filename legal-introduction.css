@@ -40,6 +40,16 @@
 }
 
 @media (min-width: 769px) {
+    /* The paragraph determines the row before the cover has downloaded. */
+    .intro-text {
+        position: relative;
+    }
+
+    .intro-content > img {
+        position: absolute;
+        height: 100%;
+    }
+
     .container.container-ley {
         padding-right: 20px !important;
     }
