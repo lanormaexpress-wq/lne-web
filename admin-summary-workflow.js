@@ -4,7 +4,8 @@
     let notice, publishButton;
     let current = null, destination = null, pendingId = null, boundId = null, timer, saving = null;
     let loading = false, dirty = false, canPublish = false, sequence = 0, bindingError = null;
-    let saveAction = null, queuedSubmit = null, preparing = false, publishing = false, uncertain = false;
+    let saveAction = null, queuedSubmit = null, preparing = false, publishing = false, uncertain = false, reviewing = false;
+    let changeVersion = 0, lastAttempt = null;
     const clone = value => JSON.parse(JSON.stringify(value));
     const model = () => frame.contentWindow?.LNEState;
     const setNotice = (text, detail = text) => {
@@ -41,11 +42,13 @@
         if (!uncertain || !current) return false;
         const result = await api('/' + current.id), remote = result.document;
         if (remote.updated_at !== current.updated_at) {
-            if (!['title', 'content_lne', 'area_id', 'course_id', 'template_id'].every(key => canonical(remote[key]) === canonical(payload[key]))) {
+            const matches = candidate => candidate && ['title', 'content_lne', 'area_id', 'course_id', 'template_id'].every(key => canonical(remote[key]) === canonical(candidate[key]));
+            const latestSaved = matches(payload);
+            if (!latestSaved && !matches(lastAttempt)) {
                 throw new Error('El servidor tiene otra versión. No se sobrescribió nada: conserva la exportación y compara las versiones antes de continuar.');
             }
             current = remote; canPublish = result.canPublish; updateActions(); uncertain = false;
-            return true;
+            return latestSaved;
         }
         uncertain = false; return false;
     }
@@ -59,24 +62,44 @@
         document.dispatchEvent(new CustomEvent('lne-summary-workflow-change'));
     }
     function clearBinding() {
-        clearTimeout(timer); current = null; destination = null; pendingId = null; dirty = false; bindingError = null; uncertain = false;
+        clearTimeout(timer); current = null; destination = null; pendingId = null; dirty = false; bindingError = null; uncertain = false; lastAttempt = null;
         boundId = model()?.state.documentoId; sequence++; updateActions(); setNotice('');
     }
     function hasContent() { return Boolean(model()?.state.bloques?.length); }
-    function capture() {
+    function capture(withPreview = false) {
         if (!hasContent()) throw new Error('Añade contenido al resumen antes de guardarlo.');
         const state = clone(model().state);
         const title = String(state.metadata?.titulo || '').trim();
         if (!title) throw new Error('Escribe el título del resumen en el editor.');
         // Reuse the real read-only canvas renderer and its original CSS, never a second renderer.
-        const preview = frame.contentWindow.LNERenderer.compileToDocument(state);
-        return { title, content_lne: state, preview_html: preview, area_id: destination?.areaId || null,
-            course_id: destination?.courseId || null, template_id: destination?.templateId || null };
+        return { title, content_lne: state, area_id: destination?.areaId || null,
+            course_id: destination?.courseId || null, template_id: destination?.templateId || null,
+            ...(withPreview ? { preview_html: frame.contentWindow.LNERenderer.compileToDocument(state) } : {}) };
+    }
+    // Transport references only: the database keeps the exact original image bytes.
+    // No image upload, recompression or stored-document migration is involved.
+    function compactPayload(payload) {
+        const wire = clone(payload), previous = new Map((current?.content_lne?.bloques || []).map(b => [b.id, b]));
+        wire.compact_save = true; wire.reuse_images = [];
+        wire.content_lne.bloques.forEach((block, index) => {
+            const src = block.propiedades?.src;
+            if (typeof src !== 'string' || src.length < 4096 || src !== previous.get(block.id)?.propiedades?.src) return;
+            const token = '__LNE_REUSE_IMAGE_' + index + '__';
+            block.propiedades.src = token; wire.reuse_images.push({ id: block.id, token });
+            if (wire.preview_html) wire.preview_html = wire.preview_html.split(src).join(token);
+        });
+        return wire;
     }
     function save(action = 'save') {
         if (publishing) return action === 'save' ? Promise.resolve() : Promise.reject(new Error('Hay una publicación en curso. No se envió otra solicitud.'));
         if (action === 'submit' && preparing) return Promise.reject(new Error('Hay una operación en curso. No se envió otra solicitud.'));
         if (queuedSubmit) return queuedSubmit;
+        if (action === 'submit') {
+            reviewing = true; clearTimeout(timer); frame.inert = true;
+            queuedSubmit = (async () => { if (saving) await saving; return performSave('submit'); })()
+                .finally(() => { reviewing = false; frame.inert = false; queuedSubmit = null; if (dirty) schedule(); });
+            return queuedSubmit;
+        }
         if (saving) {
             if (action === saveAction || action === 'save') return saving;
             queuedSubmit = saving.then(() => performSave(action)).finally(() => { queuedSubmit = null; if (dirty) schedule(); });
@@ -90,26 +113,39 @@
         if (loading) throw new Error('Espera a que termine de abrirse el resumen central.');
         if (action === 'submit' && current?.status === 'EN_REVISION' && !dirty && !uncertain) return;
         if (current?.status === 'PUBLICADO' && !canPublish) throw new Error('No tienes permiso para editar un publicado.');
-        const epoch = sequence, payload = capture();
+        const epoch = sequence, version = changeVersion, payload = capture(action !== 'save');
         const editorId = model().state.documentoId;
-        dirty = false; saveAction = action; setNotice('Guardando…');
+        saveAction = action; setNotice('Guardando…');
         saving = (async () => {
             const recovered = await reconcile(payload);
-            if (recovered && (action === 'save' || current.status === 'EN_REVISION')) { setNotice('Guardado ✓', current.status); return; }
+            if (recovered && action === 'submit' && current.status === 'EN_REVISION') { dirty = changeVersion !== version; setNotice('Guardado ✓', current.status); return; }
+            let created = false;
             if (!current) {
                 pendingId ||= crypto.randomUUID();
                 // Persist before the first request: a reload/retry must reuse this identity.
                 window.LNESummaryStorage.documentLink(editorId, { summaryId: pendingId, pending: true });
+                lastAttempt = payload;
                 const first = await api('', { method: 'POST', body: JSON.stringify({ ...payload, id: pendingId }) });
                 if (epoch !== sequence) return;
                 current = first.document; canPublish = first.canPublish; boundId = editorId;
                 rememberDocument(current.id);
+                created = ['title', 'content_lne', 'area_id', 'course_id', 'template_id'].every(key => canonical(current[key]) === canonical(payload[key]));
                 // POST is idempotent; a retry may have found a previously saved version.
             }
             if (epoch !== sequence) return;
-            const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ ...payload, action, updated_at: current.updated_at }) });
-            if (epoch !== sequence) return;
-            current = result.document; canPublish = result.canPublish;
+            if (!created && (!recovered || (payload.preview_html !== undefined && payload.preview_html !== current.preview_html))) {
+                lastAttempt = payload;
+                const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ ...compactPayload(payload), action: 'save', updated_at: current.updated_at }) });
+                if (epoch !== sequence) return;
+                current = { ...current, ...payload, ...result.document }; canPublish = result.canPublish;
+            }
+            if (action === 'submit' && current.status !== 'EN_REVISION') {
+                if (changeVersion !== version) throw new Error('Llegaron cambios mientras se guardaba. Se conservaron; vuelve a enviar cuando termine el guardado pendiente.');
+                const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: 'submit', transition_only: true, updated_at: current.updated_at }) });
+                if (epoch !== sequence) return;
+                current = { ...current, ...result.document }; canPublish = result.canPublish;
+            }
+            dirty = changeVersion !== version;
             updateActions(); setNotice('Guardado ✓', action === 'submit' ? 'Resumen enviado a revisión.' : current.status);
         })();
         let succeeded = false;
@@ -119,7 +155,7 @@
     function schedule() {
         clearTimeout(timer);
         if (window.LNEAdminAccess && !window.LNEPermissionCatalog.allowed(window.LNEAdminAccess, 'summary_save')) return;
-        if ((current?.status === 'PUBLICADO' && !canPublish) || !hasContent() || loading || bindingError || publishing || queuedSubmit) return;
+        if ((current?.status === 'PUBLICADO' && !canPublish) || !hasContent() || loading || bindingError || publishing || reviewing || queuedSubmit) return;
         timer = setTimeout(() => { if (dirty) save().catch(error => setNotice('Error al guardar', error.message)); }, 5000);
     }
     function attach() {
@@ -160,13 +196,13 @@
                 return;
             }
             if (['select', 'select-block', 'select-blocks', 'preview', 'toggle-preview'].includes(type)) return;
-            dirty = true; schedule();
+            changeVersion++; dirty = true; schedule();
         });
         // Inline typing deliberately does not notify state subscribers (avoids rebuilding the canvas).
         // Observe native events AFTER the editor's own handlers; do not wrap or change its methods.
         const inlineChanged = () => {
             if (loading || (current?.status === 'PUBLICADO' && !canPublish)) return;
-            dirty = true; schedule();
+            changeVersion++; dirty = true; schedule();
         };
         doc.addEventListener('input', inlineChanged);
         doc.addEventListener('change', inlineChanged);
@@ -327,7 +363,6 @@
         try {
             if (saving) await saving;
             if (uncertain && current) await reconcile(capture());
-            if (dirty) await save();
             if (!current || !['EN_REVISION', 'PUBLICADO'].includes(current.status) || !canPublish) throw new Error('Publicación final no disponible.');
             const updating = current.status === 'PUBLICADO';
             confirmation.querySelector('h2').textContent = updating ? 'ACTUALIZAR PUBLICACIÓN' : 'PUBLICAR RESUMEN';
@@ -345,10 +380,12 @@
         try {
             if (saving) await saving;
             if (uncertain && current) await reconcile(capture());
-            if (dirty) await performSave();
+            // Generate the unchanged public renderer output only at the explicit final step.
+            await performSave('sync');
+            if (dirty) throw new Error('Llegaron cambios mientras se guardaba. Se conservaron; revisa el resumen antes de publicar.');
             const updating = current.status === 'PUBLICADO';
             const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: updating ? 'update-publication' : 'publish', updated_at: current.updated_at }) });
-            current = result.document; clearTimeout(timer); dirty = false; updateActions();
+            current = { ...current, ...result.document }; clearTimeout(timer); dirty = false; updateActions();
             confirmation.close(); setNotice(updating ? 'Publicación actualizada ✓' : 'Publicado ✓', 'El contenido público se guardó correctamente.');
             showPublished(current);
         } catch (error) { confirmation.querySelector('[data-result]').textContent = error.message; }
@@ -371,6 +408,6 @@
         selectDestination(value) {
             if (publishing) throw new Error('Hay una publicación en curso. Espera su resultado.');
             if (['areaId', 'courseId', 'templateId', 'templateName'].every(key => destination?.[key] === value?.[key])) return;
-            destination = value; dirty = true; schedule();
+            destination = value; changeVersion++; dirty = true; schedule();
         }, getDocument: () => current });
 })();

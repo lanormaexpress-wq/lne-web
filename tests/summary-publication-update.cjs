@@ -9,7 +9,7 @@ const id = '11111111-1111-4111-8111-111111111111';
 const tid = '22222222-2222-4222-8222-222222222222';
 const course = courses.find(c => c.id === 'contratos');
 const app = express(), docs = new Map(), pubs = new Map();
-let base, server, revision, inserts, rpcCalls;
+let base, server, revision, inserts, rpcCalls, compactCalls=0;
 app.use(express.json());
 const actor = req => (req.get('authorization') || '').replace('Bearer ', '');
 app.all('/mock/rest/v1/summary_documents', (req, res) => {
@@ -30,6 +30,19 @@ app.post('/mock/rest/v1/rpc/update_summary_publication', (req, res) => {
     if (!pubs.has(row.id)) return res.status(409).json({});
     Object.assign(pubs.get(row.id), { title: row.title, preview_html: row.preview_html });
     res.json(row);
+});
+app.post('/mock/rest/v1/rpc/save_summary_document_compact', (req,res) => {
+    compactCalls++;
+    const row=docs.get(req.body.document_id), data=structuredClone(req.body.payload);
+    if(row.updated_at!==req.body.expected_updated_at)return res.status(409).json({code:'40001'});
+    for(const ref of req.body.reuse_images){
+        const source=row.content_lne.bloques.find(b=>b.id===ref.id)?.propiedades?.src;
+        const block=data.content_lne.bloques.find(b=>b.id===ref.id);
+        if(!source||block?.propiedades?.src!==ref.token)return res.status(400).json({});
+        block.propiedades.src=source;if(data.preview_html)data.preview_html=data.preview_html.split(ref.token).join(source);
+    }
+    Object.assign(row,data,{updated_at:String(++revision)});
+    const {content_lne,preview_html,...metadata}=row;res.json(metadata);
 });
 app.get('/mock/rest/v1/summary_publications', (req, res) => res.json([...pubs.values()].filter(p => !req.query.id || p.id === req.query.id.slice(3))));
 app.use('/documents', (req, res, next) => {
@@ -74,6 +87,18 @@ test('writer cannot edit own published document or invoke publication update', a
     assert.equal((await request('writer', 'PATCH', { ...edited(), action: 'save' })).status, 403);
     assert.equal((await request('writer', 'PATCH', { action: 'update-publication', updated_at: '1' })).status, 403);
     assert.equal(rpcCalls, 0); assert.equal(docs.get(id).preview_html, '<p>Original</p>');
+});
+test('compact autosave preserves exact inline images, HTML, ID and publication; stale version and writer are rejected',async()=>{
+    const row=docs.get(id),src='data:image/png;base64,'+'a'.repeat(100000);
+    row.content_lne={documentoId:'stable-editor-id',bloques:[{id:'image1',propiedades:{src,layout:{x:0,y:0}}}]};
+    const state=structuredClone(row.content_lne);state.bloques[0].propiedades.src='__LNE_REUSE_IMAGE_0__';state.bloques[0].propiedades.layout.x=20;
+    const body={...edited(),content_lne:state,compact_save:true,reuse_images:[{id:'image1',token:'__LNE_REUSE_IMAGE_0__'}],action:'save'};delete body.preview_html;
+    const calls=compactCalls;
+    assert.equal((await request('writer','PATCH',body)).status,403);assert.equal(compactCalls,calls);
+    const saved=await request('owner','PATCH',body);assert.equal(saved.status,200);assert.equal(saved.body.document.content_lne,undefined);
+    assert.equal(row.preview_html,'<p>Original</p>');assert.equal(row.content_lne.bloques[0].propiedades.src,src);assert.equal(row.content_lne.bloques[0].propiedades.layout.x,20);
+    assert.equal(pubs.get(id).preview_html,'<p>Original</p>');assert.equal(row.status,'PUBLICADO');assert.equal(docs.size,1);assert.equal(inserts,0);
+    assert.equal((await request('owner','PATCH',body)).status,409);
 });
 test('anonymous cannot update, but public snapshot remains readable', async () => {
     assert.equal((await request('anonymous', 'PATCH', { action: 'update-publication', updated_at: '1' })).status, 401);
