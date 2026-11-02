@@ -4,6 +4,7 @@
     let notice, publishButton;
     let current = null, destination = null, pendingId = null, boundId = null, timer, saving = null;
     let loading = false, dirty = false, canPublish = false, sequence = 0, bindingError = null;
+    let saveAction = null, queuedSubmit = null, preparing = false, publishing = false, uncertain = false;
     const clone = value => JSON.parse(JSON.stringify(value));
     const model = () => frame.contentWindow?.LNEState;
     const setNotice = (text, detail = text) => {
@@ -16,23 +17,49 @@
         history.replaceState(null, '', url);
     }
     async function api(path = '', options = {}) {
-        const response = await fetch('/admin/resumenes/documents' + path, {
-            ...options, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin'
-        });
-        let data; try { data = await response.json(); } catch (_) { throw new Error('No se pudo leer la respuesta del servidor.'); }
-        if (!response.ok) throw Object.assign(new Error(data.error || 'No se pudo guardar el resumen.'), { status: response.status });
-        return data;
+        const controller = new AbortController(); let timeout;
+        try {
+            return await Promise.race([(async () => {
+                const response = await fetch('/admin/resumenes/documents' + path, {
+                    ...options, signal: controller.signal, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin'
+                });
+                let data; try { data = await response.json(); } catch (_) { throw new Error('No se pudo leer la respuesta del servidor.'); }
+                if (!response.ok) throw Object.assign(new Error(data.error || 'No se pudo guardar el resumen.'), { status: response.status });
+                return data;
+            })(), new Promise((_, reject) => { timeout = setTimeout(() => {
+                reject(new Error('La operación excedió 45 segundos. Tus cambios siguen en el editor. Antes de reintentar se comprobará el mismo documento.'));
+                controller.abort();
+            }, 45000); })]);
+        } catch (error) {
+            if (options.method && !['GET', 'HEAD'].includes(options.method)) uncertain = true;
+            throw error;
+        } finally { clearTimeout(timeout); }
+    }
+    const canonical = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+        ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
+    async function reconcile(payload) {
+        if (!uncertain || !current) return false;
+        const result = await api('/' + current.id), remote = result.document;
+        if (remote.updated_at !== current.updated_at) {
+            if (!['title', 'content_lne', 'area_id', 'course_id', 'template_id'].every(key => canonical(remote[key]) === canonical(payload[key]))) {
+                throw new Error('El servidor tiene otra versión. No se sobrescribió nada: conserva la exportación y compara las versiones antes de continuar.');
+            }
+            current = remote; canPublish = result.canPublish; updateActions(); uncertain = false;
+            return true;
+        }
+        uncertain = false; return false;
     }
     function updateActions() {
         if (publishButton) {
             publishButton.hidden = !current || !['EN_REVISION', 'PUBLICADO'].includes(current.status) || !canPublish;
             publishButton.textContent = current?.status === 'PUBLICADO' ? 'ACTUALIZAR PUBLICACIÓN' : 'PUBLICACIÓN FINAL';
             publishButton.style.display = publishButton.hidden ? 'none' : '';
+            publishButton.disabled = preparing || publishing;
         }
         document.dispatchEvent(new CustomEvent('lne-summary-workflow-change'));
     }
     function clearBinding() {
-        clearTimeout(timer); current = null; destination = null; pendingId = null; dirty = false; bindingError = null;
+        clearTimeout(timer); current = null; destination = null; pendingId = null; dirty = false; bindingError = null; uncertain = false;
         boundId = model()?.state.documentoId; sequence++; updateActions(); setNotice('');
     }
     function hasContent() { return Boolean(model()?.state.bloques?.length); }
@@ -46,16 +73,29 @@
         return { title, content_lne: state, preview_html: preview, area_id: destination?.areaId || null,
             course_id: destination?.courseId || null, template_id: destination?.templateId || null };
     }
-    async function save(action = 'save') {
+    function save(action = 'save') {
+        if (publishing) return action === 'save' ? Promise.resolve() : Promise.reject(new Error('Hay una publicación en curso. No se envió otra solicitud.'));
+        if (action === 'submit' && preparing) return Promise.reject(new Error('Hay una operación en curso. No se envió otra solicitud.'));
+        if (queuedSubmit) return queuedSubmit;
+        if (saving) {
+            if (action === saveAction || action === 'save') return saving;
+            queuedSubmit = saving.then(() => performSave(action)).finally(() => { queuedSubmit = null; if (dirty) schedule(); });
+            return queuedSubmit;
+        }
+        return performSave(action);
+    }
+    async function performSave(action = 'save') {
         clearTimeout(timer);
         if (bindingError) throw bindingError;
         if (loading) throw new Error('Espera a que termine de abrirse el resumen central.');
-        if (saving) { await saving; return save(action); }
+        if (action === 'submit' && current?.status === 'EN_REVISION' && !dirty && !uncertain) return;
         if (current?.status === 'PUBLICADO' && !canPublish) throw new Error('No tienes permiso para editar un publicado.');
         const epoch = sequence, payload = capture();
         const editorId = model().state.documentoId;
-        dirty = false; setNotice('Guardando…');
+        dirty = false; saveAction = action; setNotice('Guardando…');
         saving = (async () => {
+            const recovered = await reconcile(payload);
+            if (recovered && (action === 'save' || current.status === 'EN_REVISION')) { setNotice('Guardado ✓', current.status); return; }
             if (!current) {
                 pendingId ||= crypto.randomUUID();
                 // Persist before the first request: a reload/retry must reuse this identity.
@@ -74,12 +114,12 @@
         })();
         let succeeded = false;
         try { await saving; succeeded = true; } catch (error) { dirty = true; setNotice('Error al guardar', error.message); throw error; }
-        finally { saving = null; if (succeeded && dirty && current && sequence === epoch) schedule(); }
+        finally { saving = null; saveAction = null; if (succeeded && dirty && current && sequence === epoch) schedule(); }
     }
     function schedule() {
         clearTimeout(timer);
         if (window.LNEAdminAccess && !window.LNEPermissionCatalog.allowed(window.LNEAdminAccess, 'summary_save')) return;
-        if ((current?.status === 'PUBLICADO' && !canPublish) || !hasContent() || loading || bindingError) return;
+        if ((current?.status === 'PUBLICADO' && !canPublish) || !hasContent() || loading || bindingError || publishing || queuedSubmit) return;
         timer = setTimeout(() => { if (dirty) save().catch(error => setNotice('Error al guardar', error.message)); }, 5000);
     }
     function attach() {
@@ -282,7 +322,11 @@
     document.body.appendChild(confirmation);
     confirmation.querySelector('[data-cancel]').onclick = () => confirmation.close();
     async function confirmPublication() {
+        if (preparing || publishing || queuedSubmit || saveAction === 'submit') return;
+        preparing = true; updateActions();
         try {
+            if (saving) await saving;
+            if (uncertain && current) await reconcile(capture());
             if (dirty) await save();
             if (!current || !['EN_REVISION', 'PUBLICADO'].includes(current.status) || !canPublish) throw new Error('Publicación final no disponible.');
             const updating = current.status === 'PUBLICADO';
@@ -291,20 +335,24 @@
             confirmation.querySelector('[data-destination]').textContent = `Título: ${current.title}\nÁrea: ${nameOf('areas', current.area_id)}\nCurso: ${nameOf('courses', current.course_id)}\nCartilla: ${destination?.templateName || current.template_id}\nAutor: ${current.author_label}`;
             confirmation.querySelector('[data-result]').textContent = ''; confirmation.showModal();
         } catch (error) { setNotice(error.message); }
+        finally { preparing = false; updateActions(); }
     }
     confirmation.querySelector('[data-confirm]').onclick = async event => {
+        if (publishing || queuedSubmit || saveAction === 'submit') return;
+        publishing = true; clearTimeout(timer); updateActions();
         event.target.disabled = true;
         frame.inert = true;
         try {
             if (saving) await saving;
-            await save();
+            if (uncertain && current) await reconcile(capture());
+            if (dirty) await performSave();
             const updating = current.status === 'PUBLICADO';
             const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: updating ? 'update-publication' : 'publish', updated_at: current.updated_at }) });
             current = result.document; clearTimeout(timer); dirty = false; updateActions();
             confirmation.close(); setNotice(updating ? 'Publicación actualizada ✓' : 'Publicado ✓', 'El contenido público se guardó correctamente.');
             showPublished(current);
         } catch (error) { confirmation.querySelector('[data-result]').textContent = error.message; }
-        finally { event.target.disabled = false; frame.inert = false; }
+        finally { publishing = false; event.target.disabled = false; frame.inert = false; updateActions(); if (dirty) schedule(); }
     };
     function showPublished(row) {
         const dialog = document.createElement('dialog'); dialog.className = 'summary-selection-dialog';
@@ -320,5 +368,9 @@
     document.addEventListener('lne-admin-session-ready', event => { if (!event.detail.authenticated) { clearBinding(); list.close(); confirmation.close(); withdrawal.close(); permanent.close(); withdrawalId = null; deleting = null; } });
     window.addEventListener('beforeunload', event => { if (saving || (dirty && hasContent() && (current?.status !== 'PUBLICADO' || canPublish))) { event.preventDefault(); event.returnValue = ''; } });
     window.LNESummaryWorkflow = Object.freeze({ save, hasContent, getDestination: () => destination,
-        selectDestination(value) { destination = value; dirty = true; schedule(); }, getDocument: () => current });
+        selectDestination(value) {
+            if (publishing) throw new Error('Hay una publicación en curso. Espera su resultado.');
+            if (['areaId', 'courseId', 'templateId', 'templateName'].every(key => destination?.[key] === value?.[key])) return;
+            destination = value; dirty = true; schedule();
+        }, getDocument: () => current });
 })();
