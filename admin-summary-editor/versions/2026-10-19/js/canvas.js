@@ -1743,12 +1743,27 @@ window.LNECanvas = (function () {
         staging.style.cssText=`position:fixed;left:-10000px;top:0;visibility:hidden;width:${width}px;`;
         const target=document.createElement('div');
         target.className='document-sheet lne-document-body lne-rendered-sheet';
-        target.style.cssText='position:relative;box-sizing:border-box;max-width:none;';
+        target.style.cssText=`position:relative;box-sizing:border-box;max-width:none;width:${width}px;min-width:${width}px;`;
         staging.appendChild(target);document.body.appendChild(staging);
         try {
             sheetContainer=target;
             render({...state,previewMode:false});
             if(!editable) {
+                // Freeze only properties affected by responsive rules while the
+                // original shared CSS is active. The exported sheet may scale,
+                // but another viewport must not turn two columns into one.
+                const properties=new Map();
+                const inspect=(rules,inMedia=false)=>{for(const rule of rules){
+                    if(rule.cssRules){inspect(rule.cssRules,inMedia||rule.type===CSSRule.MEDIA_RULE);continue;}
+                    if(!inMedia||!rule.selectorText||!rule.style)continue;
+                    let nodes;try{nodes=[...(target.matches(rule.selectorText)?[target]:[]),...target.querySelectorAll(rule.selectorText)];}catch{continue;}
+                    for(const node of nodes){let names=properties.get(node);if(!names){names=new Set();properties.set(node,names);}for(const name of rule.style)names.add(name);}
+                }};
+                for(const sheet of document.styleSheets){try{inspect(sheet.cssRules);}catch{/* Cross-origin font sheets remain linked unchanged. */}}
+                const values=[];
+                for(const [node,names] of properties){const style=getComputedStyle(node);for(const name of names)values.push([node,name,style.getPropertyValue(name)]);}
+                for(const [node,name,value] of values)if(value)node.style.setProperty(name,value,'important');
+                target.dataset.lneComposition='1';
                 target.classList.add('lne-readonly-sheet');
                 target.querySelectorAll('.block-controls,.block-copy-check,.object-resize-handle,.img-resize-handle,.object-move-zone,.table-context-bar,.image-context-bar,.block-insert-menu,.document-clean-state button').forEach(el=>el.remove());
                 target.querySelectorAll('.lne-insertion-overlay').forEach(el=>el.remove());

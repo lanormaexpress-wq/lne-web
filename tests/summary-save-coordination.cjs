@@ -2,7 +2,7 @@
 const express=require('express'),path=require('node:path'),fs=require('node:fs'),assert=require('node:assert/strict');
 const {chromium}=require('C:/Users/Usuario/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const app=express(),root=path.resolve(__dirname,'..'),id='11111111-1111-4111-8111-111111111111',tid='22222222-2222-4222-8222-222222222222';
-let row=null,revision=0,mode='ok',publications=0,publicationUpdates=0,active=0,maxActive=0;const writes=[],sizes=[];
+let row=null,revision=0,mode='ok',publications=0,publicationUpdates=0,publicationHtml='',active=0,maxActive=0,releaseSave;const writes=[],sizes=[];
 const fixture=process.env.LNE_SUMMARY_FIXTURE?JSON.parse(fs.readFileSync(process.env.LNE_SUMMARY_FIXTURE)):{documentoId:'mat-fixture',metadata:{titulo:'Prueba local'},bloques:[{id:'p1',texto:'Original'},{id:'img1',tipo:'imagen',propiedades:{src:'data:image/png;base64,'+'a'.repeat(100000),layout:{x:0,y:0}}}]};
 app.use(express.json({limit:'30mb'}));
 app.get('/fixture-state',(_req,res)=>res.json(fixture));
@@ -16,18 +16,25 @@ window.LNESummaryStorage={documentLink:(key,value)=>{if(value)localStorage.setIt
 app.get('/admin/resumenes/catalog',(_req,res)=>res.json({areas:[{id:'civil',name:'Civil'}],courses:[{id:'contratos',area:'civil',name:'Contratos',templates:[]}],canAddTemplate:false,canManageTemplates:false}));
 app.get('/admin/resumenes/templates',(_req,res)=>res.json({templates:[{id:tid,name:'Cartilla existente'}]}));
 app.get('/admin/resumenes/documents/:id',(_req,res)=>res.json({document:row,canPublish:true,canEdit:true}));
-app.post('/admin/resumenes/documents',(req,res)=>{writes.push('create');row={...req.body,id,status:'BORRADOR',updated_at:String(++revision)};res.json({document:row,canPublish:true});});
+app.get('/admin/resumenes/documents/resolve/:editor',(_req,res)=>res.json({document:row,canPublish:true,canEdit:true}));
+app.get('/api/formation/summaries/:id',(_req,res)=>res.json({id,preview_html:publicationHtml}));
+app.post('/admin/resumenes/documents',(req,res)=>{writes.push('create');row={...req.body,id,status:'BORRADOR',updated_at:String(++revision)};if(mode==='create-empty'){mode='ok';return res.status(204).end();}res.json({document:row,canPublish:true});});
 app.patch('/admin/resumenes/documents/:id',async(req,res)=>{
  const action=req.body.action;writes.push(action);sizes.push({action,bytes:Buffer.byteLength(JSON.stringify(req.body)),preview:Object.hasOwn(req.body,'preview_html')});
  active++;maxActive=Math.max(maxActive,active);res.on('finish',()=>active--);res.on('close',()=>{if(!res.writableFinished)active--;});
  if(mode==='fail'){mode='ok';return res.status(500).json({error:'Fallo simulado'});}
  if(mode==='stall'){mode='ok';res.writeHead(200,{'Content-Type':'application/json'});res.write('{');return;}
+ if(mode==='hold'){mode='ok';await new Promise(resolve=>releaseSave=resolve);}
  if(mode==='delay'){mode='ok';await new Promise(r=>setTimeout(r,100));}
  if(req.body.updated_at!==row.updated_at)return res.status(409).json({error:'Versión diferente'});
- if(action==='publish'){assert.equal(row.status,'EN_REVISION');publications++;row.status='PUBLICADO';}
- else if(action==='update-publication'){assert.equal(row.status,'PUBLICADO');publicationUpdates++;}
+ if(action==='publish'){assert.equal(row.status,'EN_REVISION');publications++;row.status='PUBLICADO';publicationHtml=row.preview_html;}
+ else if(action==='update-publication'){assert.equal(row.status,'PUBLICADO');publicationUpdates++;publicationHtml=row.preview_html;}
  else {const data=structuredClone(req.body);if(data.compact_save){for(const ref of data.reuse_images){const source=row.content_lne.bloques.find(b=>b.id===ref.id)?.propiedades?.src,block=data.content_lne.bloques.find(b=>b.id===ref.id);assert.equal(block.propiedades.src,ref.token);assert.ok(source);block.propiedades.src=source;if(data.preview_html)data.preview_html=data.preview_html.split(ref.token).join(source);}}Object.assign(row,data);if(action==='submit'){assert.ok(row.preview_html);row.status='EN_REVISION';}}
  row.updated_at=String(++revision);
+ if((mode==='submit-empty'&&action==='submit')||(mode==='publish-empty'&&action==='publish')||(mode==='update-empty'&&action==='update-publication')){mode='ok';return res.status(204).end();}
+ if(mode==='empty-200'||mode==='empty-204'){const status=mode==='empty-204'?204:200;mode='ok';return res.status(status).end();}
+ if(mode==='invalid-200'){mode='ok';return res.status(200).send('<!doctype html>');}
+ if(mode==='flat'){mode='ok';const {content_lne,preview_html,...metadata}=row;return res.json(metadata);}
  if(mode==='committed-stall'){mode='ok';res.writeHead(200,{'Content-Type':'application/json'});res.write('{');return;}
  const {content_lne,preview_html,...metadata}=row;res.json({document:req.body.compact_save||req.body.transition_only?metadata:row,canPublish:true});
 });
@@ -37,7 +44,7 @@ app.use(express.static(root));
   browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const page=await browser.newPage();let base=`http://127.0.0.1:${server.address().port}`;
   const ready=()=>page.waitForFunction(()=>window.LNESummaryWorkflow&&document.getElementById('summary-editor-frame').contentWindow.LNEState?.state&&document.getElementById('summary-editor-frame').contentWindow.LNEState?.__centralWorkflowAttached);
   await page.goto(base+'/fixture');await ready();
-  await page.evaluate(tid=>LNESummaryWorkflow.selectDestination({areaId:'civil',courseId:'contratos',templateId:tid,templateName:'Cartilla existente'}),tid);
+  mode='create-empty';await page.evaluate(tid=>LNESummaryWorkflow.selectDestination({areaId:'civil',courseId:'contratos',templateId:tid,templateName:'Cartilla existente'}),tid);
   await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='BORRADOR');const originalId=row.id;
   await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto='Autosave';m.notify('edit');});
   await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.content_lne.bloques[0].texto==='Autosave');
@@ -49,14 +56,21 @@ app.use(express.static(root));
   const rapidStart=writes.length;await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;for(let i=0;i<10;i++){m.state.bloques[0].texto='Rápido '+i;m.notify('edit');}});
   await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.content_lne.bloques[0].texto==='Rápido 9');assert.equal(writes.length,rapidStart+1);
   // Changes arriving during an active request coalesce to the newest state.
-  mode='delay';await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto='En curso';m.notify('edit');});
+  mode='hold';await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto='En curso';m.notify('edit');});
   await page.waitForFunction(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-save-status').textContent==='Guardando…');
   await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;for(let i=0;i<10;i++){m.state.bloques[0].texto='Pendiente '+i;m.notify('edit');}});
+  releaseSave();
   await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.content_lne.bloques[0].texto==='Pendiente 9');
   await page.reload();await ready();await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.id);assert.equal(row.id,originalId);assert.equal(row.status,'BORRADOR');assert.equal(await page.evaluate(()=>document.getElementById('summary-editor-frame').contentWindow.LNEState.state.bloques[0].texto),'Pendiente 9');
+  for(const response of ['empty-200','empty-204','invalid-200','flat']){
+   mode=response;await page.evaluate(text=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto=text;return LNESummaryWorkflow.save();},response);
+   assert.equal(row.content_lne.bloques[0].texto,response);assert.equal(await page.evaluate(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-save-status').textContent),'Guardado ✓');
+   assert.equal(await page.evaluate(()=>LNESummaryWorkflow.getDocument().updated_at),row.updated_at);
+  }
   await page.evaluate(()=>LNESummarySelection.open());await page.waitForFunction(()=>!document.querySelector('[data-submit-review]').disabled);
   mode='fail';await page.locator('[data-submit-review]').click();await page.waitForFunction(()=>document.querySelector('[data-status]').textContent==='Fallo simulado');assert.equal(await page.locator('[data-submit-review]').isEnabled(),true);
   const submissions=writes.filter(x=>x==='submit').length;
+  mode='submit-empty';
   await page.evaluate(()=>{const b=document.querySelector('[data-submit-review]');b.click();b.click();});await page.waitForFunction(()=>document.querySelector('[data-status]').textContent==='Resumen enviado a revisión.');assert.equal(writes.filter(x=>x==='submit').length,submissions+1);
   // A repeated successful submit is a no-op, not a second write.
   await page.evaluate(()=>LNESummaryWorkflow.save('submit'));assert.equal(writes.filter(x=>x==='submit').length,submissions+1);
@@ -76,14 +90,17 @@ app.use(express.static(root));
   // Auto-save + double submit share one save and one state transition.
   mode='delay';const start=writes.length;
   await page.evaluate(async()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto='Último cambio';const a=LNESummaryWorkflow.save();await Promise.all([a,LNESummaryWorkflow.save('submit'),LNESummaryWorkflow.save('submit')]);});assert.ok(writes.slice(start).filter(x=>x==='save').length<=2);
-  await page.evaluate(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-publish').click());await page.locator('[data-confirm]').waitFor({state:'visible'});mode='delay';
+  mode='hold';await page.evaluate(()=>{const m=document.getElementById('summary-editor-frame').contentWindow.LNEState;m.state.bloques[0].texto='Autosave seguido de publicación';m.notify('edit');});
+  await page.waitForFunction(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-save-status').textContent==='Guardando…');
+  await page.evaluate(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-publish').click());releaseSave();await page.locator('[data-confirm]').waitFor({state:'visible'});mode='publish-empty';
   await page.evaluate(()=>{const b=document.querySelector('[data-confirm]');b.click();b.click();});await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='PUBLICADO');assert.equal(publications,1);assert.equal(writes.filter(x=>x==='publish').length,1);assert.equal(await page.locator('[data-confirm]').isEnabled(),true);
+  assert.ok(row.preview_html.includes('Autosave seguido de publicación'));assert.equal(row.content_lne.bloques[0].texto,'Autosave seguido de publicación');
   assert.equal(writes.filter(x=>x==='create').length,1);assert.equal(row.id,originalId);
   const beforePublishedOpen=writes.length;await page.reload();await ready();await page.waitForFunction(()=>LNESummaryWorkflow.getDocument()?.status==='PUBLICADO');await page.waitForTimeout(150);assert.equal(writes.length,beforePublishedOpen);
-  await page.evaluate(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-publish').click());await page.locator('[data-confirm]').waitFor({state:'visible'});mode='delay';
+  await page.evaluate(()=>document.getElementById('summary-editor-frame').contentDocument.getElementById('lne-summary-publish').click());await page.locator('[data-confirm]').waitFor({state:'visible'});mode='update-empty';
   await page.evaluate(()=>{const b=document.querySelector('[data-confirm]');b.click();b.click();});await page.waitForFunction(()=>!document.querySelector('[data-confirm]').closest('dialog').open);
   assert.equal(publicationUpdates,1);assert.equal(publications,1);assert.equal(writes.filter(x=>x==='update-publication').length,1);
   assert.equal(maxActive,1);console.log(JSON.stringify({fixtureBlocks:fixture.bloques.length,autosaveBytes:sizes.filter(x=>!x.preview&&x.action==='save').map(x=>x.bytes),maxConcurrent:maxActive,requests:writes.length}));
   console.log('PASS focused: BORRADOR/autosave/F5 same ID; double submit single request; HTTP failure unlock; timeout unlock; lost-response reconciliation; save/submit coordination; double publication single request; one document, one publication.');
- }finally{await browser?.close();server.close();server.closeAllConnections();}
+ }finally{releaseSave?.();await browser?.close();server.close();server.closeAllConnections();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

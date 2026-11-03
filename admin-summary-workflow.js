@@ -21,11 +21,12 @@
         const controller = new AbortController(); let timeout;
         try {
             return await Promise.race([(async () => {
-                const response = await fetch('/admin/resumenes/documents' + path, {
+                const response = await fetch(path.startsWith('/api/') ? path : '/admin/resumenes/documents' + path, {
                     ...options, signal: controller.signal, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin'
                 });
-                let data; try { data = await response.json(); } catch (_) { throw new Error('No se pudo leer la respuesta del servidor.'); }
-                if (!response.ok) throw Object.assign(new Error(data.error || 'No se pudo guardar el resumen.'), { status: response.status });
+                const raw = response.status === 204 ? '' : await response.text();
+                let data; try { data = raw.trim() ? JSON.parse(raw) : null; } catch (_) { throw new Error('No se pudo leer la respuesta del servidor.'); }
+                if (!response.ok) throw Object.assign(new Error(data?.error || 'No se pudo guardar el resumen.'), { status: response.status });
                 return data;
             })(), new Promise((_, reject) => { timeout = setTimeout(() => {
                 reject(new Error('La operación excedió 45 segundos. Tus cambios siguen en el editor. Antes de reintentar se comprobará el mismo documento.'));
@@ -38,6 +39,46 @@
     }
     const canonical = value => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
         ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]])) : item);
+    const matchesContent = (remote, payload) => payload && ['title','content_lne','area_id','course_id','template_id',
+        ...(payload.preview_html === undefined ? [] : ['preview_html'])].every(key => canonical(remote[key]) === canonical(payload[key]));
+    async function writeDocument(body, expected) {
+        const id = current.id, version = current.updated_at;
+        const status = body.action === 'submit' ? 'EN_REVISION' : body.action === 'publish' || body.action === 'update-publication' ? 'PUBLICADO' : current.status;
+        try {
+            const result = await api('/' + id, { method: 'PATCH', body: JSON.stringify(body) });
+            const document = result?.document || (result?.id ? result : null);
+            if (!document || document.id !== id || !document.updated_at ||
+                (document.status && document.status !== status) || (body.action !== 'save' && !document.status) ||
+                (body.action !== 'update-publication' && document.updated_at === version)) throw new Error('Respuesta de guardado sin versión confirmada.');
+            uncertain = false; return { ...result, document };
+        } catch (error) {
+            uncertain = true;
+            if (error.status >= 400 && error.status < 500 && error.status !== 409) throw error;
+            // A success with no body, a lost response or a timeout is not a failed write.
+            // Verify the same ID before permitting any retry or editorial transition.
+            const result = await api('/' + id), remote = result?.document;
+            if (!remote || remote.id !== id || remote.status !== status || !matchesContent(remote, expected) ||
+                (body.action !== 'update-publication' && remote.updated_at === version)) throw error;
+            if (body.action === 'update-publication') {
+                const publication = await api('/api/formation/summaries/' + id);
+                if (publication?.preview_html !== expected.preview_html) throw error;
+            }
+            uncertain = false; return result;
+        }
+    }
+    async function createDocument(payload, id) {
+        try {
+            const result = await api('', { method: 'POST', body: JSON.stringify({ ...payload, id }) });
+            if (!result?.document?.id || !result.document.updated_at) throw new Error('Primer guardado sin versión confirmada.');
+            return result;
+        } catch (error) {
+            uncertain = true;
+            if (error.status >= 400 && error.status < 500 && error.status !== 409) throw error;
+            const result = await api('/resolve/' + encodeURIComponent(payload.content_lne.documentoId));
+            if (!result?.document || !matchesContent(result.document, payload)) throw error;
+            uncertain = false; return result;
+        }
+    }
     async function reconcile(payload) {
         if (!uncertain || !current) return false;
         const result = await api('/' + current.id), remote = result.document;
@@ -114,9 +155,10 @@
         if (action === 'submit' && current?.status === 'EN_REVISION' && !dirty && !uncertain) return;
         if (current?.status === 'PUBLICADO' && !canPublish) throw new Error('No tienes permiso para editar un publicado.');
         const epoch = sequence, version = changeVersion, payload = capture(action !== 'save');
+        if (action === 'save' && current && !dirty && !uncertain && matchesContent(current, payload)) return Promise.resolve();
         const editorId = model().state.documentoId;
         saveAction = action; setNotice('Guardando…');
-        saving = (async () => {
+        const work = (async () => {
             const recovered = await reconcile(payload);
             if (recovered && action === 'submit' && current.status === 'EN_REVISION') { dirty = changeVersion !== version; setNotice('Guardado ✓', current.status); return; }
             let created = false;
@@ -125,7 +167,7 @@
                 // Persist before the first request: a reload/retry must reuse this identity.
                 window.LNESummaryStorage.documentLink(editorId, { summaryId: pendingId, pending: true });
                 lastAttempt = payload;
-                const first = await api('', { method: 'POST', body: JSON.stringify({ ...payload, id: pendingId }) });
+                const first = await createDocument(payload, pendingId);
                 if (epoch !== sequence) return;
                 current = first.document; canPublish = first.canPublish; boundId = editorId;
                 rememberDocument(current.id);
@@ -135,22 +177,33 @@
             if (epoch !== sequence) return;
             if (!created && (!recovered || (payload.preview_html !== undefined && payload.preview_html !== current.preview_html))) {
                 lastAttempt = payload;
-                const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ ...compactPayload(payload), action: 'save', updated_at: current.updated_at }) });
+                const result = await writeDocument({ ...compactPayload(payload), action: 'save', updated_at: current.updated_at }, payload);
                 if (epoch !== sequence) return;
-                current = { ...current, ...payload, ...result.document }; canPublish = result.canPublish;
+                current = { ...current, ...payload, ...result.document }; canPublish = result.canPublish ?? canPublish;
             }
             if (action === 'submit' && current.status !== 'EN_REVISION') {
                 if (changeVersion !== version) throw new Error('Llegaron cambios mientras se guardaba. Se conservaron; vuelve a enviar cuando termine el guardado pendiente.');
-                const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: 'submit', transition_only: true, updated_at: current.updated_at }) });
+                const result = await writeDocument({ action: 'submit', transition_only: true, updated_at: current.updated_at }, payload);
                 if (epoch !== sequence) return;
-                current = { ...current, ...result.document }; canPublish = result.canPublish;
+                current = { ...current, ...result.document }; canPublish = result.canPublish ?? canPublish;
             }
             dirty = changeVersion !== version;
             updateActions(); setNotice('Guardado ✓', action === 'submit' ? 'Resumen enviado a revisión.' : current.status);
         })();
         let succeeded = false;
-        try { await saving; succeeded = true; } catch (error) { dirty = true; setNotice('Error al guardar', error.message); throw error; }
-        finally { saving = null; saveAction = null; if (succeeded && dirty && current && sequence === epoch) schedule(); }
+        const completed = work.then(() => { succeeded = true; }, error => {
+            if (sequence === epoch) { dirty = true; setNotice('Error al guardar', error.message); } throw error;
+        }).finally(() => {
+            // Every caller awaits this complete operation, including its cleanup.
+            // An older completion must never clear a newer save's ownership.
+            if (saving !== completed) return;
+            saving = null; saveAction = null;
+            if (succeeded && sequence === epoch) {
+                setNotice(dirty ? 'Cambios pendientes…' : 'Guardado ✓', current?.status || '');
+                if (dirty && current) schedule();
+            }
+        });
+        saving = completed; return completed;
     }
     function schedule() {
         clearTimeout(timer);
@@ -384,7 +437,8 @@
             await performSave('sync');
             if (dirty) throw new Error('Llegaron cambios mientras se guardaba. Se conservaron; revisa el resumen antes de publicar.');
             const updating = current.status === 'PUBLICADO';
-            const result = await api('/' + current.id, { method: 'PATCH', body: JSON.stringify({ action: updating ? 'update-publication' : 'publish', updated_at: current.updated_at }) });
+            const result = await writeDocument({ action: updating ? 'update-publication' : 'publish', updated_at: current.updated_at },
+                { title: current.title, content_lne: current.content_lne, preview_html: current.preview_html, area_id: current.area_id, course_id: current.course_id, template_id: current.template_id });
             current = { ...current, ...result.document }; clearTimeout(timer); dirty = false; updateActions();
             confirmation.close(); setNotice(updating ? 'Publicación actualizada ✓' : 'Publicado ✓', 'El contenido público se guardó correctamente.');
             showPublished(current);

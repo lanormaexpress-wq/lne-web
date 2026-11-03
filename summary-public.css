@@ -3,7 +3,8 @@ html:has(.lne-public-summary), body:has(> .lne-public-summary) {
     width:100%; min-width:0; height:auto; min-height:100%; margin:0;
     display:block; overflow-x:visible; overflow-y:auto; background:#fff;
 }
-.lne-public-summary {
+.lne-public-summary { width:100%; min-width:0; box-sizing:border-box; }
+.lne-public-summary:not(.lne-public-summary-canvas) {
     --lne-reading-font:'Roboto',sans-serif;
     --lne-reading-heading-font:'Playfair Display',serif;
     --font-cuerpo:var(--lne-reading-font);
@@ -12,7 +13,7 @@ html:has(.lne-public-summary), body:has(> .lne-public-summary) {
     width:100%; min-width:0; box-sizing:border-box;
     font:400 16.8px/1.8 'Roboto',sans-serif;
 }
-.lne-public-summary .lne-rendered-sheet {
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-rendered-sheet {
     width:100%; min-width:0; max-width:1200px !important;
     margin:0 auto; padding-inline:clamp(16px,4vw,48px); box-sizing:border-box;
 }
@@ -21,23 +22,29 @@ html:has(.lne-public-summary), body:has(> .lne-public-summary) {
 .lne-public-summary-canvas .lne-rendered-sheet {
     width:1200px; min-width:1200px; padding-inline:48px;
 }
-.lne-public-summary .lne-document-body { font-family:var(--lne-reading-font); font-size:16.8px; font-weight:400; line-height:1.8; }
-.lne-public-summary :is(.lne-block-parrafo,.lne-block-lista,.lne-block-tabla) { font-family:var(--lne-reading-font); }
-.lne-public-summary :is(h1,h2,h3,h4,h5,h6,.lne-editorial-title,.lne-block-titulo) { font-family:var(--lne-reading-heading-font); }
-.lne-public-summary .lne-meta-topline { gap:12px; flex-wrap:wrap; }
-.lne-public-summary .lne-meta-topline > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
-.lne-public-summary .lne-editorial-header { margin-bottom:16px; padding-bottom:0; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-document-body { font-family:var(--lne-reading-font); font-size:16.8px; font-weight:400; line-height:1.8; }
+.lne-public-summary:not(.lne-public-summary-canvas) :is(.lne-block-parrafo,.lne-block-lista,.lne-block-tabla) { font-family:var(--lne-reading-font); }
+.lne-public-summary:not(.lne-public-summary-canvas) :is(h1,h2,h3,h4,h5,h6,.lne-editorial-title,.lne-block-titulo) { font-family:var(--lne-reading-heading-font); }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-meta-topline { gap:12px; flex-wrap:wrap; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-meta-topline > * { min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-editorial-header { margin-bottom:16px; padding-bottom:0; }
 /* The default header loses 28px. Flow follows it automatically; free objects
    retain their stored sheet coordinates, so apply the same presentation shift
    to their painted boxes. Never change their saved top/left, size or mode. */
-.lne-public-summary .lne-document-content > :is(.block-absolute-text,.block-absolute-image) { translate:0 -28px; }
-.lne-public-summary .lne-document-content { min-width:0; overflow-wrap:anywhere; }
-.lne-public-summary :is(.lne-block-imagen-wrapper,.lne-block-imagen-container) { max-width:100%; box-sizing:border-box; }
-.lne-public-summary img { max-width:100%; height:auto; object-fit:contain; }
-.lne-public-summary .block-type-imagen:not(.block-float-left):not(.block-float-right) { max-width:100% !important; }
-.lne-public-summary .lne-block-tabla-wrapper { max-width:100%; overflow-x:auto; }
-.lne-public-summary .lne-block-columnas { min-width:0; }
-.lne-public-summary .lne-block-columnas > * { min-width:0; overflow-wrap:anywhere; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-document-content > :is(.block-absolute-text,.block-absolute-image) { translate:0 -28px; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-document-content { min-width:0; overflow-wrap:anywhere; }
+.lne-public-summary:not(.lne-public-summary-canvas) :is(.lne-block-imagen-wrapper,.lne-block-imagen-container) { max-width:100%; box-sizing:border-box; }
+.lne-public-summary:not(.lne-public-summary-canvas) img { max-width:100%; height:auto; object-fit:contain; }
+.lne-public-summary:not(.lne-public-summary-canvas) .block-type-imagen:not(.block-float-left):not(.block-float-right) { max-width:100% !important; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-block-tabla-wrapper { max-width:100%; overflow-x:auto; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-block-columnas { min-width:0; }
+.lne-public-summary:not(.lne-public-summary-canvas) .lne-block-columnas > * { min-width:0; overflow-wrap:anywhere; }
+/* Older saved sheets have no responsive snapshot. Preserve their original
+   1200px composition as well; only the complete sheet scales to its viewport. */
+.lne-public-summary-canvas .lne-block-columnas,
+.lne-public-summary-canvas .lne-comp-comparacion,
+.lne-public-summary-canvas .lne-cuadro-grid.cols-2 { grid-template-columns:1fr 1fr; }
+.lne-public-summary-canvas .lne-cuadro-grid.cols-3 { grid-template-columns:1fr 1fr 1fr; }
 .lne-summary-public-frame { display:block; width:100%; height:80vh; border:0; }
 .lne-summary-viewport { position:relative; width:100%; min-width:0; min-height:80vh; container-type:inline-size; }
 /* Keep the established public viewport and its vertical scroll. The sheet
