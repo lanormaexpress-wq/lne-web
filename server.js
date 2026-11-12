@@ -27,7 +27,14 @@ let publicKeyRole = '';
 try { publicKeyRole = JSON.parse(Buffer.from(SUPABASE_PUBLISHABLE_KEY.split('.')[1], 'base64url')).role || ''; } catch (_) { /* Opaque publishable key. */ }
 if (SUPABASE_PUBLISHABLE_KEY.startsWith('sb_secret_') || publicKeyRole === 'service_role') throw new Error('SUPABASE_PUBLISHABLE_KEY debe ser pública. Configura la clave privada solo en SUPABASE_SECRET_KEY o SUPABASE_SERVICE_ROLE_KEY.');
 const adminAuth = require('./lib/supabase-admin-auth')({ url: SUPABASE_URL });
-app.use('/api/formation/summaries', require('./lib/summary-documents').publicRouter(() => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY })));
+const dublyoPublic = process.env.LNE_PUBLIC_BACKEND === 'dublyobase'
+    ? require('./lib/dublyobase-public').createPublicReader({
+        url: process.env.LNE_DUBLYOBASE_URL,
+        project: process.env.LNE_DUBLYOBASE_PROJECT,
+        token: process.env.LNE_DUBLYOBASE_SERVICE_KEY
+    }) : null;
+const publicDataConfig = () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY, dublyoPublic });
+app.use('/api/formation/summaries', require('./lib/summary-documents').publicRouter(publicDataConfig));
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -155,6 +162,16 @@ async function supabaseRestAll(pathname, authorization) {
     }
 }
 
+async function publicLegalRows(resource) {
+    if (!dublyoPublic) return supabaseRestAll(resource);
+    const rows = [];
+    for (let offset = 0; ; offset += 1000) {
+        const page = await dublyoPublic.read(resource, { offset });
+        rows.push(...page);
+        if (page.length < 1000 || rows.length >= page.total) return rows;
+    }
+}
+
 function publicationImageFromStructure(structure) {
     return structure?.publicacion?.imagen_url || null;
 }
@@ -277,8 +294,8 @@ app.get('/api/public/legislation', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const [databaseNorms, articleRows] = await Promise.all([
-            supabaseRestAll('normas_legales?select=codigo,nombre,slug,introduccion,estado&estado=eq.publicado'),
-            supabaseRestAll('articulos_legales?select=codigo,estructura,estado&estado=eq.publicado')
+            publicLegalRows('normas_legales?select=codigo,nombre,slug,introduccion,estado&estado=eq.publicado'),
+            publicLegalRows('articulos_legales?select=codigo,estructura,estado&estado=eq.publicado')
         ]);
         const articleMeta = new Map();
         articleRows.forEach(row => {
@@ -297,8 +314,8 @@ app.get('/api/public/legislation/search-index', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const [publishedNorms, articles] = await Promise.all([
-            supabaseRestAll('normas_legales?select=codigo,nombre,slug&estado=eq.publicado'),
-            supabaseRestAll('articulos_legales?select=codigo,numero_articulo,titulo,contenido,contenido_lne,estructura&estado=eq.publicado&order=orden.asc,id.asc')
+            publicLegalRows('normas_legales?select=codigo,nombre,slug&estado=eq.publicado'),
+            publicLegalRows('articulos_legales?select=codigo,numero_articulo,titulo,contenido,contenido_lne,estructura&estado=eq.publicado&order=orden.asc,id.asc')
         ]);
         const base = JSON.parse(fs.readFileSync(path.join(__dirname, 'data/search-index.json'), 'utf8'));
         res.json(require('./lib/legal-search-index')(base, publishedNorms, articles));
@@ -311,10 +328,11 @@ app.get('/api/public/legislation/:slug/articles', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     try {
         const slug = encodeURIComponent(req.params.slug);
-        const { data: normRows } = await supabaseRest(`normas_legales?select=codigo,nombre,slug,introduccion,estado&slug=eq.${slug}&estado=eq.publicado&limit=1`);
+        const resource = `normas_legales?select=codigo,nombre,slug,introduccion,estado&slug=eq.${slug}&estado=eq.publicado&limit=1`;
+        const normRows = dublyoPublic ? await dublyoPublic.read(resource) : (await supabaseRest(resource)).data;
         const norma = normRows?.[0];
         if (!norma) return res.status(404).json({ error: 'Legislación no publicada.' });
-        const rows = await supabaseRestAll(`articulos_legales?select=numero_articulo,titulo,contenido,contenido_lne,estructura,orden&codigo=eq.${encodeURIComponent(norma.codigo)}&estado=eq.publicado&order=orden.asc`);
+        const rows = await publicLegalRows(`articulos_legales?select=numero_articulo,titulo,contenido,contenido_lne,estructura,orden&codigo=eq.${encodeURIComponent(norma.codigo)}&estado=eq.publicado&order=orden.asc`);
         res.json({ norma, articulos: rows });
     } catch (error) {
         res.status(error.status || 500).json({ error: error.message });
@@ -401,7 +419,7 @@ app.get('/googlea91f2d4ac41a836d.html', (_req, res) => {
 // Unknown routes are 404; data outages are 503, never an empty indexable shell.
 const publicSeo = require('./lib/public-seo').createPublicSeo({
     root: __dirname,
-    getConfig: () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY })
+    getConfig: publicDataConfig
 });
 app.use(publicSeo.router);
 
