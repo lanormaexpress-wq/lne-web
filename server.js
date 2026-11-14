@@ -33,7 +33,7 @@ const dublyoPublic = process.env.LNE_PUBLIC_BACKEND === 'dublyobase'
         project: process.env.LNE_DUBLYOBASE_PROJECT,
         token: process.env.LNE_DUBLYOBASE_SERVICE_KEY
     }) : null;
-const publicDataConfig = () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY, dublyoPublic });
+const publicDataConfig = () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY, dublyoPublic, dublyoPool });
 const dublyoAdminEnabled = process.env.LNE_DUBLYOBASE_ADMIN_ENABLED === 'true';
 const dublyoDatabaseUrl = dublyoAdminEnabled && (process.env.LNE_DUBLYOBASE_DATABASE_URL ||
     (process.env.LNE_DUBLYOBASE_DATABASE_URL_FILE &&
