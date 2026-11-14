@@ -17,7 +17,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use('/admin-summary-editor', (_req, res) => res.status(403).send('Acceso privado.'));
-const summaryAdminRouter = require('./lib/summary-editor')(requireAdmin, () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY }));
+const summaryAdminRouter = require('./lib/summary-editor')(requireAdmin, () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY, dublyoPool }));
 app.use('/admin/resumenes', summaryAdminRouter);
 const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://higdtttcndqzapkenets.supabase.co';
@@ -34,6 +34,21 @@ const dublyoPublic = process.env.LNE_PUBLIC_BACKEND === 'dublyobase'
         token: process.env.LNE_DUBLYOBASE_SERVICE_KEY
     }) : null;
 const publicDataConfig = () => ({ url: SUPABASE_URL, key: SUPABASE_PUBLISHABLE_KEY, dublyoPublic });
+const dublyoAdminEnabled = process.env.LNE_DUBLYOBASE_ADMIN_ENABLED === 'true';
+const dublyoDatabaseUrl = dublyoAdminEnabled && (process.env.LNE_DUBLYOBASE_DATABASE_URL ||
+    (process.env.LNE_DUBLYOBASE_DATABASE_URL_FILE &&
+        fs.readFileSync(process.env.LNE_DUBLYOBASE_DATABASE_URL_FILE, 'utf8').trim()));
+if (dublyoAdminEnabled && !dublyoDatabaseUrl) {
+    throw new Error('Configura la conexión privada de PostgreSQL para el administrador.');
+}
+const dublyoPool = dublyoAdminEnabled
+    ? new (require('pg').Pool)({
+            connectionString: dublyoDatabaseUrl,
+            max: 5, connectionTimeoutMillis: 5000, idleTimeoutMillis: 10000,
+            statement_timeout: 8000
+        }) : null;
+const dublyoAdmin = dublyoPool
+    ? require('./lib/dublyobase-admin-access').createAdminAccess({ pool: dublyoPool }) : null;
 app.use('/api/formation/summaries', require('./lib/summary-documents').publicRouter(publicDataConfig));
 
 app.use(cors());
@@ -42,7 +57,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Body-parser errors may embed a fragment of a malformed JSON body. Never echo/log
 // those fragments for account/password operations, even in development mode.
 app.use((error, req, res, next) => {
-    if (!req.path.startsWith('/api/admin/users')) return next(error);
+    if (!req.path.startsWith('/api/admin/users') && !req.path.startsWith('/api/admin-account/')) return next(error);
     return res.status(error.status === 413 ? 413 : 400).json({ error: 'Solicitud de cuenta inválida o demasiado grande.' });
 });
 
@@ -66,6 +81,13 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+app.use('/api/admin-account', require('./lib/dublyobase-account-recovery')({
+    enabled: Boolean(dublyoAdmin) && process.env.LNE_DUBLYOBASE_RECOVERY_ENABLED === 'true',
+    privateActivation: process.env.LNE_DUBLYOBASE_PRIVATE_ACTIVATION === 'true',
+    verifiedRecoveryEmail: process.env.LNE_DUBLYOBASE_VERIFIED_RECOVERY_EMAIL,
+    admin: dublyoAdmin
+}));
+
 // Solo expone configuración pública. Nunca incluir claves service_role aquí.
 app.get('/api/config/supabase', (req, res) => {
     res.json({
@@ -78,6 +100,12 @@ async function requireOwner(req, res, next) {
     const authorization = req.get('authorization') || '';
     if (!authorization.startsWith('Bearer ')) return res.status(401).json({ error: 'Sesión requerida.' });
     try {
+        if (dublyoAdmin) {
+            const user = await dublyoAdmin.admin(authorization.slice(7));
+            if (user.app_metadata.role !== 'owner') return res.status(403).json({ error: 'Acceso reservado al propietario.' });
+            req.owner = user;
+            return next();
+        }
         const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
             headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: authorization }
         });
@@ -87,6 +115,7 @@ async function requireOwner(req, res, next) {
         req.owner = user;
         next();
     } catch (error) {
+        if (dublyoAdmin) return res.status(error.status || 503).json({ error: 'No se pudo validar el acceso.' });
         console.error('No se pudo validar al propietario:', error);
         res.status(502).json({ error: 'No se pudo validar la sesión.' });
     }
@@ -96,15 +125,15 @@ async function requireAdmin(req, res, next) {
     const authorization = req.get('authorization') || '';
     if (!authorization.startsWith('Bearer ')) return res.status(401).json({ error: 'Sesión requerida.' });
     try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        const response = dublyoAdmin ? null : await fetch(`${SUPABASE_URL}/auth/v1/user`, {
             headers: { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: authorization }
         });
-        if (!response.ok) return res.status(401).json({ error: 'Sesión inválida.' });
-        const user = await response.json();
+        if (response && !response.ok) return res.status(401).json({ error: 'Sesión inválida.' });
+        const user = dublyoAdmin ? await dublyoAdmin.admin(authorization.slice(7)) : await response.json();
         if (!['owner', 'editor'].includes(user.app_metadata?.role)) {
             return res.status(403).json({ error: 'Acceso reservado al equipo editorial.' });
         }
-        if (user.app_metadata?.role !== 'owner') {
+        if (!dublyoAdmin && user.app_metadata?.role !== 'owner') {
             const permissions = await supabaseRest(`admin_user_permissions?select=profile,permissions&user_id=eq.${encodeURIComponent(user.id)}&limit=1`, { authorization });
             user.admin_permissions = permissions.data?.[0]?.permissions || {};
             user.admin_profile = permissions.data?.[0]?.profile || 'custom';
@@ -116,6 +145,7 @@ async function requireAdmin(req, res, next) {
         }
         next();
     } catch (error) {
+        if (dublyoAdmin) return res.status(error.status || 503).json({ error: 'No se pudo validar el acceso.' });
         console.error('No se pudo validar al usuario del conversor:', error);
         res.status(502).json({ error: 'No se pudo validar la sesión.' });
     }
@@ -132,6 +162,7 @@ async function supabaseAdmin(pathname, options = {}) {
 }
 
 async function supabaseRest(pathname, { authorization, method = 'GET', body, prefer, range } = {}) {
+    if (dublyoPool) throw Object.assign(new Error('Esta operación todavía no está disponible en Dublyobase.'), { status: 503 });
     const response = await fetch(`${SUPABASE_URL}/rest/v1/${pathname}`, {
         method,
         headers: {
@@ -339,7 +370,10 @@ app.get('/api/public/legislation/:slug/articles', async (req, res) => {
     }
 });
 
-app.use('/api/admin', require('./lib/admin-users')({ requireAdmin, rest: supabaseRest, auth: supabaseAdmin, serviceAvailable: adminAuth.available }));
+if (dublyoPool) app.use('/api/admin/legislation-data', require('./lib/dublyobase-legislation-read')({ pool: dublyoPool, requireAdmin }));
+app.use('/api/admin', dublyoPool
+    ? require('./lib/dublyobase-users')({ requireAdmin, pool: dublyoPool })
+    : require('./lib/admin-users')({ requireAdmin, rest: supabaseRest, auth: supabaseAdmin, serviceAvailable: adminAuth.available }));
 // Legacy account endpoints are no longer registered: all account operations go through admin-users.
 
 const publicationImageUpload = multer({

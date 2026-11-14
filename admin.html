@@ -41,6 +41,22 @@
                     <span>Ingresar</span><i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
+            <details id="account-recovery" hidden>
+                <summary>Recuperar o activar mi contraseña</summary>
+                <form id="account-recovery-form">
+                    <label for="recovery-email">Correo de tu cuenta</label>
+                    <input id="recovery-email" type="email" autocomplete="username" required>
+                    <button type="submit">Enviar código</button>
+                    <div id="recovery-confirm" hidden>
+                        <label for="recovery-code">Código del correo</label>
+                        <input id="recovery-code" autocomplete="one-time-code">
+                        <label for="recovery-password">Contraseña</label>
+                        <input id="recovery-password" type="password" autocomplete="new-password" minlength="8">
+                        <button id="recovery-save" type="button">Guardar contraseña</button>
+                    </div>
+                    <p id="recovery-message" role="status"></p>
+                </form>
+            </details>
             <a class="back-link" href="/"><i class="fa-solid fa-arrow-left"></i> Volver al sitio</a>
         </section>
     </main>
@@ -258,7 +274,9 @@
     <script src="/admin-session.js?v=document-isolation-1"></script>
     <script src="/admin-permission-catalog.js?v=2"></script>
     <script src="/admin-users.js?v=3-self-name"></script>
-    <script src="/admin.js?v=central-identity-2"></script>
+    <script src="/admin-dublyobase-session.js"></script>
+    <script src="/admin.js?v=dublyobase-auth-1"></script>
+    <script src="/admin-account-recovery.js" defer></script>
     <script src="/admin-summary-integration.js?v=security-1"></script>
     <script src="/admin-summary-tools.js?v=security-1"></script>
     <script src="/formacion.js"></script>
