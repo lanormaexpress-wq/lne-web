@@ -81,7 +81,11 @@ const server = app.listen(0, '127.0.0.1', async () => {
         articles[0].estado = 'publicado';
         summaries.length = 0; assert.equal((await request('/formacion/contratos/resumen/11111111-1111-4111-8111-111111111111')).status, 404);
         norm.estado = 'borrador'; assert.equal((await request('/legislacion/codigo-civil')).status, 404); norm.estado = 'publicado';
-        fail = true; assert.equal((await request('/legislacion/codigo-civil/articulo/1')).status, 503);
+        fail = true;
+        const offlineArticle = await request('/legislacion/codigo-civil/articulo/I');
+        assert.equal(offlineArticle.status, 200);
+        assert(offlineArticle.body.includes('Abrogación de la ley'));
+        assert.equal((await request('/legislacion/codigo-civil/articulo/no-existe')).status, 404);
         const outage = createPublicSeo({ root, getConfig: () => ({ url: 'https://public.example', key: 'public-test-key' }), fetchImpl: fakeFetch, sitemapOptions: { seedFile: false, cacheFile: false, autoStart: false } });
         await assert.rejects(outage.sitemapEntries()); fail = false;
         if (process.env.LNE_SEO_BROWSER === '1') {
